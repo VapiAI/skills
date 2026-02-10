@@ -6,7 +6,7 @@ Complete reference for all providers supported in Vapi assistant configuration.
 
 ### OpenAI
 ```json
-{ "provider": "openai", "model": "gpt-4o" }
+{ "provider": "openai", "model": "gpt-4.1" }
 ```
 Models: `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`
 

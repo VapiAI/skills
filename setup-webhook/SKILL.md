@@ -82,7 +82,7 @@ app.post("/vapi/webhook", (req, res) => {
           firstMessage: `Hello ${message.call.customer?.name || "there"}!`,
           model: {
             provider: "openai",
-            model: "gpt-4o",
+            model: "gpt-4.1",
             messages: [
               { role: "system", content: "You are a helpful assistant." },
             ],
@@ -157,7 +157,7 @@ def vapi_webhook():
                 "firstMessage": "Hello! How can I help?",
                 "model": {
                     "provider": "openai",
-                    "model": "gpt-4o",
+                    "model": "gpt-4.1",
                     "messages": [
                         {"role": "system", "content": "You are a helpful assistant."}
                     ],

@@ -346,7 +346,7 @@ curl -X PATCH https://api.vapi.ai/assistant/{assistant-id} \
   -d '{
     "model": {
       "provider": "openai",
-      "model": "gpt-4o",
+      "model": "gpt-4.1",
       "toolIds": ["tool-id-1", "tool-id-2"],
       "messages": [{"role": "system", "content": "Your prompt here"}]
     }

@@ -39,7 +39,7 @@ curl -X POST https://api.vapi.ai/squad \
           "firstMessage": "Hello! How can I direct your call today?",
           "model": {
             "provider": "openai",
-            "model": "gpt-4o",
+            "model": "gpt-4.1",
             "messages": [
               {
                 "role": "system",
@@ -94,7 +94,7 @@ const squad = await vapi.squads.create({
         firstMessage: "Hello! How can I direct your call today?",
         model: {
           provider: "openai",
-          model: "gpt-4o",
+          model: "gpt-4.1",
           messages: [
             {
               role: "system",
@@ -272,7 +272,7 @@ curl -X POST https://api.vapi.ai/call \
         "firstMessage": "Hello, this is the clinic. How can I help you today?",
         "model": {
           "provider": "openai",
-          "model": "gpt-4o",
+          "model": "gpt-4.1",
           "messages": [
             {
               "role": "system",
@@ -318,7 +318,7 @@ curl -X POST https://api.vapi.ai/call \
         "firstMessage": "Welcome to our store! Are you looking to make a purchase today?",
         "model": {
           "provider": "openai",
-          "model": "gpt-4o",
+          "model": "gpt-4.1",
           "messages": [
             { "role": "system", "content": "You are a sales assistant. Help customers find products and make purchases. Transfer to support for order issues or returns." }
           ],

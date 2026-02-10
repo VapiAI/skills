@@ -27,7 +27,7 @@ curl -X POST https://api.vapi.ai/assistant \
     "firstMessage": "Hello! How can I help you today?",
     "model": {
       "provider": "openai",
-      "model": "gpt-4o",
+      "model": "gpt-4.1",
       "messages": [
         {
           "role": "system",
@@ -59,7 +59,7 @@ const assistant = await vapi.assistants.create({
   firstMessage: "Hello! How can I help you today?",
   model: {
     provider: "openai",
-    model: "gpt-4o",
+    model: "gpt-4.1",
     messages: [
       {
         role: "system",
@@ -98,7 +98,7 @@ response = requests.post(
         "firstMessage": "Hello! How can I help you today?",
         "model": {
             "provider": "openai",
-            "model": "gpt-4o",
+            "model": "gpt-4.1",
             "messages": [
                 {
                     "role": "system",
@@ -136,7 +136,7 @@ The language model powering the assistant's intelligence.
 {
   "model": {
     "provider": "openai",
-    "model": "gpt-4o",
+    "model": "gpt-4.1",
     "temperature": 0.7,
     "maxTokens": 1000,
     "messages": [
@@ -256,7 +256,7 @@ Attach tools so the assistant can take actions during calls.
 {
   "model": {
     "provider": "openai",
-    "model": "gpt-4o",
+    "model": "gpt-4.1",
     "toolIds": ["tool-id-1", "tool-id-2"],
     "messages": [{"role": "system", "content": "..."}]
   }
@@ -269,7 +269,7 @@ Attach tools so the assistant can take actions during calls.
 {
   "model": {
     "provider": "openai",
-    "model": "gpt-4o",
+    "model": "gpt-4.1",
     "tools": [
       {
         "type": "function",
@@ -389,7 +389,7 @@ curl -X DELETE https://api.vapi.ai/assistant/{id} \
   "firstMessage": "Thank you for calling! How can I assist you today?",
   "model": {
     "provider": "openai",
-    "model": "gpt-4o",
+    "model": "gpt-4.1",
     "messages": [
       {
         "role": "system",
@@ -411,7 +411,7 @@ curl -X DELETE https://api.vapi.ai/assistant/{id} \
   "firstMessage": "Hi there! I can help you schedule an appointment. What date works best for you?",
   "model": {
     "provider": "openai",
-    "model": "gpt-4o",
+    "model": "gpt-4.1",
     "messages": [
       {
         "role": "system",
@@ -452,7 +452,7 @@ curl -X DELETE https://api.vapi.ai/assistant/{id} \
   "firstMessage": "Hello! How can I help you? / Hola! Como puedo ayudarte?",
   "model": {
     "provider": "openai",
-    "model": "gpt-4o",
+    "model": "gpt-4.1",
     "messages": [
       {
         "role": "system",

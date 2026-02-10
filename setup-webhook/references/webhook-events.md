@@ -30,7 +30,7 @@ Sent when Vapi needs an assistant configuration. Return a full assistant object.
   "assistant": {
     "name": "Dynamic Assistant",
     "firstMessage": "Hello!",
-    "model": { "provider": "openai", "model": "gpt-4o", "messages": [] },
+    "model": { "provider": "openai", "model": "gpt-4.1", "messages": [] },
     "voice": { "provider": "vapi", "voiceId": "Elliot" },
     "transcriber": { "provider": "deepgram", "model": "nova-3", "language": "en" }
   }

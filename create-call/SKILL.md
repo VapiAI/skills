@@ -119,7 +119,7 @@ Define an assistant inline instead of referencing a saved one:
     "firstMessage": "Hello! This is a test call.",
     "model": {
       "provider": "openai",
-      "model": "gpt-4o",
+      "model": "gpt-4.1",
       "messages": [
         {
           "role": "system",
