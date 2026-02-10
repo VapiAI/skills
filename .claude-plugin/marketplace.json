@@ -1,0 +1,29 @@
+{
+  "name": "vapi-skills",
+  "owner": {
+    "name": "Vapi",
+    "email": "support@vapi.ai"
+  },
+  "metadata": {
+    "description": "Skills for building voice AI agents with Vapi",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "vapi-voice-ai",
+      "description": "Complete skill set for building voice AI agents with Vapi — create assistants, tools, calls, squads, phone numbers, webhooks, and workflows",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./setup-api-key",
+        "./create-assistant",
+        "./create-tool",
+        "./create-call",
+        "./create-squad",
+        "./create-phone-number",
+        "./setup-webhook",
+        "./create-workflow"
+      ]
+    }
+  ]
+}
