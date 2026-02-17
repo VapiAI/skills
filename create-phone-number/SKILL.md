@@ -164,3 +164,16 @@ curl -X DELETE https://api.vapi.ai/phone-number/{id} \
 - [Vapi Phone Numbers Docs](https://docs.vapi.ai/phone-numbers/import-twilio)
 - [Free Telephony](https://docs.vapi.ai/free-telephony)
 - [Phone Number Hooks](https://docs.vapi.ai/phone-numbers/phone-number-hooks)
+
+## Additional Resources
+
+This skills repository includes a **Vapi documentation MCP server** (`vapi-docs`) that gives your AI agent access to the full Vapi knowledge base. Use the `searchDocs` tool to look up anything beyond what this skill covers — advanced configuration, troubleshooting, SDK details, and more.
+
+**Auto-configured:** If you cloned or installed these skills, the MCP server is already configured via `.mcp.json` (Claude Code), `.cursor/mcp.json` (Cursor), or `.vscode/mcp.json` (VS Code Copilot).
+
+**Manual setup:** If your agent doesn't auto-detect the config, run:
+```bash
+claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
+```
+
+See the [README](../README.md#vapi-documentation-server-mcp) for full setup instructions across all supported agents.

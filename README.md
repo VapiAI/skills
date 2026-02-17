@@ -35,6 +35,43 @@ npx skills add VapiAI/skills -a cursor
 
 Copy any skill directory into your project's `.claude/skills/` (for Claude Code), `.cursor/skills/` (for Cursor), or the equivalent skills directory for your agent.
 
+## Vapi Documentation Server (MCP)
+
+This repository includes configuration for the [Vapi documentation MCP server](https://docs.vapi.ai), which gives your AI agent access to the full Vapi knowledge base via RAG. It activates automatically in agents that support MCP.
+
+The skills cover common workflows. The MCP docs server fills in the gaps — advanced configuration, troubleshooting, SDK details, and more.
+
+### Supported agents
+
+| Agent | Config File | Auto-detected |
+|-------|------------|---------------|
+| Claude Code | `.mcp.json` | Yes |
+| Cursor | `.cursor/mcp.json` | Yes |
+| VS Code Copilot | `.vscode/mcp.json` | Yes |
+
+**Requires:** Node.js (for `npx`). Uses [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) to bridge the remote server. No API key needed for the docs server.
+
+### Manual setup
+
+If your agent doesn't auto-detect MCP configs:
+
+**Claude Code:**
+```bash
+claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
+```
+
+**Any agent (JSON config):**
+```json
+{
+  "mcpServers": {
+    "vapi-docs": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://docs.vapi.ai/_mcp/server"]
+    }
+  }
+}
+```
+
 ## Available Skills
 
 | Skill | Description |
@@ -79,6 +116,7 @@ Skills include examples for:
 - **Base URL**: `https://api.vapi.ai`
 - **Authentication**: Bearer token via `Authorization: Bearer $VAPI_API_KEY`
 - **Full API Docs**: https://docs.vapi.ai
+- **MCP Docs Server**: `https://docs.vapi.ai/_mcp/server` (auto-configured via `.mcp.json`)
 - **API Swagger**: https://api.vapi.ai/api
 
 ## License

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "vapi-docs": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://docs.vapi.ai/_mcp/server"]
+    }
+  }
+}
