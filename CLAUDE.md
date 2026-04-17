@@ -23,6 +23,7 @@ The skills cover common workflows. The MCP docs server covers everything else.
 - `create-phone-number` — Phone number provisioning
 - `setup-webhook` — Webhook/server URL configuration
 - `create-workflow` — Conversation workflow builder
+- `comm-runner` — Incident communications and update cadence management
 
 ## Configuration
 

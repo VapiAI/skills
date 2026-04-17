@@ -22,7 +22,8 @@
         "./create-squad",
         "./create-phone-number",
         "./setup-webhook",
-        "./create-workflow"
+        "./create-workflow",
+        "./comm-runner"
       ]
     }
   ]
