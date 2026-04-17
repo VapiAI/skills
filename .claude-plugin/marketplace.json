@@ -23,7 +23,9 @@
         "./create-phone-number",
         "./setup-webhook",
         "./create-workflow",
-        "./comm-runner"
+        "./comm-runner",
+        "./commsrunner",
+        "./commrunner"
       ]
     }
   ]
