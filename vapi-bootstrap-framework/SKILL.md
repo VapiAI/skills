@@ -34,7 +34,7 @@ Scaffold an entire Vapi voice-agent project from a single `ROUGH_DRAFT.md` spec.
 **Entry point** (always created):
 - `src/bootstrap.ts` — idempotent double loop over scenarios × languages
 
-Defaults: languages `en` + `es`. Model `openai gpt-4.1` temperature `0.5`. Voices ElevenLabs `eleven_turbo_v2` (EN) / `eleven_multilingual_v2` (ES). Transcriber Deepgram `nova-3`. Override these only if the user explicitly asks.
+Defaults: languages `en` + `es`. Model `openai gpt-4.1` temperature `0.5`. Voices ElevenLabs `eleven_turbo_v2` (EN) / `eleven_multilingual_v2` (ES). Transcriber Deepgram `nova-3` (EN) / Soniox `stt-rt-v4` (ES). Override these only if the user explicitly asks.
 
 ## Workflow
 
@@ -134,7 +134,7 @@ interface VoiceConfig {
 }
 
 interface TranscriberConfig {
-  provider: "deepgram";
+  provider: "deepgram" | "soniox";
   model: string;
   language: string;
 }
@@ -154,7 +154,7 @@ const VOICE_BY_LANGUAGE: Record<LanguageId, VoiceConfig> = {
 
 const TRANSCRIBER_BY_LANGUAGE: Record<LanguageId, TranscriberConfig> = {
   en: { provider: "deepgram", model: "nova-3", language: "en" },
-  es: { provider: "deepgram", model: "nova-3", language: "es" },
+  es: { provider: "soniox", model: "stt-rt-v4", language: "es" },
 };
 
 export const voiceFor = (languageId: LanguageId): VoiceConfig =>
