@@ -86,6 +86,16 @@ claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
 | [create-workflow](./create-workflow) | Build visual conversation workflows with branching logic |
 | [vapi-bootstrap-framework](./vapi-bootstrap-framework) | Scaffold a full Bun + TypeScript voice-agent project from a `ROUGH_DRAFT.md` — multi-scenario, multi-language assistants with an idempotent bootstrap script |
 
+## Machine-Readable Manifest
+
+Agents and MCP servers can discover the current skill catalog from [`skills.manifest.json`](./skills.manifest.json). The manifest lists every skill, its primary `SKILL.md`, reference files, and raw GitHub URLs for runtime retrieval.
+
+Validate manifest changes with:
+
+```bash
+node scripts/validate-skills-manifest.mjs
+```
+
 ## Configuration
 
 All skills require a Vapi API key. Set it as an environment variable:
