@@ -1,154 +1,29 @@
-# Voice, Model, and Transcriber Providers
+# Provider Policy
 
-Complete reference for all providers supported in Vapi assistant configuration.
+Use this reference when the user asks for a non-default model, voice, or transcriber.
 
-## Model Providers
+## Source of Truth
 
-### OpenAI
-```json
-{ "provider": "openai", "model": "gpt-4.1" }
-```
-Models: `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`
+1. Use the Vapi OpenAPI schema for payload structure.
+2. Use the Vapi dashboard, API responses, and official Vapi provider docs for current selectable provider values.
+3. Use exact user-provided provider IDs for private, synced, custom, or third-party resources.
+4. Use Vapi API validation errors as the final check.
 
-### Anthropic
-```json
-{ "provider": "anthropic", "model": "claude-3-5-sonnet-20241022" }
-```
-Models: `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022`, `claude-3-opus-20240229`
+Do not maintain exhaustive provider/model/voice tables in this skill. Provider availability changes too often, and stale tables cause failed assistant creation.
 
-### Google Gemini
-```json
-{ "provider": "google", "model": "gemini-1.5-pro" }
-```
-Models: `gemini-1.5-pro`, `gemini-1.5-flash`
+## Defaults
 
-### Groq
-```json
-{ "provider": "groq", "model": "llama-3.1-70b-versatile" }
-```
-Models: `llama-3.1-70b-versatile`, `llama-3.1-8b-instant`, `mixtral-8x7b-32768`
+Use these defaults when the user does not specify alternatives:
 
-### DeepInfra
-```json
-{ "provider": "deepinfra", "model": "meta-llama/Meta-Llama-3.1-70B-Instruct" }
-```
-
-### OpenRouter
-```json
-{ "provider": "openrouter", "model": "anthropic/claude-3.5-sonnet" }
-```
-Access 100+ models via OpenRouter.
-
-### Perplexity
-```json
-{ "provider": "perplexity", "model": "llama-3.1-sonar-large-128k-online" }
-```
-Web-connected models for real-time information.
-
-### Together AI
-```json
-{ "provider": "together-ai", "model": "meta-llama/Llama-3-70b-chat-hf" }
-```
-
-### Azure OpenAI
-```json
-{ "provider": "azure-openai", "model": "your-deployment-name" }
-```
-Requires Azure credential setup.
-
-### Custom LLM
 ```json
 {
-  "provider": "custom-llm",
-  "model": "your-model-name",
-  "url": "https://your-llm-server.com/v1/chat/completions"
+  "model": { "provider": "openai", "model": "gpt-4.1" },
+  "voice": { "provider": "vapi", "voiceId": "Elliot", "version": 2 },
+  "transcriber": { "provider": "deepgram", "model": "flux-general-en", "language": "en" }
 }
 ```
-Any OpenAI-compatible endpoint.
 
-## Voice Providers
-
-### Vapi Voices (Recommended — lowest latency)
-```json
-{ "provider": "vapi", "voiceId": "Elliot" }
-```
-Voices: `Elliot`, `Lily`, `Rohan`, `Paola`, `Kian`, and more.
-
-### ElevenLabs
-```json
-{ "provider": "11labs", "voiceId": "JBFqnCBsd6RMkjVDRZzb" }
-```
-Requires ElevenLabs API key as credential.
-
-### PlayHT
-```json
-{ "provider": "playht", "voiceId": "voice-id-from-playht" }
-```
-
-### Cartesia
-```json
-{ "provider": "cartesia", "voiceId": "voice-id-from-cartesia" }
-```
-
-### OpenAI
-```json
-{ "provider": "openai", "voiceId": "alloy" }
-```
-Voices: `alloy`, `echo`, `fable`, `onyx`, `nova`, `shimmer`
-
-### Azure
-```json
-{ "provider": "azure", "voiceId": "en-US-JennyNeural" }
-```
-
-### Deepgram
-```json
-{ "provider": "deepgram", "voiceId": "aura-asteria-en" }
-```
-
-### Rime AI
-```json
-{ "provider": "rime-ai", "voiceId": "voice-id-from-rime" }
-```
-
-## Transcriber Providers
-
-### Deepgram (Recommended)
-```json
-{ "provider": "deepgram", "model": "nova-3", "language": "en" }
-```
-Models: `nova-3` (best), `nova-2`, `base`, `enhanced`
-
-### Google
-```json
-{ "provider": "google", "model": "latest_long", "language": "en" }
-```
-
-### Gladia
-```json
-{ "provider": "gladia", "model": "fast", "language": "en" }
-```
-Models: `fast`, `accurate`
-
-### Assembly AI
-```json
-{ "provider": "assembly-ai", "model": "best", "language": "en" }
-```
-Models: `best`, `nano`
-
-### Speechmatics
-```json
-{ "provider": "speechmatics", "language": "en" }
-```
-
-### Talkscriber
-```json
-{ "provider": "talkscriber", "language": "en" }
-```
-
-## Multilingual Support
-
-For multilingual assistants, set the transcriber language to `"multi"`:
+For multilingual assistants, use:
 
 ```json
 {
@@ -156,6 +31,29 @@ For multilingual assistants, set the transcriber language to `"multi"`:
 }
 ```
 
-## Adding Provider Credentials
+## Model Selection
 
-If using your own API keys (e.g., your own OpenAI or ElevenLabs key), add them in the Vapi Dashboard under **Integrations**: https://dashboard.vapi.ai
+- Use the default OpenAI model unless the user asks for a different provider or model.
+- For specific or latest model requests, verify the exact model ID in official Vapi docs, Vapi dashboard/API output, or the user's selected Vapi value.
+- For OpenRouter, custom LLMs, Azure deployments, or providers that accept account-specific model names, require the exact model ID or deployment value from the user.
+- Exclude models marked deprecated by Vapi or by the upstream provider, even if they still appear in older examples.
+- If the user asks what is available and current values are not exposed in public docs, say that the selectable list must be checked in the Vapi dashboard instead of guessing.
+
+## Voice Selection
+
+- Use Vapi `Elliot` with `version: 2` by default.
+- For other Vapi voices, use only active Vapi voice names documented by Vapi or selected by the user.
+- For ElevenLabs and other third-party voices, use the exact Vapi dropdown/API value selected by the user. Do not infer provider-native IDs from display names.
+- For Deepgram voices, use the named Vapi/Deepgram voice ID from the dropdown, such as `asteria`, and put `aura` or `aura-2` in `voice.model` when that model is selected.
+- For custom voices, require the exact server URL or saved configuration value. Do not draft creation-ready custom voice payloads from placeholders.
+
+## Transcriber Selection
+
+- Use Deepgram `flux-general-en` with `language: "en"` for English-only assistants.
+- Use Deepgram `nova-3` with `language: "multi"` for multilingual assistants.
+- For non-default transcribers, require a documented Vapi shape or exact user-selected dashboard/API value.
+- Do not assume every transcriber supports every language, keyword, formatting, or endpointing option.
+
+## Credentials
+
+When a provider requires customer credentials, tell the user to configure provider credentials in the Vapi Dashboard under Integrations. Do not invent credential IDs or provider account values.

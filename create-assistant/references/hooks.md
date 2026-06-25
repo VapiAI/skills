@@ -1,79 +1,68 @@
 # Assistant Hooks Reference
 
-Hooks automate actions when specific events occur during calls.
+Use hooks only when the user asks for event-based behavior during calls.
 
-## Available Hook Events
+## Safety Rules
 
-| Event | Description |
-|-------|-------------|
-| `call.ending` | Triggers when a call is ending |
-| `assistant.speech.interrupted` | When the assistant's speech is interrupted by the customer |
-| `customer.speech.interrupted` | When the customer's speech is interrupted by the assistant |
-| `customer.speech.timeout` | When the customer doesn't speak within a specified time |
-| `assistant.transcriber.endpointedSpeechLowConfidence` | When a transcript has low confidence |
+- Do not add transfer, function, SMS, notification, or webhook behavior without exact user-provided destinations, server URLs, or saved tool IDs.
+- Prefer `say` and `endCall` examples when drafting creation-ready payloads because they do not require external infrastructure.
+- Use Vapi API validation errors as the final authority for hook shape.
 
-## Hook Structure
+## Documented Events
+
+| Event | Use |
+| --- | --- |
+| `call.ending` | Trigger behavior when a call is ending |
+| `call.timeElapsed` | Trigger behavior after a specified number of seconds from call start |
+| `assistant.speech.interrupted` | React when the assistant is interrupted |
+| `customer.speech.interrupted` | React when the customer is interrupted |
+| `customer.speech.timeout` | React when the customer does not speak within a timeout |
+| `assistant.transcriber.endpointedSpeechLowConfidence` | React to low-confidence final transcripts |
+
+## Hook Shape
 
 ```json
 {
   "hooks": [
     {
-      "on": "<event-name>",
-      "filters": [],
-      "options": {},
-      "do": [],
-      "name": "optional-name"
+      "on": "customer.speech.timeout",
+      "options": {
+        "timeoutSeconds": 10,
+        "triggerMaxCount": 3,
+        "triggerResetMode": "onUserSpeech"
+      },
+      "do": [
+        {
+          "type": "say",
+          "exact": "Are you still there?"
+        }
+      ]
     }
   ]
 }
 ```
 
-### Actions (`do` array)
+Hook fields:
 
-#### Say Action
+- `on`: event name.
+- `do`: actions to perform.
+- `filters`: optional conditions that must match.
+- `options`: optional event-specific settings.
+- `name`: optional internal name.
 
-Speak a message:
+## Safe Actions
+
+Say a fixed message:
 
 ```json
 {
   "type": "say",
-  "exact": "A predetermined message to speak"
-}
-```
-
-AI-generated message:
-```json
-{
-  "type": "say",
-  "prompt": "Based on the conversation in {{transcript}}, ask the user to clarify."
-}
-```
-
-Multiple options (random selection):
-```json
-{
-  "type": "say",
-  "exact": ["Sorry about that", "Go ahead", "Please continue"]
-}
-```
-
-#### Tool Action
-
-Execute a tool:
-
-```json
-{
-  "type": "tool",
-  "tool": {
-    "type": "transferCall",
-    "destinations": [
-      { "type": "number", "number": "+1234567890" }
-    ]
-  }
+  "exact": "Are you still there?"
 }
 ```
 
 End the call:
+
 ```json
 {
   "type": "tool",
@@ -81,120 +70,80 @@ End the call:
 }
 ```
 
-Custom function:
-```json
-{
-  "type": "tool",
-  "tool": {
-    "type": "function",
-    "async": true,
-    "function": {
-      "name": "log_event",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "event_type": { "type": "string", "value": "timeout" }
-        }
-      }
-    },
-    "server": { "url": "https://your-server.com/api" }
-  }
-}
-```
+## Exact-Value Actions
 
-### Filters
+Use these only when the user supplies the required real values:
 
-Filter when hooks trigger:
+- `transferCall`: requires the exact destination number or destination configuration.
+- Function tools: require a real function definition and real `server.url`, or a saved tool ID.
+- External notifications: require a real saved tool, endpoint, or integration value.
 
-```json
-{
-  "filters": [
-    {
-      "type": "oneOf",
-      "key": "call.endedReason",
-      "oneOf": ["pipeline-error", "assistant-error"]
-    }
-  ]
-}
-```
+Do not include placeholder strings such as example URLs, fake phone numbers, or draft IDs in a creation-ready assistant.
 
-### Options
+## Event Options
 
-#### For `customer.speech.timeout`
+For `customer.speech.timeout`:
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `timeoutSeconds` | number | 7.5 | Seconds to wait (1-1000) |
-| `triggerMaxCount` | number | 3 | Max triggers per call (1-10) |
-| `triggerResetMode` | string | `"never"` | When to reset count (`"never"` or `"onUserSpeech"`) |
+| Option | Type | Notes |
+| --- | --- | --- |
+| `timeoutSeconds` | number | Seconds to wait for customer speech |
+| `triggerMaxCount` | number | Maximum triggers per call |
+| `triggerResetMode` | string | Usually `never` or `onUserSpeech` |
 
-#### For `endpointedSpeechLowConfidence`
+For `call.timeElapsed`:
 
-| Option | Type | Description |
-|--------|------|-------------|
+| Option | Type | Notes |
+| --- | --- | --- |
+| `seconds` | number | Seconds from call start when the hook should trigger |
+
+For `assistant.transcriber.endpointedSpeechLowConfidence`:
+
+| Option | Type | Notes |
+| --- | --- | --- |
 | `confidenceMin` | number | Minimum confidence threshold |
 | `confidenceMax` | number | Maximum confidence threshold |
 
-Shorthand: `"on": "assistant.transcriber.endpointedSpeechLowConfidence[confidence=0.2:0.4]"`
+## Safe Examples
 
-## Complete Examples
-
-### Progressive Timeout with Call End
+Prompt the caller after silence:
 
 ```json
 {
   "hooks": [
     {
       "on": "customer.speech.timeout",
-      "options": { "timeoutSeconds": 10, "triggerMaxCount": 3, "triggerResetMode": "onUserSpeech" },
-      "do": [{ "type": "say", "exact": "Are you still there?" }]
-    },
-    {
-      "on": "customer.speech.timeout",
-      "options": { "timeoutSeconds": 20, "triggerMaxCount": 3, "triggerResetMode": "onUserSpeech" },
-      "do": [{ "type": "say", "prompt": "Ask the user if they need help based on {{transcript}}" }]
-    },
-    {
-      "on": "customer.speech.timeout",
-      "options": { "timeoutSeconds": 30, "triggerMaxCount": 3, "triggerResetMode": "onUserSpeech" },
+      "options": {
+        "timeoutSeconds": 10,
+        "triggerMaxCount": 3,
+        "triggerResetMode": "onUserSpeech"
+      },
       "do": [
-        { "type": "say", "exact": "I'll end the call now. Feel free to call back anytime." },
-        { "type": "tool", "tool": { "type": "endCall" } }
+        { "type": "say", "exact": "Are you still there?" }
       ]
     }
   ]
 }
 ```
 
-### Transfer on Error with Notification
+Start wrapping up before a call limit:
 
 ```json
 {
+  "maxDurationSeconds": 600,
   "hooks": [
     {
-      "on": "call.ending",
-      "filters": [{ "type": "oneOf", "key": "call.endedReason", "oneOf": ["pipeline-error"] }],
+      "on": "call.timeElapsed",
+      "options": { "seconds": 540 },
       "do": [
-        { "type": "say", "exact": "I apologize for the difficulty. Let me transfer you." },
-        {
-          "type": "tool",
-          "tool": {
-            "type": "function",
-            "async": true,
-            "function": {
-              "name": "report_error",
-              "parameters": { "type": "object", "properties": {} }
-            },
-            "server": { "url": "https://your-server.com/report-error" }
-          }
-        },
-        {
-          "type": "tool",
-          "tool": {
-            "type": "transferCall",
-            "destinations": [{ "type": "number", "number": "+1234567890" }]
-          }
-        }
+        { "type": "say", "exact": "We have about one minute left. Is there anything else urgent?" }
+      ]
+    },
+    {
+      "on": "call.timeElapsed",
+      "options": { "seconds": 590 },
+      "do": [
+        { "type": "say", "exact": "Thank you for your time. I need to end the call now. Goodbye." },
+        { "type": "tool", "tool": { "type": "endCall" } }
       ]
     }
   ]
