@@ -1,6 +1,11 @@
 ---
 name: create-assistant
 description: Create Vapi voice AI assistant payloads or assistants through the Vapi API. Use when building phone or web call agents, generating assistant JSON, choosing safe default model/voice/transcriber settings, attaching existing Vapi tool IDs, adding assistant hooks, configuring HIPAA/compliance only when explicitly requested, or fixing Vapi assistant API validation errors.
+license: MIT
+compatibility: Requires internet access and a Vapi API key (VAPI_API_KEY).
+metadata:
+  author: vapi
+  version: "2.0"
 ---
 
 # Vapi Assistant Creation
