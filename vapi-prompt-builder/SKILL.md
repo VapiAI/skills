@@ -1,6 +1,11 @@
 ---
 name: vapi-prompt-builder
 description: Create, improve, or audit Vapi voice agent and Squad system prompts for production phone and web based voice agents. Use when the user wants help designing a Vapi assistant prompt, multi-assistant Squad prompt set, refining an existing prompt, creating prompt sections, building an intake or handoff workflow, improving tool-use instructions, adding guardrails, or optimizing voice-agent behavior for brevity, turn-taking, error handling, caller data collection, escalation, handoffs, and spoken formatting.
+license: MIT
+compatibility: Requires internet access and a Vapi API key (VAPI_API_KEY).
+metadata:
+  author: vapi
+  version: "1.0"
 ---
 
 # Vapi Prompt Builder
