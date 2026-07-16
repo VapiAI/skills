@@ -1,8 +1,8 @@
 ---
 name: vapi-bootstrap-framework
-description: Scaffold a complete Vapi voice-agent project from a ROUGH_DRAFT.md spec. Generates package.json, .env.example, .gitignore, and the full TypeScript framework — scenario registry, per-language voice/transcriber stack, prompt composer, assistant builder, and an idempotent bootstrap script — plus one rough first-draft body.md per scenario. Drop this skill in any project's .cursor/skills/ folder (or ~/.cursor/skills/ for global use), write a ROUGH_DRAFT.md at the project root, name the skill, and `bun run bootstrap` puts the entire fleet live in dashboard.vapi.ai. Use when the user asks to scaffold or bootstrap Vapi voice agents from a rough draft, build a Vapi assistant fleet, or invokes this skill by name. Targets Bun + TypeScript + @vapi-ai/server-sdk.
+description: Scaffold a complete Vapi voice-agent project from a ROUGH_DRAFT.md spec. Generates package.json, tsconfig.json, .env.example, .gitignore, and the full TypeScript framework — scenario registry, per-language voice/transcriber stack, prompt composer, assistant builder, and an idempotent bootstrap script — plus one rough first-draft body.md per scenario. Drop this skill in any project's .cursor/skills/ folder (or ~/.cursor/skills/ for global use), write a ROUGH_DRAFT.md at the project root, name the skill, and `bun run bootstrap` puts the entire fleet live in dashboard.vapi.ai. Use when the user asks to scaffold or bootstrap Vapi voice agents from a rough draft, build a Vapi assistant fleet, or invokes this skill by name. Targets Bun + TypeScript + @vapi-ai/server-sdk.
 license: MIT
-compatibility: Requires Bun, internet access, and a Vapi API key (VAPI_PRIVATE_KEY).
+compatibility: Requires Bun, internet access, and a Vapi private API key (VAPI_API_KEY).
 metadata:
   author: vapi
   version: "1.0"
@@ -16,7 +16,8 @@ Scaffold an entire Vapi voice-agent project from a single `ROUGH_DRAFT.md` spec.
 
 **Project scaffolding** (only created if absent — never overwritten):
 - `package.json` — Bun + `@vapi-ai/server-sdk` + a `bootstrap` script
-- `.env.example` — `VAPI_PRIVATE_KEY` placeholder + one slot per `(scenario × language)` tuple
+- `tsconfig.json` — strict no-emit TypeScript validation
+- `.env.example` — `VAPI_API_KEY` placeholder + one slot per `(scenario × language)` tuple
 - `.gitignore` — `node_modules`, `.env*.local`, OS junk
 
 **Framework spine** (always created — architectural; every later change extends a slot here, never the spine itself):
@@ -44,7 +45,7 @@ Defaults: languages `en` + `es`. Model `openai gpt-4.1` temperature `0.5`. Voice
 2. **Detect scenarios** — every `## N. <scenario name>` heading is one scenario. Derive a snake_case `scenarioId` from the name (e.g. "Lead Qualification & Screening" → `qualification`; "Appointment Scheduling" → `appointment`). When in doubt, pick the shortest unambiguous noun. Keep ids short — they become env var names.
 3. **Extract the opening line** — under each scenario, look for `**On the page**`, `**Opening**`, `**Greeting**`, or the first quoted string in the section. That's `firstMessage.en` verbatim.
 4. **Distill the flow** — `**What happens**` (or equivalent prose) becomes a rough first-draft `body.md`. Persona-driven, not a contract — no failure rules, no exact wordings, no scripted off-ramps yet. Keep it short.
-5. **Scaffold the project root** — for each of `package.json`, `.env.example`, `.gitignore`: if the file is absent, create it from the template below. If `.env.example` already exists, append any missing `VAPI_ASSISTANT_<SCENARIO>_<LANG>` slots; never reorder or remove existing lines. If `package.json` exists, leave it alone but verify it has `@vapi-ai/server-sdk` in deps and a `bootstrap` script — tell the user if either is missing instead of editing.
+5. **Scaffold the project root** — for each of `package.json`, `tsconfig.json`, `.env.example`, `.gitignore`: if the file is absent, create it from the template below. If `.env.example` already exists, append any missing `VAPI_ASSISTANT_<SCENARIO>_<LANG>` slots; never reorder or remove existing lines. If `package.json` exists, leave it alone but verify it has `@vapi-ai/server-sdk` in deps plus `bootstrap` and `typecheck` scripts — tell the user if any are missing instead of editing.
 6. **Generate the framework spine** — copy the five spine files verbatim from the templates below. They don't change between projects; only the scenario registry's imports do.
 7. **Generate per-scenario files** — one `scenarios/<id>.ts`, one `prompts/<id>/body.md`, one `prompts/<id>/off-topic-es.md` per detected scenario.
 8. **Wire up the registry** — `scenarios/index.ts` imports every scenario and exports the `SCENARIOS` const, `ScenarioId`, `SCENARIO_IDS`, `scenarioFor`.
@@ -52,7 +53,7 @@ Defaults: languages `en` + `es`. Model `openai gpt-4.1` temperature `0.5`. Voice
 10. **Translate first messages to Spanish** — natural Latin American Spanish, brand names untranslated.
 11. **Tell the user how to run it** (see "Verification" below).
 
-Do **not** add `clientTools` to scenarios in this skill — capture tools land in a follow-up step. Do **not** rewrite `body.md` as a contract here either — that's a separate step.
+Keep each scenario's `clientTools` array empty in this skill — functional capture tools land in a follow-up step. Do **not** rewrite `body.md` as a contract here either — that's a separate step.
 
 ## File templates
 
@@ -76,10 +77,11 @@ Templates use these placeholders that you substitute per project:
   "private": true,
   "type": "module",
   "scripts": {
-    "bootstrap": "bun run src/bootstrap.ts"
+    "bootstrap": "bun run src/bootstrap.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@vapi-ai/server-sdk": "^0.5.2"
+    "@vapi-ai/server-sdk": "^1.2.0"
   },
   "devDependencies": {
     "@types/bun": "^1.3.13",
@@ -89,11 +91,28 @@ Templates use these placeholders that you substitute per project:
 }
 ```
 
+### `tsconfig.json` (only if absent)
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "strict": true,
+    "types": ["bun"]
+  },
+  "include": ["src/**/*.ts"]
+}
+```
+
 ### `.env.example` (create if absent; extend if present)
 
 ```dotenv
 # Get this from https://dashboard.vapi.ai/keys
-VAPI_PRIVATE_KEY=
+VAPI_API_KEY=
 
 # One slot per (scenario × language). First `bun run bootstrap` prints the
 # ids; paste them here, then re-run for idempotent updates.
@@ -269,6 +288,7 @@ export const <SCENARIO_ID> = {
     en: "<FIRST_MESSAGE_EN>",
     es: "<FIRST_MESSAGE_ES>",
   },
+  clientTools: [] as const,
 };
 
 export type <PascalCase scenario id>Scenario = typeof <SCENARIO_ID>;
@@ -357,7 +377,7 @@ const requireEnv = (name: string): string => {
 };
 
 const main = async () => {
-  const vapi = new VapiClient({ token: requireEnv("VAPI_PRIVATE_KEY") });
+  const vapi = new VapiClient({ token: requireEnv("VAPI_API_KEY") });
   const created: Array<{ envVar: string; id: string }> = [];
 
   for (const scenarioId of SCENARIO_IDS) {
@@ -374,10 +394,10 @@ const main = async () => {
 
       if (existingId) {
         try {
-          await vapi.assistants.update(
-            existingId,
-            body as unknown as Parameters<typeof vapi.assistants.update>[1],
-          );
+          await vapi.assistants.update({
+            id: existingId,
+            ...body,
+          } as unknown as Parameters<typeof vapi.assistants.update>[0]);
           console.log(`✓ Updated ${label} → ${existingId}`);
           updated = true;
         } catch (err) {
@@ -457,7 +477,8 @@ After generating files, tell the user to run:
 
 ```bash
 bun install
-cp .env.example .env.local     # paste VAPI_PRIVATE_KEY from dashboard.vapi.ai/keys
+bun run typecheck              # validates locally; creates nothing in Vapi
+cp .env.example .env.local     # add VAPI_API_KEY from dashboard.vapi.ai/org/api-keys
 bun run bootstrap              # creates one assistant per (scenario × language)
 # paste the printed VAPI_ASSISTANT_<SCENARIO>_<LANG>=<id> lines into .env.local
 bun run bootstrap              # second run prints "Updated ..." for every tuple

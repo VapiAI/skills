@@ -132,11 +132,7 @@ Transfer the caller to another number or SIP endpoint.
       "message": "Transferring you to our billing department now.",
       "description": "Transfer to billing department when customer has billing questions"
     }
-  ],
-  "function": {
-    "name": "transfer_to_billing",
-    "description": "Transfer the caller to the billing department"
-  }
+  ]
 }
 ```
 
@@ -160,11 +156,7 @@ Allows the assistant to end the call programmatically.
 
 ```json
 {
-  "type": "endCall",
-  "function": {
-    "name": "end_call",
-    "description": "End the call when the conversation is complete"
-  }
+  "type": "endCall"
 }
 ```
 
@@ -174,21 +166,7 @@ Send DTMF tones (touch-tone signals) during a call for IVR navigation.
 
 ```json
 {
-  "type": "dtmf",
-  "function": {
-    "name": "press_digits",
-    "description": "Press phone keypad digits to navigate phone menus",
-    "parameters": {
-      "type": "object",
-      "properties": {
-        "digits": {
-          "type": "string",
-          "description": "Digits to press (0-9, *, #)"
-        }
-      },
-      "required": ["digits"]
-    }
-  }
+  "type": "dtmf"
 }
 ```
 
@@ -199,10 +177,7 @@ Detect and handle voicemail.
 ```json
 {
   "type": "voicemail",
-  "function": {
-    "name": "leave_voicemail",
-    "description": "Leave a voicemail message"
-  }
+  "beepDetectionEnabled": true
 }
 ```
 
@@ -211,10 +186,8 @@ Detect and handle voicemail.
 ```json
 {
   "type": "google.calendar.event.create",
-  "function": {
-    "name": "create_calendar_event",
-    "description": "Schedule a meeting on Google Calendar"
-  }
+  "name": "create_calendar_event",
+  "description": "Schedule a meeting on Google Calendar"
 }
 ```
 
@@ -223,10 +196,8 @@ Detect and handle voicemail.
 ```json
 {
   "type": "google.sheets.row.append",
-  "function": {
-    "name": "log_to_sheet",
-    "description": "Log call data to a Google Sheet"
-  }
+  "name": "log_to_sheet",
+  "description": "Log call data to the configured Google Sheet"
 }
 ```
 
@@ -235,12 +206,12 @@ Detect and handle voicemail.
 ```json
 {
   "type": "slack.message.send",
-  "function": {
-    "name": "notify_slack",
-    "description": "Send a notification to Slack"
-  }
+  "name": "notify_slack",
+  "description": "Send urgent notifications to the #customer-support Slack channel"
 }
 ```
+
+Connect Google or Slack under the dashboard's tool-provider integrations before using these built-in tools. Configure the spreadsheet, sheet range, calendar, or Slack channel in the dashboard as required; never put OAuth tokens in a tool payload.
 
 ### MCP Tool
 
@@ -269,7 +240,7 @@ When the assistant calls a tool, Vapi sends a POST request to your server URL.
       {
         "id": "call_abc123",
         "name": "get_weather",
-        "arguments": {
+        "parameters": {
           "location": "San Francisco"
         }
       }
@@ -315,11 +286,11 @@ app.post("/api/tools", async (req, res) => {
 
     switch (toolCall.name) {
       case "get_weather":
-        const weather = await fetchWeather(toolCall.arguments.location);
-        result = `${toolCall.arguments.location}: ${weather.temp}°F, ${weather.condition}`;
+        const weather = await fetchWeather(toolCall.parameters.location);
+        result = `${toolCall.parameters.location}: ${weather.temp}°F, ${weather.condition}`;
         break;
       case "lookup_order":
-        const order = await lookupOrder(toolCall.arguments.orderNumber);
+        const order = await lookupOrder(toolCall.parameters.orderNumber);
         result = `Order ${order.number}: ${order.status}`;
         break;
       default:
@@ -430,13 +401,11 @@ Control what the assistant says during tool execution:
 
 ## Additional Resources
 
-This skills repository includes a **Vapi documentation MCP server** (`vapi-docs`) that gives your AI agent access to the full Vapi knowledge base. Use the `searchDocs` tool to look up anything beyond what this skill covers — advanced configuration, troubleshooting, SDK details, and more.
+Vapi provides a **documentation MCP server** that gives compatible AI agents access to the Vapi knowledge base. Use its documentation search for advanced configuration, troubleshooting, SDK details, and anything beyond this skill.
 
-**Auto-configured:** If you cloned or installed these skills, the MCP server is already configured via `.mcp.json` (Claude Code), `.cursor/mcp.json` (Cursor), or `.vscode/mcp.json` (VS Code Copilot).
-
-**Manual setup:** If your agent doesn't auto-detect the config, run:
+To add the Vapi documentation MCP server manually in Claude Code, run:
 ```bash
 claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
 ```
 
-See the [README](../README.md#vapi-documentation-server-mcp) for full setup instructions across all supported agents.
+See the [Vapi MCP integration guide](https://docs.vapi.ai/cli/mcp) for setup instructions across supported agents.

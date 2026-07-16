@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "vapi-voice-ai",
-      "description": "Complete skill set for building voice AI agents with Vapi — create assistants, tools, calls, squads, phone numbers, webhooks, and workflows",
+      "description": "Complete skill set for building voice AI agents with Vapi — create assistants, tools, calls, squads, phone numbers, and webhooks",
       "source": "./",
       "strict": false,
       "skills": [
@@ -23,7 +23,6 @@
         "./create-squad",
         "./create-phone-number",
         "./setup-webhook",
-        "./create-workflow",
         "./vapi-bootstrap-framework"
       ]
     }

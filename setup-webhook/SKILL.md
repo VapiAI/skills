@@ -27,21 +27,18 @@ curl -X PATCH https://api.vapi.ai/assistant/{id} \
   -H "Authorization: Bearer $VAPI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "serverUrl": "https://your-server.com/vapi/webhook",
-    "serverUrlSecret": "your-webhook-secret"
+    "server": {
+      "url": "https://your-server.com/vapi/webhook",
+      "credentialId": "cred_abc123"
+    }
   }'
 ```
+
+Create the optional `credentialId` in **Dashboard > Custom Credentials**. Omit it only for a deliberately public endpoint.
 
 ### On a Phone Number
 
-```bash
-curl -X PATCH https://api.vapi.ai/phone-number/{id} \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "serverUrl": "https://your-server.com/vapi/webhook"
-  }'
-```
+Phone-number updates also use a `server` object with `url` and optional `credentialId`. When updating through the API, first retrieve the number and preserve its existing `provider` discriminator in the PATCH body. The dashboard is the safest choice when the provider is unknown.
 
 ### At the Organization Level
 
@@ -65,8 +62,6 @@ Priority order: Tool server URL > Assistant server URL > Phone Number server URL
 
 ```typescript
 import express from "express";
-import crypto from "crypto";
-
 const app = express();
 app.use(express.json());
 
@@ -87,7 +82,7 @@ app.post("/vapi/webhook", (req, res) => {
               { role: "system", content: "You are a helpful assistant." },
             ],
           },
-          voice: { provider: "vapi", voiceId: "Elliot" },
+          voice: { provider: "vapi", voiceId: "Elliot", version: 2 },
           transcriber: { provider: "deepgram", model: "nova-3", language: "en" },
         },
       });
@@ -95,9 +90,12 @@ app.post("/vapi/webhook", (req, res) => {
 
     case "tool-calls":
       // Handle tool calls from the assistant
-      const results = message.toolCallList.map((toolCall: any) => ({
+      const results = (message.toolCallList || []).map((toolCall: any) => ({
         toolCallId: toolCall.id,
-        result: handleToolCall(toolCall.name, toolCall.arguments),
+        result: handleToolCall(
+          toolCall.name,
+          toolCall.parameters || toolCall.arguments
+        ),
       }));
       res.json({ results });
       break;
@@ -106,10 +104,10 @@ app.post("/vapi/webhook", (req, res) => {
       // Process the call report
       console.log("Call ended:", {
         callId: message.call.id,
-        duration: message.durationSeconds,
+        endedReason: message.endedReason,
         cost: message.cost,
-        summary: message.summary,
-        transcript: message.transcript,
+        analysis: message.analysis,
+        artifact: message.artifact,
       });
       res.json({});
       break;
@@ -162,7 +160,7 @@ def vapi_webhook():
                         {"role": "system", "content": "You are a helpful assistant."}
                     ],
                 },
-                "voice": {"provider": "vapi", "voiceId": "Elliot"},
+                "voice": {"provider": "vapi", "voiceId": "Elliot", "version": 2},
                 "transcriber": {"provider": "deepgram", "model": "nova-3", "language": "en"},
             }
         })
@@ -178,7 +176,7 @@ def vapi_webhook():
 
     elif msg_type == "end-of-call-report":
         print(f"Call ended: {message['call']['id']}")
-        print(f"Summary: {message.get('summary')}")
+        print(f"Summary: {message.get('analysis', {}).get('summary')}")
 
     return jsonify({})
 
@@ -188,39 +186,26 @@ if __name__ == "__main__":
 
 ## Webhook Authentication
 
-Verify webhook authenticity using the secret:
+Use a Vapi Custom Credential and place its ID in `server.credentialId`. Vapi supports Bearer Token, OAuth 2.0 client credentials, and HMAC credentials. Verify requests according to the credential you configured; HMAC header names, algorithms, timestamps, and payload formats are configurable, so do not assume a fixed `x-vapi-signature` format.
 
-```typescript
-function verifyWebhook(req: express.Request, secret: string): boolean {
-  const signature = req.headers["x-vapi-signature"] as string;
-  if (!signature || !secret) return false;
-
-  const payload = JSON.stringify(req.body);
-  const expected = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
-
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expected)
-  );
-}
-```
+For a bearer credential, compare the incoming `Authorization: Bearer <token>` value with the token stored securely by your server. Never put the secret itself in an assistant or phone-number payload.
 
 ## Local Development
 
-Use the Vapi CLI to forward webhooks to your local server:
+Use the Vapi CLI with a public tunnel. The CLI forwards from port 4242 to your app, but it does not create the public URL itself:
 
 ```bash
 # Install the CLI
 curl -sSL https://vapi.ai/install.sh | bash
 
-# Forward events to local server
+# Terminal 1: expose the CLI listener
+ngrok http 4242
+
+# Terminal 2: forward events from the CLI to your app
 vapi listen --forward-to localhost:3000/vapi/webhook
 ```
 
-Or use ngrok:
+Set the Vapi server URL to the public ngrok URL. To skip the CLI and tunnel directly to the Express or Flask server instead:
 
 ```bash
 ngrok http 3000
@@ -234,29 +219,26 @@ The `end-of-call-report` event includes:
 | Field | Description |
 |-------|-------------|
 | `call` | Full call object with metadata |
-| `transcript` | Complete conversation transcript |
-| `summary` | AI-generated call summary |
-| `recordingUrl` | URL to the call recording |
-| `durationSeconds` | Call duration |
+| `endedReason` | Why the call ended |
+| `artifact` | Recording, transcript, messages, and other enabled artifacts |
+| `analysis` | Configured summaries, structured data, and success evaluation |
 | `cost` | Total call cost |
-| `costBreakdown` | Breakdown by component (STT, LLM, TTS, transport) |
-| `messages` | Array of all conversation messages |
+| `startedAt` / `endedAt` | Call timing, when included |
 
 ## References
 
-- [Server URL Events](references/webhook-events.md) — All event types with payload schemas
-- [Vapi Server URL Docs](https://docs.vapi.ai/server-url) — Official documentation
+- [Common Server URL Events](references/webhook-events.md) — Common event payloads and responses
+- [Setting Server URLs](https://docs.vapi.ai/server-url/setting-server-urls) — Placement and priority
+- [Server Authentication](https://docs.vapi.ai/server-url/server-authentication) — Custom Credentials
 - [Local Development](https://docs.vapi.ai/server-url/developing-locally) — Testing webhooks locally
 
 ## Additional Resources
 
-This skills repository includes a **Vapi documentation MCP server** (`vapi-docs`) that gives your AI agent access to the full Vapi knowledge base. Use the `searchDocs` tool to look up anything beyond what this skill covers — advanced configuration, troubleshooting, SDK details, and more.
+Vapi provides a **documentation MCP server** that gives compatible AI agents access to the Vapi knowledge base. Use its documentation search for advanced configuration, troubleshooting, SDK details, and anything beyond this skill.
 
-**Auto-configured:** If you cloned or installed these skills, the MCP server is already configured via `.mcp.json` (Claude Code), `.cursor/mcp.json` (Cursor), or `.vscode/mcp.json` (VS Code Copilot).
-
-**Manual setup:** If your agent doesn't auto-detect the config, run:
+To add the Vapi documentation MCP server manually in Claude Code, run:
 ```bash
 claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
 ```
 
-See the [README](../README.md#vapi-documentation-server-mcp) for full setup instructions across all supported agents.
+See the [Vapi MCP integration guide](https://docs.vapi.ai/cli/mcp) for setup instructions across supported agents.

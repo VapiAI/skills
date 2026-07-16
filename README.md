@@ -84,7 +84,6 @@ claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
 | [create-squad](./create-squad) | Build multi-assistant squads with handoff workflows |
 | [create-phone-number](./create-phone-number) | Set up phone numbers from Twilio, Vonage, Telnyx, or Vapi |
 | [setup-webhook](./setup-webhook) | Configure server URLs to receive real-time call events |
-| [create-workflow](./create-workflow) | Build visual conversation workflows with branching logic |
 | [vapi-bootstrap-framework](./vapi-bootstrap-framework) | Scaffold a full Bun + TypeScript voice-agent project from a `ROUGH_DRAFT.md` — multi-scenario, multi-language assistants with an idempotent bootstrap script |
 
 ## Configuration

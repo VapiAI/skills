@@ -22,7 +22,6 @@ The skills cover common workflows. The MCP docs server covers everything else.
 - `create-squad` — Multi-assistant squad setup
 - `create-phone-number` — Phone number provisioning
 - `setup-webhook` — Webhook/server URL configuration
-- `create-workflow` — Conversation workflow builder
 - `vapi-bootstrap-framework` — Scaffold a complete Bun + TypeScript voice-agent project from a `ROUGH_DRAFT.md` spec
 
 ## Configuration

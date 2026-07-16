@@ -15,7 +15,7 @@ When the assistant calls a tool, Vapi POSTs to your server URL:
       {
         "id": "toolu_01DTPAzUm5Gk3zxrpJ969oMF",
         "name": "get_weather",
-        "arguments": {
+        "parameters": {
           "location": "San Francisco"
         }
       }
@@ -89,7 +89,7 @@ app.post("/api/tools", async (req, res) => {
 
   for (const toolCall of message.toolCallList) {
     try {
-      const result = await handleTool(toolCall.name, toolCall.arguments);
+      const result = await handleTool(toolCall.name, toolCall.parameters);
       results.push({ toolCallId: toolCall.id, result });
     } catch (error) {
       results.push({
@@ -136,7 +136,7 @@ def handle_tools():
 
     for tool_call in message["toolCallList"]:
         try:
-            result = handle_tool(tool_call["name"], tool_call["arguments"])
+            result = handle_tool(tool_call["name"], tool_call["parameters"])
             results.append({"toolCallId": tool_call["id"], "result": result})
         except Exception as e:
             results.append({"toolCallId": tool_call["id"], "result": f"Error: {str(e)}"})
@@ -168,7 +168,7 @@ export default async function handler(req, res) {
   const { message } = req.body;
   const results = message.toolCallList.map((toolCall) => ({
     toolCallId: toolCall.id,
-    result: handleTool(toolCall.name, toolCall.arguments),
+    result: handleTool(toolCall.name, toolCall.parameters),
   }));
 
   res.json({ results });
