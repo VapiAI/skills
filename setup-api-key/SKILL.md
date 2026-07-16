@@ -27,34 +27,34 @@ Tell the user:
 > 2. Name your key (e.g., "development")
 > 3. Copy the key immediately — it is only shown once
 >
-> Paste your API key here when ready.
+> Do not paste a private API key into this chat. Save it locally using the steps below, then tell me when the file is ready.
 
-Then wait for the user's next message which should contain the API key.
+Then wait for the user to confirm that the local environment file is ready. Do not ask them to send or display the key.
 
 ### Step 2: Validate and configure
 
-Once the user provides the API key:
+Once the user confirms the key is stored locally:
 
-1. **Validate the key** by making a request:
+1. **Confirm the key is available without printing it.** Prefer an existing environment variable. Otherwise, ask the user to save it as `VAPI_API_KEY` in a local `.env.local` file using their editor. Never display the file contents.
+
+2. **Validate the key** by making a request from the environment where it is loaded:
    ```bash
-   curl -s -o /dev/null -w "%{http_code}" https://api.vapi.ai/assistant \
-     -H "Authorization: Bearer <the-api-key>"
+    curl -s -o /dev/null -w "%{http_code}" https://api.vapi.ai/assistant \
+      -H "Authorization: Bearer $VAPI_API_KEY"
    ```
 
-2. **If validation fails** (non-200 response):
+3. **If validation fails** (non-200 response):
    - Tell the user the API key appears to be invalid
    - Ask them to double-check and try again
    - Remind them of the URL: https://dashboard.vapi.ai/org/api-keys
 
-3. **If validation succeeds** (200 response), save the API key:
-
-   Check if a `.env` file exists. If so, append to it. If not, create one:
+4. **If validation succeeds**, confirm that the local environment file contains this variable without showing its value:
    ```
    VAPI_API_KEY=<the-api-key>
    ```
 
-4. **Confirm success:**
-   > Your Vapi API key is configured and stored in `.env` as `VAPI_API_KEY`.
+5. **Confirm success:**
+   > Your Vapi API key is configured locally as `VAPI_API_KEY`.
    >
    > You can now use Vapi's API to create assistants, make calls, and build voice AI agents.
    >
@@ -62,9 +62,10 @@ Once the user provides the API key:
 
 ### Step 3: Verify .gitignore
 
-Check if `.gitignore` exists and contains `.env`. If not, add it:
+Check whether `.gitignore` protects local environment files. If not, add:
 ```
-.env
+.env*
+!.env.example
 ```
 
 ## Environment Variable
@@ -82,13 +83,11 @@ Authorization: Bearer $VAPI_API_KEY
 
 ## Additional Resources
 
-This skills repository includes a **Vapi documentation MCP server** (`vapi-docs`) that gives your AI agent access to the full Vapi knowledge base. Use the `searchDocs` tool to look up anything beyond what this skill covers — advanced configuration, troubleshooting, SDK details, and more.
-
-**Auto-configured:** If you cloned or installed these skills, the MCP server is already configured via `.mcp.json` (Claude Code), `.cursor/mcp.json` (Cursor), or `.vscode/mcp.json` (VS Code Copilot).
+Vapi provides a **documentation MCP server** that gives compatible AI agents access to the Vapi knowledge base. Use its documentation search for advanced configuration, troubleshooting, SDK details, and anything beyond this skill.
 
 **Manual setup:** If your agent doesn't auto-detect the config, run:
 ```bash
 claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
 ```
 
-See the [README](../README.md#vapi-documentation-server-mcp) for full setup instructions across all supported agents.
+See the [Vapi MCP integration guide](https://docs.vapi.ai/cli/mcp) for setup instructions across supported agents.

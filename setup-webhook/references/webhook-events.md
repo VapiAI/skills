@@ -1,6 +1,6 @@
 # Webhook Event Types Reference
 
-Complete reference for all Vapi server URL event types and their payloads.
+Reference for common Vapi server URL event types and their payloads. Consult the live Server Events documentation for the full and changing list.
 
 ## assistant-request
 
@@ -31,7 +31,7 @@ Sent when Vapi needs an assistant configuration. Return a full assistant object.
     "name": "Dynamic Assistant",
     "firstMessage": "Hello!",
     "model": { "provider": "openai", "model": "gpt-4.1", "messages": [] },
-    "voice": { "provider": "vapi", "voiceId": "Elliot" },
+    "voice": { "provider": "vapi", "voiceId": "Elliot", "version": 2 },
     "transcriber": { "provider": "deepgram", "model": "nova-3", "language": "en" }
   }
 }
@@ -49,7 +49,7 @@ Sent when the assistant calls a tool during a conversation.
       {
         "id": "call_abc123",
         "name": "function_name",
-        "arguments": { "key": "value" }
+        "parameters": { "key": "value" }
       }
     ],
     "call": { "id": "call-uuid" },
@@ -84,7 +84,7 @@ Sent when the call status changes.
 }
 ```
 
-Statuses: `queued`, `ringing`, `in-progress`, `forwarding`, `ended`
+Statuses: `scheduled`, `queued`, `ringing`, `in-progress`, `forwarding`, `ended`
 
 **Response:** Acknowledge with `{}`
 
@@ -116,27 +116,26 @@ Sent when the call ends with a complete summary.
 {
   "message": {
     "type": "end-of-call-report",
+    "endedReason": "customer-ended-call",
     "call": {
       "id": "call-uuid",
       "type": "outboundPhoneCall",
-      "status": "ended",
-      "endedReason": "customer-ended-call"
+      "status": "ended"
     },
-    "transcript": "Full conversation transcript...",
-    "summary": "AI-generated summary of the call",
-    "recordingUrl": "https://storage.vapi.ai/recordings/...",
-    "durationSeconds": 180,
+    "artifact": {
+      "transcript": "Full conversation transcript...",
+      "recording": {},
+      "messages": [
+        { "role": "assistant", "message": "Hello! How can I help?" },
+        { "role": "user", "message": "I need to check my order." }
+      ]
+    },
+    "analysis": {
+      "summary": "AI-generated summary of the call"
+    },
     "cost": 0.15,
-    "costBreakdown": {
-      "stt": 0.02,
-      "llm": 0.08,
-      "tts": 0.03,
-      "transport": 0.02
-    },
-    "messages": [
-      { "role": "assistant", "content": "Hello! How can I help?" },
-      { "role": "user", "content": "I need to check my order." }
-    ]
+    "startedAt": "2026-07-16T18:00:00.000Z",
+    "endedAt": "2026-07-16T18:03:00.000Z"
   }
 }
 ```

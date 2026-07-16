@@ -64,7 +64,7 @@ curl -X POST https://api.vapi.ai/squad \
               }
             ]
           },
-          "voice": { "provider": "vapi", "voiceId": "Lily" },
+          "voice": { "provider": "vapi", "voiceId": "Lily", "version": 2 },
           "transcriber": { "provider": "deepgram", "model": "nova-3", "language": "en" }
         }
       },
@@ -178,7 +178,7 @@ Override saved assistant settings within the squad context without modifying the
 {
   "assistantId": "saved-assistant-id",
   "assistantOverrides": {
-    "voice": { "provider": "vapi", "voiceId": "Elliot" },
+    "voice": { "provider": "vapi", "voiceId": "Elliot", "version": 2 },
     "firstMessage": "Overridden greeting for this squad"
   }
 }
@@ -209,7 +209,7 @@ Add squad-specific tools to a saved assistant:
 }
 ```
 
-### Member Overrides
+### Members Overrides
 
 Apply configuration to ALL members simultaneously:
 
@@ -219,8 +219,8 @@ Apply configuration to ALL members simultaneously:
     { "assistant": { "name": "Agent A", "..." : "..." } },
     { "assistantId": "agent-b-id" }
   ],
-  "memberOverrides": {
-    "voice": { "provider": "vapi", "voiceId": "Elliot" },
+  "membersOverrides": {
+    "voice": { "provider": "vapi", "voiceId": "Elliot", "version": 2 },
     "transcriber": { "provider": "deepgram", "model": "nova-3", "language": "en" }
   }
 }
@@ -297,7 +297,7 @@ curl -X POST https://api.vapi.ai/call \
             }
           ]
         },
-        "voice": { "provider": "vapi", "voiceId": "Lily" }
+        "voice": { "provider": "vapi", "voiceId": "Lily", "version": 2 }
       }
     },
     { "assistantId": "scheduling-assistant-id" },
@@ -361,12 +361,20 @@ curl https://api.vapi.ai/squad/{id} -H "Authorization: Bearer $VAPI_API_KEY"
 curl -X PATCH https://api.vapi.ai/squad/{id} \
   -H "Authorization: Bearer $VAPI_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"name": "Updated Squad Name"}'
+  -d '{
+    "name": "Updated Squad Name",
+    "members": [
+      { "assistantId": "first-assistant-id" },
+      { "assistantId": "second-assistant-id" }
+    ]
+  }'
 
 # Delete a squad
 curl -X DELETE https://api.vapi.ai/squad/{id} \
   -H "Authorization: Bearer $VAPI_API_KEY"
 ```
+
+The update API requires the complete `members` array. Retrieve the current squad first and preserve every member when changing its name or overrides.
 
 ## References
 
@@ -376,13 +384,11 @@ curl -X DELETE https://api.vapi.ai/squad/{id} \
 
 ## Additional Resources
 
-This skills repository includes a **Vapi documentation MCP server** (`vapi-docs`) that gives your AI agent access to the full Vapi knowledge base. Use the `searchDocs` tool to look up anything beyond what this skill covers — advanced configuration, troubleshooting, SDK details, and more.
-
-**Auto-configured:** If you cloned or installed these skills, the MCP server is already configured via `.mcp.json` (Claude Code), `.cursor/mcp.json` (Cursor), or `.vscode/mcp.json` (VS Code Copilot).
+Vapi provides a **documentation MCP server** that gives compatible AI agents access to the Vapi knowledge base. Use its documentation search for advanced configuration, troubleshooting, SDK details, and anything beyond this skill.
 
 **Manual setup:** If your agent doesn't auto-detect the config, run:
 ```bash
 claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
 ```
 
-See the [README](../README.md#vapi-documentation-server-mcp) for full setup instructions across all supported agents.
+See the [Vapi MCP integration guide](https://docs.vapi.ai/cli/mcp) for setup instructions across supported agents.

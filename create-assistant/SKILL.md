@@ -30,9 +30,10 @@ Create a valid Vapi assistant payload first. Call the Vapi API only when the use
 
 2. Build the smallest valid assistant.
    - Include `name`, `firstMessage`, `model`, `voice`, and `transcriber`.
+   - Keep `name` at 40 characters or fewer, as enforced by the Vapi API.
    - Put behavior in `model.messages[0].content`.
    - Keep voice-agent prompts concise and spoken-response oriented.
-   - Completion: the payload can stand alone without placeholder IDs, URLs, phone numbers, or provider names.
+   - Completion: the payload can stand alone with a name of 40 characters or fewer and without placeholder IDs, URLs, phone numbers, or provider names.
 
 3. Apply safe defaults.
    - Model: `{ "provider": "openai", "model": "gpt-4.1" }`
