@@ -5,7 +5,7 @@ license: MIT
 compatibility: Requires Bun, internet access, and a Vapi API key (VAPI_PRIVATE_KEY).
 metadata:
   author: vapi
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Vapi bootstrap framework
@@ -79,7 +79,7 @@ Templates use these placeholders that you substitute per project:
     "bootstrap": "bun run src/bootstrap.ts"
   },
   "dependencies": {
-    "@vapi-ai/server-sdk": "^0.5.2"
+    "@vapi-ai/server-sdk": "^1.2.2"
   },
   "devDependencies": {
     "@types/bun": "^1.3.13",
@@ -333,7 +333,7 @@ If the visitor goes off-topic, pick one of these and then return to the next mis
  *
  * Run with `bun run bootstrap`. Bun auto-loads .env.local.
  */
-import { VapiClient } from "@vapi-ai/server-sdk";
+import { type Vapi, VapiClient } from "@vapi-ai/server-sdk";
 
 import {
   buildAssistant,
@@ -367,17 +367,18 @@ const main = async () => {
       const body = buildAssistant(
         scenarioId,
         languageId,
-      ) as unknown as Parameters<typeof vapi.assistants.create>[0];
+      ) as unknown as Vapi.CreateAssistantDto;
 
       const label = `${scenarioId}/${languageId}`;
       let updated = false;
 
       if (existingId) {
         try {
-          await vapi.assistants.update(
-            existingId,
-            body as unknown as Parameters<typeof vapi.assistants.update>[1],
-          );
+          // SDK 1.x: `update` takes one request object with the id inline.
+          await vapi.assistants.update({
+            id: existingId,
+            ...body,
+          } as Vapi.UpdateAssistantDto);
           console.log(`✓ Updated ${label} → ${existingId}`);
           updated = true;
         } catch (err) {
