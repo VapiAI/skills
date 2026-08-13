@@ -1,25 +1,37 @@
-# Assistant Hooks Reference
+# Assistant Hooks
 
-Use hooks only when the user asks for event-based behavior during calls.
+Read this file only when the user wants Vapi to run an action automatically in response to a supported call event.
 
-## Safety Rules
+## Choose the Right Mechanism
 
-- Do not add transfer, function, SMS, notification, or webhook behavior without exact user-provided destinations, server URLs, or saved tool IDs.
-- Prefer `say` and `endCall` examples when drafting creation-ready payloads because they do not require external infrastructure.
-- Use Vapi API validation errors as the final authority for hook shape.
+Use a hook when the event itself should deterministically trigger an action, such as speaking after customer silence or beginning call wrap-up after a time limit.
 
-## Documented Events
+Do not use a hook when:
 
-| Event | Use |
-| --- | --- |
-| `call.ending` | Trigger behavior when a call is ending |
-| `call.timeElapsed` | Trigger behavior after a specified number of seconds from call start |
-| `assistant.speech.interrupted` | React when the assistant is interrupted |
-| `customer.speech.interrupted` | React when the customer is interrupted |
-| `customer.speech.timeout` | React when the customer does not speak within a timeout |
-| `assistant.transcriber.endpointedSpeechLowConfidence` | React to low-confidence final transcripts |
+- The model should decide whether to act from the conversation. Attach an assistant tool instead.
+- The user's backend only needs to receive call updates. Configure documented server events instead.
+- Prompt instructions alone already express the behavior and no deterministic event trigger is required.
 
-## Hook Shape
+## Build and Verify
+
+- Use the current Assistant Hooks guide to select the event and understand its behavior.
+- Validate the final event, options, filters, and actions against the current `CreateAssistantDTO` schema before returning or creating a payload.
+- If the guide and create schema disagree, do not guess or silently substitute another event. Omit the disputed configuration and explain the mismatch.
+- Do not reuse event names or shapes from memory. Do not invent destinations, server URLs, tool IDs, filters, or events.
+- Keep secrets in Vapi credentials or the user's backend.
+
+Choose actions deliberately:
+
+- `say.exact`: speak fixed text. Prefer this when wording must be predictable.
+- `say.prompt`: generate a spoken response from conversation context.
+- `message.add`: add context or an instruction to the conversation; set its documented response behavior intentionally.
+- `tool`: execute a verified saved tool by ID or a fully documented inline native tool.
+
+Reuse a saved tool when it already exists and its real ID is available. Use an inline tool only when its complete current configuration and every required value are known.
+
+## Customer Speech Timeout
+
+This is a safe pattern for prompting a silent caller. Include an explicit timeout in creation-ready payloads rather than relying on a documented default that may differ from schema validation.
 
 ```json
 {
@@ -42,26 +54,20 @@ Use hooks only when the user asks for event-based behavior during calls.
 }
 ```
 
-Hook fields:
+Verify the supported timeout range, trigger count, and reset modes against the current schema before changing these values.
 
-- `on`: event name.
-- `do`: actions to perform.
-- `filters`: optional conditions that must match.
-- `options`: optional event-specific settings.
-- `name`: optional internal name.
+## Tool Action
 
-## Safe Actions
-
-Say a fixed message:
+Call an already saved tool only with its real ID:
 
 ```json
 {
-  "type": "say",
-  "exact": "Are you still there?"
+  "type": "tool",
+  "toolId": "<verified-tool-id>"
 }
 ```
 
-End the call:
+Use a native inline action only when its complete public shape is known:
 
 ```json
 {
@@ -70,82 +76,10 @@ End the call:
 }
 ```
 
-## Exact-Value Actions
+The saved-tool example is a template, not creation-ready JSON. Do not put placeholders into a creation-ready payload.
 
-Use these only when the user supplies the required real values:
+## Public Sources
 
-- `transferCall`: requires the exact destination number or destination configuration.
-- Function tools: require a real function definition and real `server.url`, or a saved tool ID.
-- External notifications: require a real saved tool, endpoint, or integration value.
-
-Do not include placeholder strings such as example URLs, fake phone numbers, or draft IDs in a creation-ready assistant.
-
-## Event Options
-
-For `customer.speech.timeout`:
-
-| Option | Type | Notes |
-| --- | --- | --- |
-| `timeoutSeconds` | number | Seconds to wait for customer speech |
-| `triggerMaxCount` | number | Maximum triggers per call |
-| `triggerResetMode` | string | Usually `never` or `onUserSpeech` |
-
-For `call.timeElapsed`:
-
-| Option | Type | Notes |
-| --- | --- | --- |
-| `seconds` | number | Seconds from call start when the hook should trigger |
-
-For `assistant.transcriber.endpointedSpeechLowConfidence`:
-
-| Option | Type | Notes |
-| --- | --- | --- |
-| `confidenceMin` | number | Minimum confidence threshold |
-| `confidenceMax` | number | Maximum confidence threshold |
-
-## Safe Examples
-
-Prompt the caller after silence:
-
-```json
-{
-  "hooks": [
-    {
-      "on": "customer.speech.timeout",
-      "options": {
-        "timeoutSeconds": 10,
-        "triggerMaxCount": 3,
-        "triggerResetMode": "onUserSpeech"
-      },
-      "do": [
-        { "type": "say", "exact": "Are you still there?" }
-      ]
-    }
-  ]
-}
-```
-
-Start wrapping up before a call limit:
-
-```json
-{
-  "maxDurationSeconds": 600,
-  "hooks": [
-    {
-      "on": "call.timeElapsed",
-      "options": { "seconds": 540 },
-      "do": [
-        { "type": "say", "exact": "We have about one minute left. Is there anything else urgent?" }
-      ]
-    },
-    {
-      "on": "call.timeElapsed",
-      "options": { "seconds": 590 },
-      "do": [
-        { "type": "say", "exact": "Thank you for your time. I need to end the call now. Goodbye." },
-        { "type": "tool", "tool": { "type": "endCall" } }
-      ]
-    }
-  ]
-}
-```
+- [Assistant Hooks](https://docs.vapi.ai/assistants/assistant-hooks) — event behavior, actions, options, and examples
+- [Create Assistant API](https://docs.vapi.ai/api-reference/assistants/create) — final payload schema
+- [Server Events](https://docs.vapi.ai/server-url/events) — backend notifications that should not be modeled as hooks

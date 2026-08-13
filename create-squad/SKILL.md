@@ -1,394 +1,130 @@
 ---
 name: create-squad
-description: Create multi-assistant squads in Vapi with handoffs between specialized voice agents. Use when building complex voice workflows that need multiple assistants with different roles, like triage-to-booking or sales-to-support handoffs.
+description: Design, create, update, and verify Vapi Squads and documented handoff tools through the public API. Use for choosing a single assistant versus a multi-assistant Squad, persistent or transient members, entry-member ordering, specialization boundaries, context engineering, variable extraction, model-specific handoff patterns, assistant-version pins, and safe Squad updates.
 license: MIT
-compatibility: Requires internet access and a Vapi API key (VAPI_API_KEY).
+compatibility: Internet access and VAPI_API_KEY are required only for live Vapi API operations.
 metadata:
   author: vapi
-  version: "1.0"
+  version: "2.0"
 ---
 
 # Vapi Squad Creation
 
-Create squads that orchestrate multiple specialized assistants with context-preserving handoffs. Break complex workflows into focused assistants that transfer calls between each other.
+Use a Squad only when multiple focused assistants improve the design. Default to a payload or implementation plan unless the user explicitly requests live Vapi mutations.
 
-> **Setup:** Ensure `VAPI_API_KEY` is set. See the `setup-api-key` skill if needed.
+## Decide Whether to Use a Squad
 
-## Why Squads?
+Prefer one assistant when one focused prompt and one compatible tool set can handle the use case reliably. Use a Squad for genuine boundaries such as:
 
-Single assistants with large prompts cause higher hallucination rates, increased costs, and greater latency. Squads solve this by creating focused assistants with specific roles:
+- distinct domains or personas;
+- different tool or credential access;
+- deliberate context isolation;
+- separately maintained specialists.
 
-- **Triage** → **Booking** → **Confirmation**
-- **Sales** → **Technical Support** → **Billing**
-- **Receptionist** → **Department Specialist**
+Do not create one assistant per conversational step. Keep related steps in one member and make each handoff boundary earn its latency and operational cost.
 
-## Quick Start
+## Safety and Source Rules
 
-### cURL
+- Verify squad, member, handoff, context, and version fields against the current public [Squads documentation](https://docs.vapi.ai/squads), [Handoff tool guide](https://docs.vapi.ai/squads/handoff), and OpenAPI schema.
+- Never invent assistant IDs, names, tool IDs, destinations, versions, credentials, server URLs, or extracted variables.
+- Prompt text does not create a handoff. Configure and attach a documented `handoff` tool.
+- Keep member order explicit: the first member starts the call.
+- Prefer saved assistants, reusable tools, and a saved Squad for production. Use transient members or Squads only when the request is intentionally ephemeral or a prototype.
 
-```bash
-curl -X POST https://api.vapi.ai/squad \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Support Squad",
-    "members": [
-      {
-        "assistant": {
-          "name": "Receptionist",
-          "firstMessage": "Hello! How can I direct your call today?",
-          "model": {
-            "provider": "openai",
-            "model": "gpt-4.1",
-            "messages": [
-              {
-                "role": "system",
-                "content": "You are a receptionist. Determine if the caller needs sales or support, then transfer them to the right department."
-              }
-            ],
-            "tools": [
-              {
-                "type": "handoff",
-                "destinations": [
-                  {
-                    "type": "assistant",
-                    "assistantId": "sales-assistant-id",
-                    "description": "Transfer when the caller asks about pricing, plans, or wants to purchase"
-                  },
-                  {
-                    "type": "assistant",
-                    "assistantId": "support-assistant-id",
-                    "description": "Transfer when the caller has a technical issue or needs help"
-                  }
-                ]
-              }
-            ]
-          },
-          "voice": { "provider": "vapi", "voiceId": "Lily", "version": 2 },
-          "transcriber": { "provider": "deepgram", "model": "nova-3", "language": "en" }
-        }
-      },
-      {
-        "assistantId": "sales-assistant-id"
-      },
-      {
-        "assistantId": "support-assistant-id"
-      }
-    ]
-  }'
-```
+## Persistent Squad Procedure
 
-### TypeScript (Server SDK)
+1. Determine the execution mode.
+   - Return JSON or a plan when the user asks for a draft or does not clearly authorize live writes.
+   - Perform live creates or updates only with explicit intent and an available `VAPI_API_KEY`.
 
-```typescript
-import { VapiClient } from "@vapi-ai/server-sdk";
+2. Define focused members.
+   - State each member's responsibility, tools, and handoff boundaries.
+   - Choose the entry member and place it first.
+   - Reuse existing assistants by resolving names through `GET /assistant`; create missing assistants first with the `create-assistant` skill.
 
-const vapi = new VapiClient({ token: process.env.VAPI_API_KEY! });
+3. Create handoff relationships after destinations exist.
+   - Resolve every destination assistant before building a persistent handoff tool.
+   - Use `type: "assistant"` plus a verified `assistantId` for saved cross-assistant destinations.
+   - Use clear descriptions that state when the model should hand off and what should be collected first.
+   - Create reusable handoff tools through `POST /tool`, then attach them to the source assistants with the configuration-preserving procedure in the `create-tool` skill.
+   - For OpenAI models, current public guidance recommends one handoff tool per destination. For Anthropic models, one tool with multiple destinations is supported and recommended.
 
-const squad = await vapi.squads.create({
-  name: "Support Squad",
-  members: [
-    {
-      assistant: {
-        name: "Receptionist",
-        firstMessage: "Hello! How can I direct your call today?",
-        model: {
-          provider: "openai",
-          model: "gpt-4.1",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a receptionist. Determine if the caller needs sales or support, then transfer them.",
-            },
-          ],
-          tools: [
-            {
-              type: "handoff",
-              destinations: [
-                {
-                  type: "assistant",
-                  assistantId: "sales-assistant-id",
-                  description: "Transfer for pricing and purchasing questions",
-                },
-                {
-                  type: "assistant",
-                  assistantId: "support-assistant-id",
-                  description: "Transfer for technical issues",
-                },
-              ],
-            },
-          ],
-        },
-        voice: { provider: "vapi", voiceId: "Lily" },
-        transcriber: { provider: "deepgram", model: "nova-3", language: "en" },
-      },
-    },
-    { assistantId: "sales-assistant-id" },
-    { assistantId: "support-assistant-id" },
-  ],
-});
+4. Configure public context controls only when needed.
+   - Use `contextEngineeringPlan` on a handoff destination: `all`, `lastNMessages`, `userAndAssistantMessages`, `previousAssistantMessages`, or `none` when supported by the current schema.
+   - Use `variableExtractionPlan.schema` only for specific structured values needed downstream. Do not invent values or claim extraction occurred before a real handoff.
+   - Keep sensitive tool results out of downstream context when the use case requires isolation.
 
-console.log("Squad created:", squad.id);
-```
+5. Create and verify the Squad.
+   - Build `members` from verified assistant IDs in explicit order.
+   - Optionally set `assistantVersion` only to a version returned by the public assistant API when the user wants an immutable pin. Omit it to follow latest.
+   - Before a production-affecting create or update, recap member order, handoffs, and target and obtain explicit confirmation unless the user's current instruction already unambiguously authorizes that exact mutation now.
+   - Send `POST /squad` only after explicit live-create intent.
+   - Validate the returned Squad ID, complete member order, entry member, pins, and handoff attachments before reporting success.
 
-## Squad Structure
+6. Handle failures honestly.
+   - On a `400`, correct a documented field placement or limit before at most one justified retry.
+   - On `401` or `403`, stop for authentication or permission issues. On `404`, report the missing assistant, tool, or Squad. On `5xx`, report the service failure.
+   - If a sequence partially succeeds, list the IDs created so the user can review or clean them up. Do not continue creating dependent resources after a fatal error.
 
-### Members
+## Persistent Squad Payload
 
-The first member in the array starts the call. Each member is either:
-
-- **Transient** — Defined inline with `assistant: { ... }`
-- **Persistent** — References a saved assistant via `assistantId: "..."`
+Use verified IDs only:
 
 ```json
 {
+  "name": "Support Squad",
   "members": [
-    { "assistant": { "name": "Inline Assistant", "..." : "..." } },
-    { "assistantId": "saved-assistant-id" }
+    { "assistantId": "<verified-triage-assistant-id>" },
+    { "assistantId": "<verified-billing-assistant-id>" },
+    { "assistantId": "<verified-technical-assistant-id>" }
   ]
 }
 ```
 
-### Handoff Tools
+The first member is the entry assistant. Handoff tools belong on the relevant source assistants; Squad membership alone does not define every transition.
 
-Handoff tools define how assistants transfer between each other:
+## Handoff Payload
 
 ```json
 {
   "type": "handoff",
+  "function": { "name": "handoff_to_billing" },
   "destinations": [
     {
       "type": "assistant",
-      "assistantId": "target-assistant-id",
-      "description": "Clear description of WHEN to transfer. Be specific about trigger conditions."
-    }
-  ],
-  "function": {
-    "name": "handoff_to_sales"
-  }
-}
-```
-
-### Assistant Overrides
-
-Override saved assistant settings within the squad context without modifying the original:
-
-```json
-{
-  "assistantId": "saved-assistant-id",
-  "assistantOverrides": {
-    "voice": { "provider": "vapi", "voiceId": "Elliot", "version": 2 },
-    "firstMessage": "Overridden greeting for this squad"
-  }
-}
-```
-
-### Appending Tools via Overrides
-
-Add squad-specific tools to a saved assistant:
-
-```json
-{
-  "assistantId": "saved-assistant-id",
-  "assistantOverrides": {
-    "tools:append": [
-      {
-        "type": "handoff",
-        "destinations": [
-          {
-            "type": "assistant",
-            "assistantId": "another-assistant-id",
-            "description": "Transfer when customer needs billing help"
+      "assistantId": "<verified-billing-assistant-id>",
+      "description": "The caller needs billing, invoice, or payment help.",
+      "contextEngineeringPlan": {
+        "type": "userAndAssistantMessages"
+      },
+      "variableExtractionPlan": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "accountNumber": { "type": "string" }
           }
-        ],
-        "function": { "name": "handoff_to_billing" }
-      }
-    ]
-  }
-}
-```
-
-### Members Overrides
-
-Apply configuration to ALL members simultaneously:
-
-```json
-{
-  "members": [
-    { "assistant": { "name": "Agent A", "..." : "..." } },
-    { "assistantId": "agent-b-id" }
-  ],
-  "membersOverrides": {
-    "voice": { "provider": "vapi", "voiceId": "Elliot", "version": 2 },
-    "transcriber": { "provider": "deepgram", "model": "nova-3", "language": "en" }
-  }
-}
-```
-
-## Using Squads in Calls
-
-### Outbound call with a squad
-
-```bash
-curl -X POST https://api.vapi.ai/call \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "squadId": "your-squad-id",
-    "phoneNumberId": "your-phone-number-id",
-    "customer": {
-      "number": "+11234567890"
-    }
-  }'
-```
-
-### Transient squad in a call
-
-```json
-{
-  "squad": {
-    "members": [
-      { "assistant": { "..." : "..." } },
-      { "assistantId": "..." }
-    ]
-  },
-  "phoneNumberId": "phone-number-id",
-  "customer": { "number": "+11234567890" }
-}
-```
-
-## Common Patterns
-
-### Clinic Triage → Scheduling
-
-```json
-{
-  "name": "Clinic Squad",
-  "members": [
-    {
-      "assistant": {
-        "name": "Triage Nurse",
-        "firstMessage": "Hello, this is the clinic. How can I help you today?",
-        "model": {
-          "provider": "openai",
-          "model": "gpt-4.1",
-          "messages": [
-            {
-              "role": "system",
-              "content": "You are a clinic triage assistant. Assess the caller's needs: if they need an appointment, transfer to scheduling. If it's urgent, transfer to the nurse line."
-            }
-          ],
-          "tools": [
-            {
-              "type": "handoff",
-              "destinations": [
-                {
-                  "type": "assistant",
-                  "assistantId": "scheduling-assistant-id",
-                  "description": "Transfer when caller wants to book, reschedule, or cancel an appointment"
-                },
-                {
-                  "type": "assistant",
-                  "assistantId": "nurse-assistant-id",
-                  "description": "Transfer for urgent medical questions or symptoms"
-                }
-              ]
-            }
-          ]
-        },
-        "voice": { "provider": "vapi", "voiceId": "Lily", "version": 2 }
-      }
-    },
-    { "assistantId": "scheduling-assistant-id" },
-    { "assistantId": "nurse-assistant-id" }
-  ]
-}
-```
-
-### E-commerce: Sales → Support → Returns
-
-```json
-{
-  "name": "E-commerce Squad",
-  "members": [
-    {
-      "assistant": {
-        "name": "Sales Agent",
-        "firstMessage": "Welcome to our store! Are you looking to make a purchase today?",
-        "model": {
-          "provider": "openai",
-          "model": "gpt-4.1",
-          "messages": [
-            { "role": "system", "content": "You are a sales assistant. Help customers find products and make purchases. Transfer to support for order issues or returns." }
-          ],
-          "tools": [
-            {
-              "type": "handoff",
-              "destinations": [
-                { "type": "assistant", "assistantId": "support-id", "description": "Transfer for order status, shipping, or account issues" },
-                { "type": "assistant", "assistantId": "returns-id", "description": "Transfer for returns, refunds, or exchanges" }
-              ]
-            }
-          ]
         }
       }
-    },
-    { "assistantId": "support-id" },
-    { "assistantId": "returns-id" }
+    }
   ]
 }
 ```
 
-## Best Practices
+Placeholders are acceptable in templates, never in live requests. Read [Squad Configuration](references/squad-configuration.md) for transient Squads, context transfer, version pins, and safe Squad updates.
 
-1. **Keep assistants focused** — Each assistant should have 1-3 goals maximum
-2. **Minimize squad size** — Split only when there's a clear functional boundary
-3. **Write specific handoff descriptions** — The LLM uses these to decide when to transfer
-4. **Mention handoffs in system prompts** — Tell each assistant what departments exist
-5. **Use member overrides** — Apply consistent voice and transcriber settings across the squad
+## Update Safely
 
-## Managing Squads
+`PATCH /squad/{id}` expects a complete `members` array. Always:
 
-```bash
-# List squads
-curl https://api.vapi.ai/squad -H "Authorization: Bearer $VAPI_API_KEY"
+1. `GET /squad/{id}`.
+2. Copy the complete ordered member objects and `membersOverrides`.
+3. Apply only the requested change, preserving each member's `assistantId` or inline assistant, `assistantVersion`, `assistantOverrides`, and any documented destination fields already present.
+4. Patch the complete merged configuration.
+5. Re-fetch and verify order, entry member, pins, overrides, and handoffs.
 
-# Get a squad
-curl https://api.vapi.ai/squad/{id} -H "Authorization: Bearer $VAPI_API_KEY"
+## Public Sources
 
-# Update a squad
-curl -X PATCH https://api.vapi.ai/squad/{id} \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Updated Squad Name",
-    "members": [
-      { "assistantId": "first-assistant-id" },
-      { "assistantId": "second-assistant-id" }
-    ]
-  }'
-
-# Delete a squad
-curl -X DELETE https://api.vapi.ai/squad/{id} \
-  -H "Authorization: Bearer $VAPI_API_KEY"
-```
-
-The update API requires the complete `members` array. Retrieve the current squad first and preserve every member when changing its name or overrides.
-
-## References
-
-- [Vapi Squads Docs](https://docs.vapi.ai/squads) — Official documentation
-- [Squad Examples](https://docs.vapi.ai/squads-example) — More patterns
-- [Handoff Configuration](https://docs.vapi.ai/squads/handoff) — Detailed handoff guide
-
-## Additional Resources
-
-Vapi provides a **documentation MCP server** that gives compatible AI agents access to the Vapi knowledge base. Use its documentation search for advanced configuration, troubleshooting, SDK details, and anything beyond this skill.
-
-**Manual setup:** If your agent doesn't auto-detect the config, run:
-```bash
-claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
-```
-
-See the [Vapi MCP integration guide](https://docs.vapi.ai/cli/mcp) for setup instructions across supported agents.
+- [Introduction to Squads](https://docs.vapi.ai/squads)
+- [Handoff tool](https://docs.vapi.ai/squads/handoff)
+- [Passing data between assistants](https://docs.vapi.ai/squads/passing-data-between-assistants)
+- [Squad API reference](https://docs.vapi.ai/api-reference/squads/get)

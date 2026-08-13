@@ -1,59 +1,62 @@
 # Provider Policy
 
-Use this reference when the user asks for a non-default model, voice, or transcriber.
+Read this file when selecting defaults, honoring a specific provider request, or configuring multiple languages.
 
-## Source of Truth
+## Source Order
 
-1. Use the Vapi OpenAPI schema for payload structure.
-2. Use the Vapi dashboard, API responses, and official Vapi provider docs for current selectable provider values.
-3. Use exact user-provided provider IDs for private, synced, custom, or third-party resources.
-4. Use Vapi API validation errors as the final check.
+1. Use the current public Vapi OpenAPI schema or API reference for payload structure and accepted values.
+2. Use current Vapi provider documentation for compatibility and recommended settings.
+3. Use exact user-supplied IDs only for private, synced, cloned, or account-specific resources.
+4. Treat the live API validation response as the final runtime check.
 
-Do not maintain exhaustive provider/model/voice tables in this skill. Provider availability changes too often, and stale tables cause failed assistant creation.
+Do not maintain exhaustive provider tables. Verify unstable model, voice, transcriber, language, and preset values at execution time.
 
-## Defaults
+## Baseline Defaults
 
-Use these defaults when the user does not specify alternatives:
+For an English-only assistant when the user does not request providers:
 
 ```json
 {
   "model": { "provider": "openai", "model": "gpt-4.1" },
   "voice": { "provider": "vapi", "voiceId": "Elliot", "version": 2 },
-  "transcriber": { "provider": "deepgram", "model": "flux-general-en", "language": "en" }
+  "transcriber": {
+    "provider": "deepgram",
+    "model": "flux-general-en",
+    "language": "en"
+  }
 }
 ```
 
-For multilingual assistants, use:
+For a multilingual assistant, first verify that every requested language is supported by both components. The current public Vapi guidance uses a Vapi Version 2 voice with automatic language detection and Deepgram Flux Multilingual:
 
 ```json
 {
-  "transcriber": { "provider": "deepgram", "model": "nova-3", "language": "multi" }
+  "voice": {
+    "provider": "vapi",
+    "voiceId": "Elliot",
+    "version": 2,
+    "language": "auto"
+  },
+  "transcriber": {
+    "provider": "deepgram",
+    "model": "flux-general-multi"
+  }
 }
 ```
 
-## Model Selection
+Omit the transcriber `language` field to enable automatic language detection. If the assistant must recognize one known language, set `language` to one of the documented codes supported by `flux-general-multi`; do not use `multi`. List the supported conversation languages in the system prompt, and do not claim universal language support.
 
-- Use the default OpenAI model unless the user asks for a different provider or model.
-- For specific or latest model requests, verify the exact model ID in official Vapi docs, Vapi dashboard/API output, or the user's selected Vapi value.
-- For OpenRouter, custom LLMs, Azure deployments, or providers that accept account-specific model names, require the exact model ID or deployment value from the user.
-- Exclude models marked deprecated by Vapi or by the upstream provider, even if they still appear in older examples.
-- If the user asks what is available and current values are not exposed in public docs, say that the selectable list must be checked in the Vapi dashboard instead of guessing.
+## Selection Rules
 
-## Voice Selection
+- Verify a user-requested exact or “latest” model before using it. If unsupported, ask for one alternative decision instead of silently substituting.
+- Use only active Vapi voice names. `Elliot` Version 2 is a documented baseline; several older example voices were retired in 2026.
+- For cloned, custom, or third-party voices, require the exact saved ID or publicly documented value. Do not derive IDs from display names.
+- Never assume a transcriber supports every language or every provider-specific option.
+- Keep provider credentials in Vapi credentials or the user's secure environment. Never place real secrets in examples or chat.
 
-- Use Vapi `Elliot` with `version: 2` by default.
-- For other Vapi voices, use only active Vapi voice names documented by Vapi or selected by the user.
-- For ElevenLabs and other third-party voices, use the exact Vapi dropdown/API value selected by the user. Do not infer provider-native IDs from display names.
-- For Deepgram voices, use the named Vapi/Deepgram voice ID from the dropdown, such as `asteria`, and put `aura` or `aura-2` in `voice.model` when that model is selected.
-- For custom voices, require the exact server URL or saved configuration value. Do not draft creation-ready custom voice payloads from placeholders.
+## Public Sources
 
-## Transcriber Selection
-
-- Use Deepgram `flux-general-en` with `language: "en"` for English-only assistants.
-- Use Deepgram `nova-3` with `language: "multi"` for multilingual assistants.
-- For non-default transcribers, require a documented Vapi shape or exact user-selected dashboard/API value.
-- Do not assume every transcriber supports every language, keyword, formatting, or endpointing option.
-
-## Credentials
-
-When a provider requires customer credentials, tell the user to configure provider credentials in the Vapi Dashboard under Integrations. Do not invent credential IDs or provider account values.
+- [Vapi Voices](https://docs.vapi.ai/providers/voice/vapi-voices)
+- [Legacy voice migration](https://docs.vapi.ai/providers/voice/vapi-voices/legacy-migration)
+- [Transcriber fallback configuration](https://docs.vapi.ai/customization/transcriber-fallback-plan)
+- [Create Assistant API](https://docs.vapi.ai/api-reference/assistants/create)
