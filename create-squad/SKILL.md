@@ -114,12 +114,12 @@ Placeholders are acceptable in templates, never in live requests. Read [Squad Co
 
 ## Update Safely
 
-`PATCH /squad/{id}` expects a complete `members` array. Always:
+Send only the changed top-level fields to `PATCH /squad/{id}`. Omit `members` for a name-only or other non-member update. When the requested change affects member order, membership, version pins, assistant overrides, or handoff destinations:
 
 1. `GET /squad/{id}`.
-2. Copy the complete ordered member objects and `membersOverrides`.
+2. Copy the complete ordered `members` array and current `membersOverrides` when it must also change.
 3. Apply only the requested change, preserving each member's `assistantId` or inline assistant, `assistantVersion`, `assistantOverrides`, and any documented destination fields already present.
-4. Patch the complete merged configuration.
+4. Patch the complete merged `members` array plus only the other changed top-level fields.
 5. Re-fetch and verify order, entry member, pins, overrides, and handoffs.
 
 ## Public Sources

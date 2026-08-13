@@ -32,6 +32,8 @@ Choose the documented tool type that directly provides the requested capability.
 
 Do not choose `function` merely because the model invokes the capability. Native, integration, API Request, and MCP tools are also model-invoked.
 
+Do not proactively recommend or create a Code Tool (`type: "code"`); it is not generally available on most accounts. Prefer `apiRequest` for a known HTTP endpoint or `function` with the user's `server.url` for user-hosted callback logic. Discuss a Code Tool only when the user explicitly asks about it, and do not present it as the recommended option.
+
 Read [Tool Type Selection](references/tool-types.md) before building a payload. Read only the section for the selected family.
 
 ## Procedure
@@ -62,7 +64,7 @@ Read [Tool Type Selection](references/tool-types.md) before building a payload. 
 5. Create or update safely.
    - Before a production-affecting mutation, recap the type, capability, external dependencies, and target unless the user's current instruction already unambiguously authorizes that exact mutation.
    - Create with `POST /tool`. Validate the returned `id`, type, callable name where applicable, and requested configuration.
-   - For an update, merge the requested change into the fetched tool. Preserve all unrelated type-specific configuration and omit response-only fields before `PATCH /tool/{id}`.
+   - For an update, send the current `type` and only changed top-level fields to `PATCH /tool/{id}`. When changing a nested object, deep-merge the requested change into that object from the fetched tool and send the merged nested object so its omitted keys are not lost. Do not resend unchanged top-level fields or response-only fields.
    - Re-fetch the tool and verify the result. Creating or updating a tool does not attach it to an assistant.
 
 6. Attach or detach without losing assistant configuration.

@@ -46,11 +46,11 @@ Use only after the area code and routing target are resolved and provisioning is
 
 ## SIP
 
-Use only for an explicit SIP request. The public Vapi phone-number schema accepts `sipUri`, but an external agent must not invent the Vapi realm or claim that an arbitrary URI can be provisioned. Use an exact supported URI from the user/current docs or complete setup in the secure dashboard.
+Use only for an explicit SIP request. The public Vapi phone-number schema accepts `sipUri`, but an external agent must not invent the Vapi realm or claim that an arbitrary URI can be provisioned. Use an exact supported URI from the user or current public API documentation; otherwise stop and state the missing prerequisite.
 
 ## Twilio
 
-The current public phone-number create DTO requires an owned number, `twilioAccountSid`, and either an auth-token path or API-key/API-secret path; it does not offer `credentialId` in that DTO. Prefer the secure dashboard import. If the user explicitly requires the API:
+The current public phone-number create DTO requires an owned number, `twilioAccountSid`, and either an auth-token path or API-key/API-secret path; it does not offer `credentialId` in that DTO. For an explicitly authorized API import:
 
 - read values from local secret environment variables;
 - build and send the JSON in memory;

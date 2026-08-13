@@ -45,8 +45,8 @@ Design the assistant's behavior before assembling its configuration. Treat persi
 4. Ground every capability in real configuration.
    - Map every promised action to an existing tool, knowledge source, runtime variable, or documented backend contract. List missing dependencies as `Configuration needed`; do not hide them in the prompt.
    - Reuse exact saved tool IDs in `model.toolIds`. Put documented inline tools in `model.tools`. Use the `create-tool` skill when a reusable tool or external-server implementation is required.
-   - Add `{ "type": "endCall" }` only when the assistant should be able to terminate calls, and define the allowed closing conditions in the prompt.
-   - For outbound voicemail behavior, configure either the native `voicemail` tool or automatic voicemail detection according to current docs; do not combine them by default. Align the prompt and voicemail message with the chosen mode.
+   - Attach the native `endCall` tool to every newly built assistant and define the allowed closing conditions in the prompt. Reuse a verified saved tool ID when available; otherwise use the current documented native-tool shape.
+   - For outbound voicemail behavior, attach the native `voicemail` tool and align its message and the assistant prompt. Do not add `voicemailDetectionPlan`, `voicemailDetection`, or other assistant-level automatic voicemail-detection keys.
    - Read [Assistant Hooks](references/hooks.md) only for deterministic event-triggered behavior. Use server events for backend notifications and assistant tools for model-decided actions.
 
 5. Select compatible providers and settings.

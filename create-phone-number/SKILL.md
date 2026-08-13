@@ -15,7 +15,7 @@ Default to a payload or implementation plan. Provision, import, route, or releas
 ## Security and Source Rules
 
 - Never ask for carrier passwords, auth tokens, API keys, API secrets, or private keys in chat.
-- Prefer a secure Vapi dashboard credential flow or an existing Vapi `credentialId` for provider imports when the current public schema supports it.
+- Use an existing Vapi `credentialId` for provider imports when the current public schema supports it. If a required credential does not exist, stop and state that API prerequisite.
 - If the public API requires raw carrier secrets and exposes no credential-based alternative, source them from local environment variables without displaying them, writing them to payload files, or logging the request body.
 - Verify provider fields against the current [Create Phone Number API](https://docs.vapi.ai/api-reference/phone-numbers/create) or public OpenAPI schema.
 - Never invent phone numbers, SIP realms, credentials, resource IDs, area-code availability, or routing destinations.
@@ -28,7 +28,7 @@ Default to a payload or implementation plan. Provision, import, route, or releas
 
 2. Choose the transport path.
    - For a nontechnical request for an ordinary number, prefer the documented Vapi-hosted US PSTN path.
-   - Use SIP only when the user explicitly asks for SIP. Require an exact documented SIP URI or use the secure dashboard flow; do not invent a regional realm.
+   - Use SIP only when the user explicitly asks for SIP. Require an exact supported SIP URI from the user or current public API documentation; if it is unavailable, stop and state the missing prerequisite. Do not invent a regional realm.
    - Use a carrier import only when the user owns the number and the required secure credential path is available.
 
 3. Resolve routing before mutation.
@@ -38,8 +38,8 @@ Default to a payload or implementation plan. Provision, import, route, or releas
 
 4. Check inventory safely.
    - Review existing phone numbers with `GET /phone-number` to avoid duplicate provisioning.
-   - The current public OpenAPI accepts `numberDesiredAreaCode` but does not expose a public available-area-code inventory endpoint. Use the dashboard to inspect availability, or accept the user's desired three-digit US area code after explaining that fulfillment is not guaranteed.
-   - Do not purchase a number merely to test availability. Do not infer global unavailability from one response or a limited dashboard sample.
+   - The current public OpenAPI accepts `numberDesiredAreaCode` but does not expose a public available-area-code inventory endpoint. Accept the user's desired three-digit US area code after explaining that fulfillment is not guaranteed.
+   - Do not purchase a number merely to test availability. Do not infer global unavailability from one provisioning response.
 
 5. Confirm and execute.
    - Show the provider, area code or exact owned number, routing destination, and whether the action may incur carrier or usage charges.

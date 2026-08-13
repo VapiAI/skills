@@ -120,6 +120,16 @@ Skills include examples for:
 - **MCP Docs Server**: `https://docs.vapi.ai/_mcp/server` (auto-configured via `.mcp.json`)
 - **API Swagger**: https://api.vapi.ai/api
 
+## Validation
+
+Validate every skill with the repository's dependency-free validator:
+
+```bash
+python3 scripts/validate-agent-skills.py
+```
+
+Pass skill directory names to validate only selected skills. Packaging uses the same validator, so a skill cannot be packaged after failing validation.
+
 ## License
 
 MIT

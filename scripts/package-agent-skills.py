@@ -6,10 +6,11 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import re
 import stat
 import zipfile
 from pathlib import Path
+
+from skill_validation import validate_skill
 
 
 DEFAULT_SKILLS = (
@@ -20,24 +21,6 @@ DEFAULT_SKILLS = (
 )
 IGNORED_NAMES = {".DS_Store", "__pycache__"}
 ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
-
-
-def validate_skill(skill_dir: Path) -> None:
-    skill_file = skill_dir / "SKILL.md"
-    if not skill_file.is_file():
-        raise ValueError(f"{skill_dir.name}: SKILL.md is missing")
-
-    text = skill_file.read_text(encoding="utf-8")
-    match = re.match(r"^---\n(.*?)\n---\n", text, flags=re.DOTALL)
-    if not match:
-        raise ValueError(f"{skill_dir.name}: SKILL.md has no YAML frontmatter")
-
-    frontmatter = match.group(1)
-    name_match = re.search(r"^name:\s*([^\n]+)$", frontmatter, flags=re.MULTILINE)
-    if not name_match or name_match.group(1).strip(' "\'') != skill_dir.name:
-        raise ValueError(f"{skill_dir.name}: frontmatter name must match the folder")
-    if not re.search(r"^description:\s*\S", frontmatter, flags=re.MULTILINE):
-        raise ValueError(f"{skill_dir.name}: frontmatter description is missing")
 
 
 def package_files(skill_dir: Path) -> list[Path]:

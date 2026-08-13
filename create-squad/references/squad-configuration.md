@@ -53,12 +53,12 @@ Never invent `vN`. Read the assistant and use a returned public version label. O
 
 ## Updating a Squad
 
-Read before write and preserve the complete ordered configuration. To reorder, add, remove, pin, or unpin a member:
+For a name-only or other non-member update, send a minimal partial PATCH and omit `members`. To reorder, add, remove, pin, unpin, override, or change a member destination:
 
 1. Fetch the current Squad.
-2. Deep-copy `members` and `membersOverrides`.
+2. Deep-copy the complete ordered `members` array and current `membersOverrides` when it must also change.
 3. Change only the intended member object.
-4. Send the complete `members` array.
+4. Send the complete merged `members` array plus only the other changed top-level fields.
 5. Fetch again and compare order and every untouched member.
 
 Do not rebuild member objects from IDs alone; that can drop overrides, pins, inline configuration, or existing destination data.
