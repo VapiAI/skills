@@ -110,7 +110,7 @@ The first member is the entry assistant. Handoff tools belong on the relevant so
 }
 ```
 
-Placeholders are acceptable in templates, never in live requests. Read [Squad Configuration](references/squad-configuration.md) for transient Squads, context transfer, version pins, and safe Squad updates.
+Placeholders are acceptable in templates, never in live requests. Read [Squad Configuration](references/squad-configuration.md) for transient Squads, context transfer, version pins, and safe Squad updates. Read [Squad API Examples](references/api-examples.md) when the user requests TypeScript, Python, or cURL implementation code.
 
 ## Update Safely
 

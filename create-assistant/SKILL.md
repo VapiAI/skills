@@ -66,18 +66,9 @@ Design the assistant's behavior before assembling its configuration. Treat persi
    - On `400`, correct one documented validation issue and retry at most once when the fix is unambiguous. Never repeat an unchanged request. On `401` or `403`, stop and report authentication or permission failure. On `404`, report the missing dependency. On `5xx`, report the service failure.
    - Provide realistic success, edge, and failure test scenarios. Recommend a web call or representative Eval/test set, then iterate from actual results; one successful call is not sufficient evidence of production quality.
 
-## Create a Saved Assistant in Vapi
+## API Implementation Examples
 
-Use this only when the user asks to create or save the assistant in their Vapi account:
-
-```bash
-curl --fail-with-body -X POST https://api.vapi.ai/assistant \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  --data-binary @assistant-payload.json
-```
-
-After a `201` response, return the saved assistant ID, summarize the verified configuration, identify anything still unconfigured, and provide test scenarios. A generated payload is not a saved assistant; a saved assistant is not automatically deployed.
+Read [Assistant API Examples](references/api-examples.md) when the user requests implementation code. Use the official TypeScript or Python Server SDK for a backend project in those languages; use cURL for a direct REST example or shell-based verification. After a successful create, return the saved assistant ID, summarize the verified configuration, identify anything still unconfigured, and provide test scenarios. A generated payload is not a saved assistant; a saved assistant is not automatically deployed.
 
 ## Output Contract
 

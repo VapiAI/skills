@@ -78,7 +78,7 @@ This template does not provision anything:
 }
 ```
 
-Read [Provider API Procedures](references/provider-api-procedures.md) for Vapi-hosted, Twilio, Vonage, Telnyx, BYO carrier, and routing examples. Keep placeholders out of live requests.
+Read [Provider API Procedures](references/provider-api-procedures.md) for Vapi-hosted, Twilio, Vonage, Telnyx, BYO carrier, and routing examples. Read [Phone Number API Examples](references/api-examples.md) when the user requests TypeScript, Python, or cURL implementation code. Keep placeholders out of live requests.
 
 ## Public Sources
 

@@ -83,28 +83,9 @@ Read [Tool Type Selection](references/tool-types.md) before building a payload. 
    - On `401` or `403`, stop for authentication or permission issues. On `404`, report the missing tool, assistant, destination, or dependency. On `5xx`, report the service failure.
    - Never claim creation, update, attachment, detachment, provider connection, or backend implementation succeeded until the associated operation is verified.
 
-## Live API Commands
+## API Implementation Examples
 
-Use only after explicit authorization:
-
-```bash
-curl --fail-with-body -X POST https://api.vapi.ai/tool \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  --data-binary @tool-payload.json
-```
-
-Read current state before an update or attachment change:
-
-```bash
-curl --fail-with-body https://api.vapi.ai/tool/<tool-id> \
-  -H "Authorization: Bearer $VAPI_API_KEY"
-
-curl --fail-with-body https://api.vapi.ai/assistant/<assistant-id> \
-  -H "Authorization: Bearer $VAPI_API_KEY"
-```
-
-Placeholders are acceptable in draft artifacts, never in live requests.
+Read [Tool API Examples](references/api-examples.md) when the user requests TypeScript, Python, or cURL implementation code. Read current tool and assistant state before update or attachment changes. Placeholders are acceptable in draft artifacts, never in live requests.
 
 ## Public Sources
 
