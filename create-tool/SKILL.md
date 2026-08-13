@@ -1,411 +1,95 @@
 ---
 name: create-tool
-description: Create custom tools for Vapi voice assistants including function tools, API request tools, transfer call tools, end call tools, and integrations with Google Calendar, Sheets, Slack, and more. Use when adding capabilities to voice agents, building tool servers, or integrating external APIs.
+description: Select, define, create, inspect, update, attach, detach, and verify reusable Vapi tools through the public API. Use for native call-control tools, supported provider integrations, API Request tools, custom function tools, MCP tools, tool messages, credentials, or configuration-preserving assistant attachment changes.
 license: MIT
-compatibility: Requires internet access and a Vapi API key (VAPI_API_KEY).
+compatibility: Internet access and VAPI_API_KEY are required only for live Vapi API operations.
 metadata:
   author: vapi
-  version: "1.0"
+  version: "2.0"
 ---
 
-# Vapi Tool Creation
-
-Create tools that give voice assistants the ability to take actions during calls — look up data, book appointments, transfer calls, send messages, and more.
-
-> **Setup:** Ensure `VAPI_API_KEY` is set. See the `setup-api-key` skill if needed.
-
-## Quick Start
-
-### Create a Function Tool (cURL)
-
-```bash
-curl -X POST https://api.vapi.ai/tool \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "type": "function",
-    "function": {
-      "name": "get_weather",
-      "description": "Get current weather for a location",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "location": {
-            "type": "string",
-            "description": "City name, e.g. San Francisco"
-          }
-        },
-        "required": ["location"]
-      }
-    },
-    "server": {
-      "url": "https://your-server.com/api/tools"
-    }
-  }'
-```
-
-### TypeScript (Server SDK)
-
-```typescript
-import { VapiClient } from "@vapi-ai/server-sdk";
-
-const vapi = new VapiClient({ token: process.env.VAPI_API_KEY! });
-
-const tool = await vapi.tools.create({
-  type: "function",
-  function: {
-    name: "get_weather",
-    description: "Get current weather for a location",
-    parameters: {
-      type: "object",
-      properties: {
-        location: {
-          type: "string",
-          description: "City name, e.g. San Francisco",
-        },
-      },
-      required: ["location"],
-    },
-  },
-  server: {
-    url: "https://your-server.com/api/tools",
-  },
-});
-
-console.log("Tool created:", tool.id);
-```
-
-## Tool Types
-
-### Function Tool
-
-The most common tool type. Your server receives the function call and returns a result.
-
-```json
-{
-  "type": "function",
-  "function": {
-    "name": "lookup_order",
-    "description": "Look up order status by order number",
-    "parameters": {
-      "type": "object",
-      "properties": {
-        "orderNumber": {
-          "type": "string",
-          "description": "The order number to look up"
-        }
-      },
-      "required": ["orderNumber"]
-    }
-  },
-  "server": {
-    "url": "https://your-server.com/api/tools"
-  },
-  "messages": [
-    {
-      "type": "request-start",
-      "content": "Let me look that up for you..."
-    },
-    {
-      "type": "request-complete",
-      "content": "I found your order information."
-    },
-    {
-      "type": "request-failed",
-      "content": "I'm having trouble looking that up. Let me try again."
-    }
-  ]
-}
-```
-
-### Transfer Call Tool
-
-Transfer the caller to another number or SIP endpoint.
-
-```json
-{
-  "type": "transferCall",
-  "destinations": [
-    {
-      "type": "number",
-      "number": "+1234567890",
-      "message": "Transferring you to our billing department now.",
-      "description": "Transfer to billing department when customer has billing questions"
-    }
-  ]
-}
-```
-
-SIP transfer:
-```json
-{
-  "type": "transferCall",
-  "destinations": [
-    {
-      "type": "sip",
-      "sipUri": "sip:billing@company.com",
-      "description": "Transfer to billing via SIP"
-    }
-  ]
-}
-```
-
-### End Call Tool
-
-Allows the assistant to end the call programmatically.
-
-```json
-{
-  "type": "endCall"
-}
-```
-
-### DTMF Tool
-
-Send DTMF tones (touch-tone signals) during a call for IVR navigation.
-
-```json
-{
-  "type": "dtmf"
-}
-```
-
-### Voicemail Tool
-
-Detect and handle voicemail.
-
-```json
-{
-  "type": "voicemail",
-  "beepDetectionEnabled": true
-}
-```
-
-### Google Calendar Tool
-
-```json
-{
-  "type": "google.calendar.event.create",
-  "name": "create_calendar_event",
-  "description": "Schedule a meeting on Google Calendar"
-}
-```
-
-### Google Sheets Tool
-
-```json
-{
-  "type": "google.sheets.row.append",
-  "name": "log_to_sheet",
-  "description": "Log call data to the configured Google Sheet"
-}
-```
-
-### Slack Tool
-
-```json
-{
-  "type": "slack.message.send",
-  "name": "notify_slack",
-  "description": "Send urgent notifications to the #customer-support Slack channel"
-}
-```
-
-Connect Google or Slack under the dashboard's tool-provider integrations before using these built-in tools. Configure the spreadsheet, sheet range, calendar, or Slack channel in the dashboard as required; never put OAuth tokens in a tool payload.
-
-### MCP Tool
-
-Connect to Model Context Protocol servers.
-
-```json
-{
-  "type": "mcp",
-  "server": {
-    "url": "https://your-mcp-server.com"
-  }
-}
-```
-
-## Tool Server Implementation
-
-When the assistant calls a tool, Vapi sends a POST request to your server URL.
-
-### Request Format
-
-```json
-{
-  "message": {
-    "type": "tool-calls",
-    "toolCallList": [
-      {
-        "id": "call_abc123",
-        "name": "get_weather",
-        "parameters": {
-          "location": "San Francisco"
-        }
-      }
-    ],
-    "call": {
-      "id": "call-uuid",
-      "orgId": "org-uuid",
-      "type": "webCall"
-    }
-  }
-}
-```
-
-### Response Format
-
-Your server must return:
-
-```json
-{
-  "results": [
-    {
-      "toolCallId": "call_abc123",
-      "result": "San Francisco: 65°F, partly cloudy"
-    }
-  ]
-}
-```
-
-### Example Server (Express.js)
-
-```typescript
-import express from "express";
-
-const app = express();
-app.use(express.json());
-
-app.post("/api/tools", async (req, res) => {
-  const { message } = req.body;
-  const results = [];
-
-  for (const toolCall of message.toolCallList) {
-    let result: string;
-
-    switch (toolCall.name) {
-      case "get_weather":
-        const weather = await fetchWeather(toolCall.parameters.location);
-        result = `${toolCall.parameters.location}: ${weather.temp}°F, ${weather.condition}`;
-        break;
-      case "lookup_order":
-        const order = await lookupOrder(toolCall.parameters.orderNumber);
-        result = `Order ${order.number}: ${order.status}`;
-        break;
-      default:
-        result = "Unknown tool";
-    }
-
-    results.push({ toolCallId: toolCall.id, result });
-  }
-
-  res.json({ results });
-});
-
-app.listen(3000);
-```
-
-## Attaching Tools to Assistants
-
-### By tool ID (recommended for reusable tools)
-
-```bash
-curl -X PATCH https://api.vapi.ai/assistant/{assistant-id} \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": {
-      "provider": "openai",
-      "model": "gpt-4.1",
-      "toolIds": ["tool-id-1", "tool-id-2"],
-      "messages": [{"role": "system", "content": "Your prompt here"}]
-    }
-  }'
-```
-
-### Inline (for one-off tools)
-
-Define tools directly in the assistant's model configuration — see the `create-assistant` skill.
-
-## Managing Tools
-
-```bash
-# List all tools
-curl https://api.vapi.ai/tool -H "Authorization: Bearer $VAPI_API_KEY"
-
-# Get a tool
-curl https://api.vapi.ai/tool/{id} -H "Authorization: Bearer $VAPI_API_KEY"
-
-# Update a tool
-curl -X PATCH https://api.vapi.ai/tool/{id} \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"function": {"description": "Updated description"}}'
-
-# Delete a tool
-curl -X DELETE https://api.vapi.ai/tool/{id} \
-  -H "Authorization: Bearer $VAPI_API_KEY"
-```
-
-## Async Tools
-
-For long-running operations, mark a tool as async. The assistant continues speaking while the tool executes:
-
-```json
-{
-  "type": "function",
-  "async": true,
-  "function": {
-    "name": "send_email",
-    "description": "Send a confirmation email (runs in background)"
-  },
-  "server": {
-    "url": "https://your-server.com/api/tools"
-  }
-}
-```
-
-## Tool Messages
-
-Control what the assistant says during tool execution:
-
-```json
-{
-  "messages": [
-    {
-      "type": "request-start",
-      "content": "One moment while I look that up..."
-    },
-    {
-      "type": "request-complete",
-      "content": "Got it!"
-    },
-    {
-      "type": "request-failed",
-      "content": "Sorry, I couldn't complete that action."
-    },
-    {
-      "type": "request-response-delayed",
-      "content": "This is taking a bit longer than usual, please hold.",
-      "timingMilliseconds": 5000
-    }
-  ]
-}
-```
-
-## References
-
-- [Tool Server Implementation](references/tool-server.md) — Detailed server setup guide
-- [Vapi Tools Docs](https://docs.vapi.ai/tools) — Official documentation
-
-## Additional Resources
-
-Vapi provides a **documentation MCP server** that gives compatible AI agents access to the Vapi knowledge base. Use its documentation search for advanced configuration, troubleshooting, SDK details, and anything beyond this skill.
-
-To add the Vapi documentation MCP server manually in Claude Code, run:
-```bash
-claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
-```
-
-See the [Vapi MCP integration guide](https://docs.vapi.ai/cli/mcp) for setup instructions across supported agents.
+# Vapi Tool Management
+
+Choose the documented tool type that directly provides the requested capability. Default to a payload or implementation plan unless the user explicitly requests a live Vapi mutation.
+
+## Safety and Source Rules
+
+- Verify the type and every field against the current [Create Tool API](https://docs.vapi.ai/api-reference/tools/create), public OpenAPI schema, or type-specific public guide before using it.
+- Never imitate a documented Vapi capability with a custom function tool.
+- Never invent an endpoint, request schema, destination, phone number, assistant ID, tool ID, integration connection, credential, or secret.
+- Keep secrets in Vapi credentials or the user's backend. Treat an MCP server URL containing a token as a credential.
+- Distinguish tool configuration, assistant attachment, provider connection, and external implementation. They are separate deliverables and success in one does not imply success in another.
+
+## Select the Tool Family
+
+| Need | Select |
+|---|---|
+| End calls, transfer calls, hand off between assistants, send DTMF or SMS, make a SIP request, or handle voicemail | The matching native Vapi tool |
+| Use a publicly documented Google Calendar, Google Sheets, Slack, GoHighLevel, or other supported provider action | The exact integration tool after resolving its connection and required resource |
+| Call a known HTTP endpoint with a declarative method, URL, headers, and body | `apiRequest` |
+| Send a model-selected function call to custom backend logic that implements Vapi's callback contract | `function` |
+| Discover and use tools from an existing MCP server | `mcp` with the default Streamable HTTP transport |
+
+Do not choose `function` merely because the model invokes the capability. Native, integration, API Request, and MCP tools are also model-invoked.
+
+Do not proactively recommend or create a Code Tool (`type: "code"`); it is not generally available on most accounts. Prefer `apiRequest` for a known HTTP endpoint or `function` with the user's `server.url` for user-hosted callback logic. Discuss a Code Tool only when the user explicitly asks about it, and do not present it as the recommended option.
+
+Read [Tool Type Selection](references/tool-types.md) before building a payload. Read only the section for the selected family.
+
+## Procedure
+
+1. Determine the execution mode.
+   - Return JSON, code, or a contract when the user asks for a draft or does not clearly authorize a live mutation.
+   - Call the Vapi API only when the user explicitly asks to create, update, attach, or detach and `VAPI_API_KEY` is available.
+   - If the key is unavailable, return ready artifacts and local commands without asking the user to paste it into chat.
+
+2. Inspect before creating.
+   - Use `GET /tool` and match any supplied name and capability to existing tools.
+   - Reuse one suitable existing tool when the match is unambiguous and the user does not require a new resource.
+   - If several tools plausibly match, ask the user to choose. Never guess an ID.
+   - Use `GET /tool/{id}` before updating an existing tool.
+
+3. Resolve the capability and dependencies.
+   - Select the tool family using the table above and current public documentation.
+   - Resolve every required endpoint, destination, provider connection, calendar, spreadsheet, channel, credential, or MCP server before a live create.
+   - If one value blocks a valid tool, show the useful proposed contract first and ask only for that value.
+
+4. Build the smallest valid payload.
+   - Give the model a concise, specific description of when to invoke the tool.
+   - For types with `function.name`, use 1–64 characters matching `^[a-zA-Z0-9_-]+$`. Generate a stable descriptive name when the user does not supply one.
+   - For `apiRequest`, validate its top-level `name`, method, URL, headers, body schema, credentials, and timeout against the current public schema.
+   - Define only parameters the model must supply. Keep trusted or secret values outside the model-visible schema.
+   - Omit spoken `messages` unless progress feedback is useful. When included, use only types currently accepted by the selected tool schema, such as `request-start`, `request-response-delayed`, `request-complete`, and `request-failed`.
+
+5. Create or update safely.
+   - Before a production-affecting mutation, recap the type, capability, external dependencies, and target unless the user's current instruction already unambiguously authorizes that exact mutation.
+   - Create with `POST /tool`. Validate the returned `id`, type, callable name where applicable, and requested configuration.
+   - For an update, send the current `type` and only changed top-level fields to `PATCH /tool/{id}`. When changing a nested object, deep-merge the requested change into that object from the fetched tool and send the merged nested object so its omitted keys are not lost. Do not resend unchanged top-level fields or response-only fields.
+   - Re-fetch the tool and verify the result. Creating or updating a tool does not attach it to an assistant.
+
+6. Attach or detach without losing assistant configuration.
+   - Read [Assistant Attachments](references/assistant-attachments.md) before changing an assistant.
+   - `GET /assistant/{id}`, copy the complete current `model`, merge the tool ID into or remove it from `model.toolIds`, and preserve `model.tools` plus every unrelated model field.
+   - Send the complete merged model to `PATCH /assistant/{id}`. Never patch a hand-written partial model.
+   - Re-fetch the assistant and verify both the requested membership and the preserved model configuration.
+
+7. Implement external behavior only when requested.
+   - For `apiRequest`, Vapi executes the configured HTTP request; do not also build a function callback server.
+   - For `mcp`, the MCP server supplies the callable tools; do not duplicate them as individual Vapi function tools.
+   - For a custom `function` whose backend must be built, read [Function Tool Server](references/function-tool-server.md). Do not load that reference for other tool families.
+
+8. Handle failures honestly.
+   - On `400`, correct a documented shape or validation error before at most one justified retry.
+   - On `401` or `403`, stop for authentication or permission issues. On `404`, report the missing tool, assistant, destination, or dependency. On `5xx`, report the service failure.
+   - Never claim creation, update, attachment, detachment, provider connection, or backend implementation succeeded until the associated operation is verified.
+
+## API Implementation Examples
+
+Read [Tool API Examples](references/api-examples.md) when the user requests TypeScript, Python, or cURL implementation code. Read current tool and assistant state before update or attachment changes. Placeholders are acceptable in draft artifacts, never in live requests.
+
+## Public Sources
+
+- [Create Tool API](https://docs.vapi.ai/api-reference/tools/create)
+- [Default tools](https://docs.vapi.ai/tools/default-tools)
+- [Custom tools](https://docs.vapi.ai/tools/custom-tools)
+- [MCP integration](https://docs.vapi.ai/tools/mcp)

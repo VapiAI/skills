@@ -98,12 +98,14 @@ Get your API key from the [Vapi Dashboard](https://dashboard.vapi.ai/org/api-key
 
 ## SDK Support
 
-Skills include examples for:
+API-focused skills pair a conceptual JSON payload with separate implementation examples:
 
-- **cURL** — Direct REST API calls
-- **TypeScript** — `npm install @vapi-ai/server-sdk`
-- **Python** — `pip install requests` (direct API) or Vapi's Python SDK
-- **Web SDK** — `npm install @vapi-ai/web` (client-side, uses public API key)
+- **TypeScript Server SDK** — `npm install @vapi-ai/server-sdk` when the current docs expose the resource method
+- **Python Server SDK** — `pip install vapi_server_sdk` when the current docs expose the resource method
+- **TypeScript or Python REST** — direct API examples when an SDK resource method is not documented
+- **cURL** — direct REST calls and shell-based verification
+
+The skills do not invent SDK methods. Revalidate language-specific syntax against the current Vapi documentation before producing final implementation code.
 
 ## Quick Start
 
@@ -119,6 +121,16 @@ Skills include examples for:
 - **Full API Docs**: https://docs.vapi.ai
 - **MCP Docs Server**: `https://docs.vapi.ai/_mcp/server` (auto-configured via `.mcp.json`)
 - **API Swagger**: https://api.vapi.ai/api
+
+## Validation
+
+Validate every skill with the repository's dependency-free validator:
+
+```bash
+python3 scripts/validate-agent-skills.py
+```
+
+Pass skill directory names to validate only selected skills. Packaging uses the same validator, so a skill cannot be packaged after failing validation.
 
 ## License
 

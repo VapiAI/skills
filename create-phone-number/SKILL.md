@@ -1,177 +1,88 @@
 ---
 name: create-phone-number
-description: Set up and manage phone numbers in Vapi for inbound and outbound voice AI calls. Use when importing Twilio, Vonage, or Telnyx numbers, buying Vapi numbers, or configuring phone numbers for assistants.
+description: Plan, provision, import, route, update, and verify Vapi phone numbers through the public API. Use for Vapi-hosted US PSTN numbers, explicitly requested SIP addresses, Twilio/Vonage/Telnyx or BYO carrier numbers, secure credential handling, assistant or squad routing, area-code requests, outbound limitations, and phone-provider troubleshooting.
 license: MIT
-compatibility: Requires internet access and a Vapi API key (VAPI_API_KEY).
+compatibility: Internet access and VAPI_API_KEY are required only for live Vapi API operations.
 metadata:
   author: vapi
-  version: "1.0"
+  version: "2.0"
 ---
 
 # Vapi Phone Number Setup
 
-Import phone numbers from Twilio, Vonage, or Telnyx, or use Vapi's built-in numbers to connect voice assistants to real phone calls.
+Default to a payload or implementation plan. Provision, import, route, or release a number only when the user explicitly requests the live mutation. Require a final explicit confirmation immediately before provisioning or another potentially chargeable action.
 
-> **Setup:** Ensure `VAPI_API_KEY` is set. See the `setup-api-key` skill if needed.
+## Security and Source Rules
 
-## Quick Start — Buy a Vapi Number
+- Never ask for carrier passwords, auth tokens, API keys, API secrets, or private keys in chat.
+- Use an existing Vapi `credentialId` for provider imports when the current public schema supports it. If a required credential does not exist, stop and state that API prerequisite.
+- If the public API requires raw carrier secrets and exposes no credential-based alternative, source them from local environment variables without displaying them, writing them to payload files, or logging the request body.
+- Verify provider fields against the current [Create Phone Number API](https://docs.vapi.ai/api-reference/phone-numbers/create) or public OpenAPI schema.
+- Never invent phone numbers, SIP realms, credentials, resource IDs, area-code availability, or routing destinations.
 
-Vapi provides free phone numbers for testing with daily call limits.
+## Procedure
 
-```bash
-curl -X POST https://api.vapi.ai/phone-number \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "vapi",
-    "assistantId": "your-assistant-id",
-    "name": "Main Support Line"
-  }'
-```
+1. Determine the execution mode.
+   - Return a payload or plan when the user asks for a draft or does not clearly authorize a live mutation.
+   - For a live request, confirm that `VAPI_API_KEY` is set without printing it.
 
-## Import from Twilio
+2. Choose the transport path.
+   - For a nontechnical request for an ordinary number, prefer the documented Vapi-hosted US PSTN path.
+   - Use SIP only when the user explicitly asks for SIP. Require an exact supported SIP URI from the user or current public API documentation; if it is unavailable, stop and state the missing prerequisite. Do not invent a regional realm.
+   - Use a carrier import only when the user owns the number and the required secure credential path is available.
 
-```bash
-curl -X POST https://api.vapi.ai/phone-number \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "twilio",
-    "number": "+11234567890",
-    "twilioAccountSid": "your-twilio-account-sid",
-    "twilioAuthToken": "your-twilio-auth-token",
-    "assistantId": "your-assistant-id",
-    "name": "Twilio Support Line"
-  }'
-```
+3. Resolve routing before mutation.
+   - List or get assistants and squads through public endpoints. Match a supplied name to one resource.
+   - If several resources are plausible, ask the user to choose. Never guess an ID.
+   - Route to either one `assistantId` or one `squadId`; clear conflicting destination fields when changing an existing route.
 
-## Import from Vonage
+4. Check inventory safely.
+   - Review existing phone numbers with `GET /phone-number` to avoid duplicate provisioning.
+   - The current public OpenAPI accepts `numberDesiredAreaCode` but does not expose a public available-area-code inventory endpoint. Accept the user's desired three-digit US area code after explaining that fulfillment is not guaranteed.
+   - Do not purchase a number merely to test availability. Do not infer global unavailability from one provisioning response.
 
-```bash
-curl -X POST https://api.vapi.ai/phone-number \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "vonage",
-    "number": "+11234567890",
-    "credentialId": "your-vonage-credential-id",
-    "assistantId": "your-assistant-id",
-    "name": "Vonage Support Line"
-  }'
-```
+5. Confirm and execute.
+   - Show the provider, area code or exact owned number, routing destination, and whether the action may incur carrier or usage charges.
+   - Obtain explicit confirmation immediately before `POST /phone-number` or another potentially chargeable mutation.
+   - Validate the response for `id`, provider, number or SIP URI, status when present, and resolved route.
 
-## Import from Telnyx
+6. Update without destroying configuration.
+   - `GET /phone-number/{id}` first.
+   - Build the provider-specific update DTO. Change only requested writable fields and preserve the current provider, hooks, server, fallback destination, and provider-specific settings by omission or exact carry-forward as required by the public schema.
+   - Do not send response-only fields such as `id`, timestamps, or organization metadata.
+   - Re-fetch the number and verify the requested route or setting.
 
-```bash
-curl -X POST https://api.vapi.ai/phone-number \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "provider": "telnyx",
-    "number": "+11234567890",
-    "credentialId": "your-telnyx-credential-id",
-    "assistantId": "your-assistant-id",
-    "name": "Telnyx Support Line"
-  }'
-```
+7. Handle failures precisely.
+   - `400`: report the rejected field or unavailable request; correct a documented shape error before at most one retry.
+   - `401`/`403`: stop for Vapi authentication or permission issues.
+   - `404`: report the missing phone number, assistant, squad, or credential.
+   - `5xx`: report a Vapi service failure and do not claim success.
+   - Separate carrier-side ownership, credential, provisioning, or transport failures from Vapi routing configuration.
 
-## Assign an Assistant
+## Free Vapi Number Limits
 
-Every phone number can be linked to an assistant or squad for inbound calls:
+Vapi-hosted free numbers are for US national use and have a limit of five per account. The first free number can be requested without a payment method. Additional free numbers require a payment method on file, but the numbers themselves remain free.
 
-```bash
-curl -X PATCH https://api.vapi.ai/phone-number/{id} \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "assistantId": "your-assistant-id"
-  }'
-```
+Free Vapi numbers support outbound calls only to US `+1` destinations and do not support international calling. Use an imported provider number or supported SIP/carrier path for international use. Do not describe free numbers as unlimited production telephony.
 
-Or assign a squad:
-```bash
-curl -X PATCH https://api.vapi.ai/phone-number/{id} \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "squadId": "your-squad-id"
-  }'
-```
+## Payload-Only Example
 
-## Phone Number Hooks
-
-Configure automated actions when calls come in:
+This template does not provision anything:
 
 ```json
 {
-  "hooks": [
-    {
-      "on": "call.ringing",
-      "do": [
-        {
-          "type": "say",
-          "exact": "Please hold while we connect you."
-        }
-      ]
-    }
-  ]
+  "provider": "vapi",
+  "numberDesiredAreaCode": "<confirmed-three-digit-area-code>",
+  "assistantId": "<verified-assistant-id>",
+  "name": "Main Support Line"
 }
 ```
 
-## Managing Phone Numbers
+Read [Provider API Procedures](references/provider-api-procedures.md) for Vapi-hosted, Twilio, Vonage, Telnyx, BYO carrier, and routing examples. Read [Phone Number API Examples](references/api-examples.md) when the user requests TypeScript, Python, or cURL implementation code. Keep placeholders out of live requests.
 
-```bash
-# List all phone numbers
-curl https://api.vapi.ai/phone-number \
-  -H "Authorization: Bearer $VAPI_API_KEY"
+## Public Sources
 
-# Get a phone number
-curl https://api.vapi.ai/phone-number/{id} \
-  -H "Authorization: Bearer $VAPI_API_KEY"
-
-# Update a phone number
-curl -X PATCH https://api.vapi.ai/phone-number/{id} \
-  -H "Authorization: Bearer $VAPI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Updated Name"}'
-
-# Delete a phone number
-curl -X DELETE https://api.vapi.ai/phone-number/{id} \
-  -H "Authorization: Bearer $VAPI_API_KEY"
-```
-
-## Inbound Call Flow
-
-1. Caller dials your Vapi phone number
-2. Vapi routes the call to the assigned assistant or squad
-3. The assistant speaks its `firstMessage`
-4. The conversation proceeds with the configured model, voice, and tools
-
-## Outbound Call Flow
-
-1. Create a call via `POST /call` with `phoneNumberId` and `customer.number`
-2. Vapi dials the customer from your phone number
-3. When answered, the assistant begins the conversation
-
-## Free Number Limitations
-
-- Cannot make international calls
-- Daily call limits apply
-- For production use, import your own Twilio/Vonage/Telnyx numbers
-
-## References
-
-- [Vapi Phone Numbers Docs](https://docs.vapi.ai/phone-numbers/import-twilio)
-- [Free Telephony](https://docs.vapi.ai/free-telephony)
-- [Phone Number Hooks](https://docs.vapi.ai/phone-numbers/phone-number-hooks)
-
-## Additional Resources
-
-Vapi provides a **documentation MCP server** that gives compatible AI agents access to the Vapi knowledge base. Use its documentation search for advanced configuration, troubleshooting, SDK details, and anything beyond this skill.
-
-**Manual setup:** If your agent doesn't auto-detect the config, run:
-```bash
-claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
-```
-
-See the [Vapi MCP integration guide](https://docs.vapi.ai/cli/mcp) for setup instructions across supported agents.
+- [Phone calling](https://docs.vapi.ai/phone-calling) and [Phone quickstart](https://docs.vapi.ai/quickstart/phone)
+- [Create Phone Number API](https://docs.vapi.ai/api-reference/phone-numbers/create)
+- [Free Vapi phone numbers](https://docs.vapi.ai/free-telephony)
+- [Import a Twilio number](https://docs.vapi.ai/phone-numbers/import-twilio)
