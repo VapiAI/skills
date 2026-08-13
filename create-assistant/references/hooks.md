@@ -16,7 +16,7 @@ Do not use a hook when:
 
 - Use the current Assistant Hooks guide to select the event and understand its behavior.
 - Validate the final event, options, filters, and actions against the current `CreateAssistantDTO` schema before returning or creating a payload.
-- If the guide and create schema disagree, do not guess or silently substitute another event. Omit the disputed configuration and explain the mismatch.
+- If the guide and create schema disagree, do not guess or silently substitute another event. Use a guide-documented event missing from the schema only after disclosing the SDK/schema compatibility risk and validating both creation and behavior outside production; omit a schema-only event unless public behavioral documentation supports it.
 - Do not reuse event names or shapes from memory. Do not invent destinations, server URLs, tool IDs, filters, or events.
 - Keep secrets in Vapi credentials or the user's backend.
 

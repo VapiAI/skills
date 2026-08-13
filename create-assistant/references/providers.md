@@ -7,27 +7,20 @@ Read this file when selecting defaults, honoring a specific provider request, or
 1. Use the current public Vapi OpenAPI schema or API reference for payload structure and accepted values.
 2. Use current Vapi provider documentation for compatibility and recommended settings.
 3. Use exact user-supplied IDs only for private, synced, cloned, or account-specific resources.
-4. Treat the live API validation response as the final runtime check.
+4. Treat the Vapi API validation response as the final runtime check.
 
-Do not maintain exhaustive provider tables. Verify unstable model, voice, transcriber, language, and preset values at execution time.
+Do not maintain exhaustive provider tables. Verify unstable model, voice, transcriber, and language values at execution time.
 
-## Baseline Defaults
+## Default Selection Strategy
 
-For an English-only assistant when the user does not request providers:
+When the user has no provider preference and the use case has no special language, latency, compliance, region, or credential constraint:
 
-```json
-{
-  "model": { "provider": "openai", "model": "gpt-4.1" },
-  "voice": { "provider": "vapi", "voiceId": "Elliot", "version": 2 },
-  "transcriber": {
-    "provider": "deepgram",
-    "model": "flux-general-en",
-    "language": "en"
-  }
-}
-```
+1. When an API payload needs an explicit model to carry `model.messages`, verify and use a currently supported model from the Create Assistant schema and provider documentation.
+2. Omit voice or transcriber only when the Create Assistant API documents the field as optional and defines the resulting behavior; otherwise provide verified explicit configuration.
 
-For a multilingual assistant, first verify that every requested language is supported by both components. The current public Vapi guidance uses a Vapi Version 2 voice with automatic language detection and Deepgram Flux Multilingual:
+Pinning every component is not inherently more production-ready. It trades automatic platform improvements for reproducibility and must be an intentional choice.
+
+For a multilingual assistant, first verify that every requested language is supported by the model, voice, and transcriber. The current public Vapi guidance supports Vapi Version 2 voices with automatic language detection and Deepgram Flux Multilingual:
 
 ```json
 {
