@@ -15,6 +15,8 @@ from skill_validation import validate_skill
 
 DEFAULT_SKILLS = (
     "create-assistant",
+    "create-phone-number",
+    "create-squad",
     "create-tool",
     "setup-webhook",
     "vapi-prompt-builder",
