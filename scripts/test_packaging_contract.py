@@ -22,6 +22,7 @@ EXPECTED_ARCHIVE_SKILLS = (
     "simulations",
     "vapi-prompt-builder",
 )
+EXPERIMENTAL_SKILLS = ("vapi-bootstrap-framework",)
 EXPECTED_RELEASE_VERSION = "1.1.0"
 
 
@@ -57,6 +58,17 @@ class PackagingContractTests(unittest.TestCase):
         self.assertEqual(
             marketplace["plugins"][0]["version"], EXPECTED_RELEASE_VERSION
         )
+
+    def test_experimental_skills_are_not_distributed_by_default(self) -> None:
+        packaging = load_packaging_module()
+        marketplace_path = REPO_ROOT / ".claude-plugin" / "marketplace.json"
+        marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+        plugin_skills = marketplace["plugins"][0]["skills"]
+
+        for skill_name in EXPERIMENTAL_SKILLS:
+            self.assertTrue((REPO_ROOT / skill_name / "SKILL.md").is_file())
+            self.assertNotIn(skill_name, packaging.DEFAULT_SKILLS)
+            self.assertNotIn(f"./{skill_name}", plugin_skills)
 
 
 if __name__ == "__main__":

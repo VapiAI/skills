@@ -23,8 +23,11 @@ The skills cover common workflows. The MCP docs server covers everything else.
 - `create-squad` — Multi-assistant squad setup
 - `create-phone-number` — Phone number provisioning
 - `setup-webhook` — Webhook/server URL configuration
+
+## Experimental Reference Workflows
+
+- `vapi-bootstrap-framework` — Opt-in recreation of the Bun + TypeScript architecture used for Vapi's landing-page agents. Do not use it for ordinary Vapi builds; use it only when the user explicitly names the skill or specifically asks to reproduce that architecture.
 - `simulations` — Realistic chat and voice simulation testing for assistants and squads
-- `vapi-bootstrap-framework` — Scaffold a complete Bun + TypeScript voice-agent project from a `ROUGH_DRAFT.md` spec
 
 ## Configuration
 

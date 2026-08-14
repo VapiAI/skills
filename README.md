@@ -86,7 +86,18 @@ claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
 | [create-phone-number](./create-phone-number) | Set up phone numbers from Twilio, Vonage, Telnyx, or Vapi |
 | [setup-webhook](./setup-webhook) | Configure server URLs to receive real-time call events |
 | [simulations](./simulations) | Design, run, and maintain realistic chat and voice simulation suites |
-| [vapi-bootstrap-framework](./vapi-bootstrap-framework) | Scaffold a full Bun + TypeScript voice-agent project from a `ROUGH_DRAFT.md` — multi-scenario, multi-language assistants with an idempotent bootstrap script |
+
+## Experimental Reference Workflows
+
+Experimental workflows are not included in the standard `vapi-voice-ai` plugin and are not the recommended path for ordinary Vapi builds. Install one explicitly only when you want to reproduce or adapt that particular architecture.
+
+- [vapi-bootstrap-framework](./vapi-bootstrap-framework) — An opt-in recreation of the Bun + TypeScript framework used to build Vapi's landing-page agents from a `ROUGH_DRAFT.md`
+
+Install it directly with:
+
+```bash
+npx skills add https://github.com/VapiAI/skills/tree/main/vapi-bootstrap-framework
+```
 
 ## Configuration
 
