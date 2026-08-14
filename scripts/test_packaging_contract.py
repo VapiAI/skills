@@ -18,6 +18,7 @@ EXPECTED_ARCHIVE_SKILLS = (
     "create-squad",
     "create-tool",
     "setup-webhook",
+    "simulations",
     "vapi-prompt-builder",
 )
 EXPECTED_RELEASE_VERSION = "1.1.0"
