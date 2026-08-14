@@ -224,10 +224,10 @@ export const loadPrompt = (
  * Scenario registry. Adding a new scenario is one entry here plus one new
  * file under `./<scenario-id>.ts` and matching prompts under `../prompts/<id>/`.
  */
-<SCENARIO_IMPORTS>
+// <SCENARIO_IMPORTS>
 
 export const SCENARIOS = {
-  <SCENARIO_KEYS>
+  // <SCENARIO_KEYS>
 } as const;
 
 export type ScenarioId = keyof typeof SCENARIOS;
@@ -281,7 +281,8 @@ export const buildAssistant = (
  * <SCENARIO_NAME> scenario. Plain data: id, name, language-keyed first
  * message. Later steps add `clientTools` (capture tools fire mid-call).
  */
-export const <SCENARIO_ID> = {
+// Rename `scenarioId` to the generated <SCENARIO_ID> identifier.
+export const scenarioId = {
   id: "<SCENARIO_ID>" as const,
   name: "<SCENARIO_NAME>",
   firstMessage: {
@@ -291,7 +292,8 @@ export const <SCENARIO_ID> = {
   clientTools: [] as const,
 };
 
-export type <PascalCase scenario id>Scenario = typeof <SCENARIO_ID>;
+// Rename this type to the generated <PascalCase scenario id>Scenario name.
+export type ScenarioIdScenario = typeof scenarioId;
 ```
 
 If `<FIRST_MESSAGE_EN>` is long, break it across concatenated string segments for readability (one logical clause per line, joined with `" + "`).

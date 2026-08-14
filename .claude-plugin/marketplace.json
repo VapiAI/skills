@@ -6,11 +6,12 @@
   },
   "metadata": {
     "description": "Skills for building voice AI agents with Vapi",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "plugins": [
     {
       "name": "vapi-voice-ai",
+      "version": "1.1.0",
       "description": "Complete skill set for building voice AI agents with Vapi — create assistants, tools, calls, squads, phone numbers, and webhooks",
       "source": "./",
       "strict": false,
