@@ -17,6 +17,7 @@ DEFAULT_SKILLS = (
     "create-assistant",
     "create-phone-number",
     "create-squad",
+    "create-structured-output",
     "create-tool",
     "setup-webhook",
     "simulations",

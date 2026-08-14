@@ -18,6 +18,7 @@
       "skills": [
         "./setup-api-key",
         "./create-assistant",
+        "./create-structured-output",
         "./vapi-prompt-builder",
         "./create-tool",
         "./create-call",
