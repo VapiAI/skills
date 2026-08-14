@@ -16,8 +16,10 @@ EXPECTED_ARCHIVE_SKILLS = (
     "create-assistant",
     "create-phone-number",
     "create-squad",
+    "create-structured-output",
     "create-tool",
     "setup-webhook",
+    "simulations",
     "vapi-prompt-builder",
 )
 EXPERIMENTAL_SKILLS = ("vapi-bootstrap-framework",)

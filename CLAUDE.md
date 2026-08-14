@@ -17,6 +17,7 @@ The skills cover common workflows. The MCP docs server covers everything else.
 
 - `setup-api-key` — API key configuration
 - `create-assistant` — Voice assistant creation
+- `create-structured-output` — Reusable post-call data extraction
 - `create-tool` — Tool/function creation for assistants
 - `create-call` — Outbound call initiation
 - `create-squad` — Multi-assistant squad setup
@@ -26,6 +27,7 @@ The skills cover common workflows. The MCP docs server covers everything else.
 ## Experimental Reference Workflows
 
 - `vapi-bootstrap-framework` — Opt-in recreation of the Bun + TypeScript architecture used for Vapi's landing-page agents. Do not use it for ordinary Vapi builds; use it only when the user explicitly names the skill or specifically asks to reproduce that architecture.
+- `simulations` — Realistic chat and voice simulation testing for assistants and squads
 
 ## Configuration
 

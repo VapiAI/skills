@@ -78,12 +78,14 @@ claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
 |-------|-------------|
 | [setup-api-key](./setup-api-key) | Guide through obtaining and configuring a Vapi API key |
 | [create-assistant](./create-assistant) | Create voice AI assistants with models, voices, transcribers, tools, and hooks |
+| [create-structured-output](./create-structured-output) | Create, attach, run, and verify reusable post-call data extraction |
 | [vapi-prompt-builder](./vapi-prompt-builder) | Create, improve, or audit production-ready Vapi voice agent and Squad system prompts |
 | [create-tool](./create-tool) | Build custom tools for assistants — function calls, transfers, integrations |
 | [create-call](./create-call) | Initiate outbound phone calls, web calls, and batch calls |
 | [create-squad](./create-squad) | Build multi-assistant squads with handoff workflows |
 | [create-phone-number](./create-phone-number) | Set up phone numbers from Twilio, Vonage, Telnyx, or Vapi |
 | [setup-webhook](./setup-webhook) | Configure server URLs to receive real-time call events |
+| [simulations](./simulations) | Design, run, and maintain realistic chat and voice simulation suites |
 
 ## Experimental Reference Workflows
 

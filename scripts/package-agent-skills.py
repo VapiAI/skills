@@ -17,8 +17,10 @@ DEFAULT_SKILLS = (
     "create-assistant",
     "create-phone-number",
     "create-squad",
+    "create-structured-output",
     "create-tool",
     "setup-webhook",
+    "simulations",
     "vapi-prompt-builder",
 )
 IGNORED_NAMES = {".DS_Store", "__pycache__"}
