@@ -16,6 +16,7 @@ EXPECTED_ARCHIVE_SKILLS = (
     "create-assistant",
     "create-phone-number",
     "create-squad",
+    "create-structured-output",
     "create-tool",
     "setup-webhook",
     "vapi-prompt-builder",

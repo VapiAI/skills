@@ -17,6 +17,7 @@ The skills cover common workflows. The MCP docs server covers everything else.
 
 - `setup-api-key` — API key configuration
 - `create-assistant` — Voice assistant creation
+- `create-structured-output` — Reusable post-call data extraction
 - `create-tool` — Tool/function creation for assistants
 - `create-call` — Outbound call initiation
 - `create-squad` — Multi-assistant squad setup
