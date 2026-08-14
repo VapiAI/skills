@@ -23,7 +23,7 @@ EXPECTED_ARCHIVE_SKILLS = (
     "vapi-prompt-builder",
 )
 EXPERIMENTAL_SKILLS = ("vapi-bootstrap-framework",)
-EXPECTED_RELEASE_VERSION = "1.1.0"
+EXPECTED_RELEASE_VERSION = "1.2.0"
 
 
 def load_packaging_module() -> ModuleType:
