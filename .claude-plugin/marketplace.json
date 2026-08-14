@@ -23,8 +23,7 @@
         "./create-call",
         "./create-squad",
         "./create-phone-number",
-        "./setup-webhook",
-        "./vapi-bootstrap-framework"
+        "./setup-webhook"
       ]
     }
   ]

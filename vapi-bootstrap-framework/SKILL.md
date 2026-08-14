@@ -1,6 +1,6 @@
 ---
 name: vapi-bootstrap-framework
-description: Scaffold a complete Vapi voice-agent project from a ROUGH_DRAFT.md spec. Generates package.json, tsconfig.json, .env.example, .gitignore, and the full TypeScript framework — scenario registry, per-language voice/transcriber stack, prompt composer, assistant builder, and an idempotent bootstrap script — plus one rough first-draft body.md per scenario. Drop this skill in any project's .cursor/skills/ folder (or ~/.cursor/skills/ for global use), write a ROUGH_DRAFT.md at the project root, name the skill, and `bun run bootstrap` puts the entire fleet live in dashboard.vapi.ai. Use when the user asks to scaffold or bootstrap Vapi voice agents from a rough draft, build a Vapi assistant fleet, or invokes this skill by name. Targets Bun + TypeScript + @vapi-ai/server-sdk.
+description: Opt-in recreation of the Bun + TypeScript framework used to build Vapi's landing-page voice agents from a ROUGH_DRAFT.md spec, including a scenario registry, language stacks, prompt composer, assistant builder, and idempotent bootstrap script. Use only when the user explicitly invokes vapi-bootstrap-framework or specifically asks to reproduce or experiment with the landing-page-agent architecture. Do not use for ordinary Vapi assistant builds; use create-assistant, create-tool, create-squad, and vapi-prompt-builder instead. Targets Bun + TypeScript + @vapi-ai/server-sdk.
 license: MIT
 compatibility: Requires Bun, internet access, and a Vapi private API key (VAPI_API_KEY).
 metadata:
@@ -9,6 +9,8 @@ metadata:
 ---
 
 # Vapi bootstrap framework
+
+> **Experimental reference workflow:** This skill recreates the architecture used for Vapi's landing-page agents. It is not the standard workflow for building Vapi assistants and should only be used when explicitly requested.
 
 Scaffold an entire Vapi voice-agent project from a single `ROUGH_DRAFT.md` spec. Works in an empty folder or alongside an existing Bun + TypeScript project. One `bun run bootstrap` after this skill finishes puts the whole fleet live in `dashboard.vapi.ai`.
 
