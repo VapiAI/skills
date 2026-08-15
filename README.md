@@ -99,6 +99,16 @@ Install it directly with:
 npx skills add https://github.com/VapiAI/skills/tree/main/vapi-bootstrap-framework
 ```
 
+## Machine-Readable Manifest
+
+Agents and MCP servers can discover the current skill catalog from [`skills.manifest.json`](./skills.manifest.json). The manifest lists every skill, its primary `SKILL.md`, reference files, and raw GitHub URLs for runtime retrieval.
+
+Validate manifest changes with:
+
+```bash
+node scripts/validate-skills-manifest.mjs
+```
+
 ## Configuration
 
 All skills require a Vapi API key. Set it as an environment variable:
