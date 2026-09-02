@@ -15,6 +15,7 @@ from skill_validation import validate_skill
 
 DEFAULT_SKILLS = (
     "create-assistant",
+    "create-campaign",
     "create-phone-number",
     "create-squad",
     "create-structured-output",

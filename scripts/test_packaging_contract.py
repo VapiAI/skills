@@ -14,6 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PACKAGING_SCRIPT = REPO_ROOT / "scripts" / "package-agent-skills.py"
 EXPECTED_ARCHIVE_SKILLS = (
     "create-assistant",
+    "create-campaign",
     "create-phone-number",
     "create-squad",
     "create-structured-output",

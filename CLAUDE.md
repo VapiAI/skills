@@ -20,6 +20,7 @@ The skills cover common workflows. The MCP docs server covers everything else.
 - `create-structured-output` — Reusable post-call data extraction
 - `create-tool` — Tool/function creation for assistants
 - `create-call` — Outbound call initiation
+- `create-campaign` — Persistent outbound campaign creation and management
 - `create-squad` — Multi-assistant squad setup
 - `create-phone-number` — Phone number provisioning
 - `setup-webhook` — Webhook/server URL configuration
