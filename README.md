@@ -15,6 +15,7 @@ Install specific skills:
 ```bash
 npx skills add VapiAI/skills --skill create-assistant
 npx skills add VapiAI/skills --skill create-tool
+npx skills add VapiAI/skills --skill create-campaign
 ```
 
 Install for a specific agent:
@@ -82,6 +83,7 @@ claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
 | [vapi-prompt-builder](./vapi-prompt-builder) | Create, improve, or audit production-ready Vapi voice agent and Squad system prompts |
 | [create-tool](./create-tool) | Build custom tools for assistants — function calls, transfers, integrations |
 | [create-call](./create-call) | Initiate outbound phone calls, web calls, and batch calls |
+| [create-campaign](./create-campaign) | Create, schedule, monitor, duplicate, and manage outbound campaigns |
 | [create-squad](./create-squad) | Build multi-assistant squads with handoff workflows |
 | [create-phone-number](./create-phone-number) | Set up phone numbers from Twilio, Vonage, Telnyx, or Vapi |
 | [setup-webhook](./setup-webhook) | Configure server URLs to receive real-time call events |

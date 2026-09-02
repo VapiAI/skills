@@ -12,7 +12,7 @@
     {
       "name": "vapi-voice-ai",
       "version": "1.2.0",
-      "description": "Complete skill set for building and testing voice AI agents with Vapi — create assistants, tools, calls, squads, phone numbers, webhooks, and simulations",
+      "description": "Complete skill set for building and testing voice AI agents with Vapi — create assistants, tools, calls, campaigns, squads, phone numbers, webhooks, and simulations",
       "source": "./",
       "strict": false,
       "skills": [
@@ -22,6 +22,7 @@
         "./vapi-prompt-builder",
         "./create-tool",
         "./create-call",
+        "./create-campaign",
         "./create-squad",
         "./create-phone-number",
         "./setup-webhook",
