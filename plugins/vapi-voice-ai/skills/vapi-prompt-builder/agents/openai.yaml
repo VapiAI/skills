@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vapi Prompt Builder"
+  short_description: "Write and audit production voice-agent prompts."
+  default_prompt: "Use $vapi-prompt-builder to build a production-ready voice-agent prompt."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Structured Output"
+  short_description: "Design reusable Vapi post-call extraction."
+  default_prompt: "Use $create-structured-output to design a Vapi post-call extraction."

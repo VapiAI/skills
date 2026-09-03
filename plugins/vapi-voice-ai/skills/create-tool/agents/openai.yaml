@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Vapi Tool"
+  short_description: "Design tools for Vapi voice assistants."
+  default_prompt: "Use $create-tool to design a tool for a Vapi assistant."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Vapi Assistant"
+  short_description: "Design Vapi voice assistant configurations."
+  default_prompt: "Use $create-assistant to create a Vapi voice assistant configuration."

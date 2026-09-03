@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Vapi Squad"
+  short_description: "Design multi-assistant Vapi handoff workflows."
+  default_prompt: "Use $create-squad to design a multi-assistant Vapi handoff workflow."

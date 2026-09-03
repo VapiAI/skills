@@ -32,7 +32,29 @@ npx skills add VapiAI/skills -a cursor
 /plugin install vapi-voice-ai@vapi-skills
 ```
 
-### Option 3: Manual installation
+### Option 3: Codex Plugin (local development)
+
+The checked-in Codex plugin is assembled from the canonical skill directories, so the
+Claude and `npx skills` layouts remain unchanged:
+
+```bash
+python3 scripts/build-codex-plugin.py
+python3 scripts/build-codex-plugin.py --check
+python3 scripts/build-codex-plugin.py --archive /tmp/vapi-voice-ai.zip
+codex plugin marketplace add .
+codex plugin add vapi-voice-ai@vapi-skills
+```
+
+The Codex package is skills-only. The repository-level MCP configuration remains available
+to agents that support it, but it is not declared as a dependency of this plugin.
+The assembly step normalizes provider-specific frontmatter and adds OpenAI skill interface
+settings under each generated `skills/<name>/agents/openai.yaml`; canonical skill directories
+remain unchanged.
+Copy-ready public listing metadata, reviewer tests, asset provenance, release notes, and the
+remaining account-owner decisions are recorded in
+[`codex-plugin/submission-materials.json`](./codex-plugin/submission-materials.json).
+
+### Option 4: Manual installation
 
 Copy any skill directory into your project's `.claude/skills/` (for Claude Code), `.cursor/skills/` (for Cursor), or the equivalent skills directory for your agent.
 
@@ -143,6 +165,8 @@ Validate every skill with the repository's dependency-free validator:
 
 ```bash
 python3 scripts/validate-agent-skills.py
+python3 -m unittest discover -s scripts -p 'test_*.py'
+python3 scripts/build-codex-plugin.py --check
 ```
 
 Pass skill directory names to validate only selected skills. Packaging uses the same validator, so a skill cannot be packaged after failing validation.

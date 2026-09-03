@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Vapi Phone Number"
+  short_description: "Configure Vapi numbers and provider imports."
+  default_prompt: "Use $create-phone-number to configure a Vapi phone number."
