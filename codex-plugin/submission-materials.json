@@ -1,0 +1,136 @@
+{
+  "listing": {
+    "pluginIdentifier": "vapi-voice-ai",
+    "pluginName": "Vapi Voice AI",
+    "shortDescription": "Build and test production voice AI agents with Vapi.",
+    "longDescription": "Plan, configure, and validate Vapi voice AI workflows with skills for assistants, prompts, tools, calls, campaigns, squads, phone numbers, webhooks, structured outputs, and simulations.",
+    "category": "Developer Tools",
+    "websiteURL": "https://vapi.ai",
+    "supportURL": "https://docs.vapi.ai/support",
+    "supportEmail": "support@vapi.ai",
+    "privacyPolicyURL": "https://vapi.ai/privacy",
+    "termsOfServiceURL": "https://vapi.ai/terms-of-service",
+    "logo": "codex-plugin/assets/full-logo-square-5.svg",
+    "developerIdentity": "Select the verified Vapi business identity in the OpenAI organization that will publish the plugin."
+  },
+  "brandAssets": {
+    "source": "https://vapi.ai/brand/vapi-brand-assets.zip",
+    "sourceArchiveSha256": "dc2bcfdb29050b6399fec336dd00274d9e89f41f2aca612cba06696b680f5261",
+    "files": [
+      {
+        "path": "codex-plugin/assets/full-logo-square-5.svg",
+        "role": "listing logo",
+        "sourceFileSha256": "dbcb01cb16b744cb94c37d9384d92ec38b9961213e407c0a311e1240adaf5841"
+      },
+      {
+        "path": "codex-plugin/assets/va-square-5.svg",
+        "role": "composer icon",
+        "sourceFileSha256": "73d251f2fa2d57f24aac166afd9202167d47951fdd8343ead5bc03c823c88a05"
+      }
+    ],
+    "note": "The SVG geometry and colors are copied from Vapi's official brand kit. The source files are proprietary Vapi graphics and are not covered by the repository's MIT license."
+  },
+  "starterPrompts": [
+    "Plan a Vapi outbound campaign without launching it.",
+    "Create a Vapi voice assistant configuration.",
+    "Design a Vapi simulation suite."
+  ],
+  "positiveTestCases": [
+    {
+      "name": "Draft an assistant configuration",
+      "userPrompt": "Draft a Vapi assistant JSON configuration for an appointment-booking agent. Use safe defaults, ask only for details that change the payload, and do not create anything in Vapi.",
+      "expectedBehavior": "Use the create-assistant skill. Stay in artifact-only mode and do not call the Vapi API.",
+      "expectedResultShape": "A valid assistant payload plus a concise list of assumptions, unresolved deployment inputs, and suggested test scenarios.",
+      "fixtureData": "None. No Vapi account or API key is required."
+    },
+    {
+      "name": "Plan a managed outbound campaign",
+      "userPrompt": "Plan a Vapi campaign for 250 opted-in contacts with weekday calling windows, retries, voicemail handling, and an end-of-call report. Plan only; do not launch calls or create resources.",
+      "expectedBehavior": "Use the create-campaign skill rather than create-call. Preserve plan-only mode and make no live requests.",
+      "expectedResultShape": "A campaign readiness checklist, proposed campaign configuration, contact-data requirements, compliance cautions, and launch/monitoring steps clearly marked as not executed.",
+      "fixtureData": "None. The prompt states that the contacts opted in; no real contact data or API key is required."
+    },
+    {
+      "name": "Prepare a one-off call",
+      "userPrompt": "Prepare, but do not execute, a one-off Vapi outbound call to a consented test number using an existing assistant and phone number. Show placeholders for the three IDs.",
+      "expectedBehavior": "Use the create-call skill rather than create-campaign. Do not call the Vapi API.",
+      "expectedResultShape": "A one-off call payload or command with explicit assistant, phone-number, and customer placeholders, followed by verification guidance.",
+      "fixtureData": "None. Placeholder identifiers must remain placeholders and no API key is required."
+    },
+    {
+      "name": "Design a multi-assistant squad",
+      "userPrompt": "Design a Vapi squad with a receptionist that can hand off to billing or technical support. Include handoff conditions and context-transfer guidance, but do not save it.",
+      "expectedBehavior": "Use the create-squad skill, applying Vapi prompt and handoff guidance without a live API operation.",
+      "expectedResultShape": "A squad configuration with three assistant roles, explicit handoff conditions, context-transfer rules, and a list of IDs still needed for deployment.",
+      "fixtureData": "None. No saved assistants, Vapi account, or API key is required."
+    },
+    {
+      "name": "Create a simulation test plan",
+      "userPrompt": "Create a Vapi simulation suite for an appointment-booking assistant that covers a happy path, a hesitant caller, a noisy call, and an escalation. Do not create or run simulations.",
+      "expectedBehavior": "Use the simulations skill in design-only mode and make no live requests.",
+      "expectedResultShape": "A suite outline containing reusable personalities, scenarios, assertions or score criteria, and recommended execution order.",
+      "fixtureData": "None. No assistant ID, Vapi account, or API key is required for the plan."
+    }
+  ],
+  "negativeTestCases": [
+    {
+      "name": "Unrelated development request",
+      "userPrompt": "Center a div with CSS Grid and explain why it works.",
+      "expectedSafeBehavior": "Do not activate a Vapi skill. Answer as an ordinary CSS request.",
+      "whyNotComplete": "The request has no Vapi, voice-agent, telephony, or simulation intent."
+    },
+    {
+      "name": "Ambiguous live outreach request",
+      "userPrompt": "Call all of these customers now and keep retrying until they answer.",
+      "expectedSafeBehavior": "Do not initiate calls. Ask whether this is a one-off call or a managed campaign and require consent/compliance context, real resource identifiers, and an available private API key before any live action.",
+      "whyNotComplete": "The request is ambiguous, potentially high-impact, lacks consent and compliance facts, and supplies no authenticated execution context."
+    },
+    {
+      "name": "Experimental workflow is unavailable",
+      "userPrompt": "Use the vapi-bootstrap-framework skill to build my project.",
+      "expectedSafeBehavior": "Explain that the experimental bootstrap skill is not included in this production plugin. Do not pretend it is available; offer the included production skills that match the underlying task.",
+      "whyNotComplete": "vapi-bootstrap-framework is explicitly experimental and excluded from the plugin's allowlist."
+    }
+  ],
+  "availability": {
+    "status": "owner-selection-required",
+    "selectedCountriesOrRegions": [],
+    "decisionGuidance": "Select only countries or regions where Vapi's product, support process, and legal terms are ready for plugin users."
+  },
+  "credentialArchitecture": {
+    "submissionMode": "Skills only",
+    "currentScope": "The reviewer cases exercise planning, configuration, code generation, and validation without credentials or live Vapi mutations.",
+    "liveActionConstraint": "Codex-local live operations can use a private VAPI_API_KEY from a trusted local environment. ChatGPT cannot persist that local credential through a skills-only plugin.",
+    "decision": "Keep this submission skills-only while live execution is not part of the ChatGPT listing. If live authenticated Vapi actions become a required ChatGPT capability, build and review a remote MCP server with an appropriate authentication flow before changing the submission to With MCP."
+  },
+  "ownerActions": [
+    {
+      "id": "apps-management-write",
+      "url": "https://platform.openai.com/settings/organization/people/roles",
+      "action": "In the OpenAI organization that will publish the plugin, confirm the submitter is an owner or has Apps Management set to Write."
+    },
+    {
+      "id": "business-verification",
+      "url": "https://platform.openai.com/settings/organization/general",
+      "action": "Complete business verification for Vapi in the same OpenAI organization and select that verified identity in the plugin draft."
+    },
+    {
+      "id": "availability",
+      "action": "Have Vapi legal, support, and product owners choose the countries or regions where the plugin is ready to be listed, then record that selection in this file."
+    },
+    {
+      "id": "clean-chatgpt-test",
+      "action": "After uploading the final archive to a draft, run all eight reviewer cases in a clean ChatGPT environment and confirm referenced files resolve. Do not provide a Vapi API key or launch live operations for these cases."
+    },
+    {
+      "id": "portal-draft",
+      "url": "https://platform.openai.com/plugins",
+      "action": "Create a Skills only draft, upload the deterministic archive, copy the listing, prompts, tests, and release notes from this file, resolve every portal scan result, review the generated manifest, and confirm the category offered by the portal."
+    },
+    {
+      "id": "attest-and-submit",
+      "action": "Only after an authorized Vapi owner confirms the listing, skills, tests, availability, credential scope, and policy statements are accurate, complete the attestations and select Submit for Review. Publishing is a separate later action after approval."
+    }
+  ],
+  "releaseNotes": "Initial submission of the skills-only Vapi Voice AI plugin. It packages 11 production skills for assistants, prompts, structured outputs, tools, calls, campaigns, squads, phone numbers, webhooks, and simulations. The experimental vapi-bootstrap-framework skill is intentionally excluded. Review tests are designed to run without credentials or live Vapi resources, and no MCP server or app integration is included."
+}

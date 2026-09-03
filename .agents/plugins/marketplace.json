@@ -1,0 +1,20 @@
+{
+  "name": "vapi-skills",
+  "interface": {
+    "displayName": "Vapi Skills"
+  },
+  "plugins": [
+    {
+      "name": "vapi-voice-ai",
+      "source": {
+        "source": "local",
+        "path": "./plugins/vapi-voice-ai"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
