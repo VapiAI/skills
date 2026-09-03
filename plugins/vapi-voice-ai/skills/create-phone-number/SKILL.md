@@ -2,10 +2,6 @@
 name: create-phone-number
 description: Plan, provision, import, route, update, and verify Vapi phone numbers through the public API. Use for Vapi-hosted US PSTN numbers, explicitly requested SIP addresses, Twilio/Vonage/Telnyx or BYO carrier numbers, secure credential handling, assistant or squad routing, area-code requests, outbound limitations, and phone-provider troubleshooting.
 license: MIT
-compatibility: Internet access and VAPI_API_KEY are required only for live Vapi API operations.
-metadata:
-  author: vapi
-  version: "2.0"
 ---
 
 # Vapi Phone Number Setup

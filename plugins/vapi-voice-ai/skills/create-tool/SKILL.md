@@ -2,10 +2,6 @@
 name: create-tool
 description: Select, define, create, inspect, update, attach, detach, and verify reusable Vapi tools through the public API. Use for native call-control tools, supported provider integrations, API Request tools, custom function tools, MCP tools, tool messages, credentials, or configuration-preserving assistant attachment changes.
 license: MIT
-compatibility: Internet access and VAPI_API_KEY are required only for live Vapi API operations.
-metadata:
-  author: vapi
-  version: "2.0"
 ---
 
 # Vapi Tool Management

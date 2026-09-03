@@ -47,6 +47,9 @@ codex plugin add vapi-voice-ai@vapi-skills
 
 The Codex package is skills-only. The repository-level MCP configuration remains available
 to agents that support it, but it is not declared as a dependency of this plugin.
+The assembly step normalizes provider-specific frontmatter and adds OpenAI skill interface
+settings under each generated `skills/<name>/agents/openai.yaml`; canonical skill directories
+remain unchanged.
 Copy-ready public listing metadata, reviewer tests, asset provenance, release notes, and the
 remaining account-owner decisions are recorded in
 [`codex-plugin/submission-materials.json`](./codex-plugin/submission-materials.json).

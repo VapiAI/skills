@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Vapi Call"
+  short_description: "Prepare one-off Vapi phone or web calls."
+  default_prompt: "Use $create-call to prepare a one-off Vapi call without executing it."

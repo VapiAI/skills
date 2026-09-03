@@ -34,6 +34,83 @@ INCLUDED_SKILLS = (
 )
 EXCLUDED_SKILLS = ("vapi-bootstrap-framework",)
 IGNORED_NAMES = {".DS_Store", "__pycache__"}
+SKILL_INTERFACES = {
+    "setup-api-key": {
+        "display_name": "Set Up Vapi API Key",
+        "short_description": "Configure a private Vapi API key safely.",
+        "default_prompt": (
+            "Use $setup-api-key to help me configure a Vapi API key safely."
+        ),
+    },
+    "create-assistant": {
+        "display_name": "Create Vapi Assistant",
+        "short_description": "Design Vapi voice assistant configurations.",
+        "default_prompt": (
+            "Use $create-assistant to create a Vapi voice assistant configuration."
+        ),
+    },
+    "create-structured-output": {
+        "display_name": "Create Structured Output",
+        "short_description": "Design reusable Vapi post-call extraction.",
+        "default_prompt": (
+            "Use $create-structured-output to design a Vapi post-call extraction."
+        ),
+    },
+    "vapi-prompt-builder": {
+        "display_name": "Vapi Prompt Builder",
+        "short_description": "Write and audit production voice-agent prompts.",
+        "default_prompt": (
+            "Use $vapi-prompt-builder to build a production-ready voice-agent prompt."
+        ),
+    },
+    "create-tool": {
+        "display_name": "Create Vapi Tool",
+        "short_description": "Design tools for Vapi voice assistants.",
+        "default_prompt": "Use $create-tool to design a tool for a Vapi assistant.",
+    },
+    "create-call": {
+        "display_name": "Create Vapi Call",
+        "short_description": "Prepare one-off Vapi phone or web calls.",
+        "default_prompt": (
+            "Use $create-call to prepare a one-off Vapi call without executing it."
+        ),
+    },
+    "create-campaign": {
+        "display_name": "Create Vapi Campaign",
+        "short_description": "Plan and manage persistent outbound campaigns.",
+        "default_prompt": (
+            "Use $create-campaign to plan a Vapi outbound campaign without launching it."
+        ),
+    },
+    "create-squad": {
+        "display_name": "Create Vapi Squad",
+        "short_description": "Design multi-assistant Vapi handoff workflows.",
+        "default_prompt": (
+            "Use $create-squad to design a multi-assistant Vapi handoff workflow."
+        ),
+    },
+    "create-phone-number": {
+        "display_name": "Create Vapi Phone Number",
+        "short_description": "Configure Vapi numbers and provider imports.",
+        "default_prompt": (
+            "Use $create-phone-number to configure a Vapi phone number."
+        ),
+    },
+    "setup-webhook": {
+        "display_name": "Set Up Vapi Webhook",
+        "short_description": "Configure Vapi server URLs and call events.",
+        "default_prompt": (
+            "Use $setup-webhook to configure a Vapi webhook and event subscriptions."
+        ),
+    },
+    "simulations": {
+        "display_name": "Vapi Simulations",
+        "short_description": "Design Vapi assistant simulation suites.",
+        "default_prompt": (
+            "Use $simulations to design a Vapi assistant simulation suite."
+        ),
+    },
+}
 CLAUDE_MCP_BLOCKS = (
     b"\n**Manual setup:** If your agent doesn't auto-detect the config, run:\n"
     b"```bash\n"
@@ -66,7 +143,7 @@ PLUGIN_MANIFEST = {
     "skills": "./skills/",
     "interface": {
         "displayName": "Vapi Voice AI",
-        "shortDescription": "Build and test production voice AI agents with Vapi.",
+        "shortDescription": "Build voice agents with Vapi.",
         "longDescription": (
             "Plan, configure, and validate Vapi voice AI workflows with skills for "
             "assistants, prompts, tools, calls, campaigns, squads, phone numbers, "
@@ -83,7 +160,7 @@ PLUGIN_MANIFEST = {
             "Create a Vapi voice assistant configuration.",
             "Design a Vapi simulation suite.",
         ],
-        "brandColor": "#0BD8B6",
+        "brandColor": "#000714",
         "composerIcon": "./assets/va-square-5.svg",
         "logo": "./assets/full-logo-square-5.svg",
     },
@@ -110,6 +187,48 @@ def json_bytes(payload: object) -> bytes:
     return (json.dumps(payload, indent=2) + "\n").encode("utf-8")
 
 
+def openai_yaml_bytes(interface: dict[str, str]) -> bytes:
+    """Render deterministic YAML without adding a runtime YAML dependency."""
+    lines = ["interface:"]
+    for key in ("display_name", "short_description", "default_prompt"):
+        lines.append(f"  {key}: {json.dumps(interface[key])}")
+    return ("\n".join(lines) + "\n").encode("utf-8")
+
+
+def normalize_openai_skill_frontmatter(contents: bytes, source: Path) -> bytes:
+    """Remove unsupported frontmatter fields from the OpenAI package copy only."""
+    lines = contents.splitlines(keepends=True)
+    if not lines or lines[0].strip() != b"---":
+        raise ValueError(f"skill is missing YAML frontmatter: {source}")
+
+    closing_index = next(
+        (index for index, line in enumerate(lines[1:], start=1) if line.strip() == b"---"),
+        None,
+    )
+    if closing_index is None:
+        raise ValueError(f"skill has unterminated YAML frontmatter: {source}")
+
+    for field in (b"compatibility", b"metadata"):
+        field_indexes = [
+            index
+            for index, line in enumerate(lines[1:closing_index], start=1)
+            if line.startswith(field + b":")
+        ]
+        if len(field_indexes) != 1:
+            raise ValueError(
+                f"skill must have exactly one {field.decode()} field: {source}"
+            )
+
+        start = field_indexes[0]
+        end = start + 1
+        while end < closing_index and lines[end].startswith((b" ", b"\t")):
+            end += 1
+        del lines[start:end]
+        closing_index -= end - start
+
+    return b"".join(lines)
+
+
 def source_files(skill_dir: Path) -> Iterable[Path]:
     for path in sorted(skill_dir.rglob("*"), key=lambda item: item.as_posix()):
         relative = path.relative_to(skill_dir)
@@ -126,6 +245,7 @@ def plugin_source_bytes(source: Path) -> bytes:
     contents = source.read_bytes()
     if source.name != "SKILL.md":
         return contents
+    contents = normalize_openai_skill_frontmatter(contents, source)
     for block in CLAUDE_MCP_BLOCKS:
         contents = contents.replace(block, b"\n")
     if b"claude mcp add" in contents:
@@ -134,6 +254,8 @@ def plugin_source_bytes(source: Path) -> bytes:
 
 
 def expected_plugin_files(repo_root: Path) -> Dict[Path, Tuple[bytes, int]]:
+    if tuple(SKILL_INTERFACES) != INCLUDED_SKILLS:
+        raise ValueError("skill interface definitions must match the included skill allowlist")
     expected: Dict[Path, Tuple[bytes, int]] = {
         Path(".codex-plugin/plugin.json"): (json_bytes(PLUGIN_MANIFEST), 0o644),
     }
@@ -151,6 +273,15 @@ def expected_plugin_files(repo_root: Path) -> Dict[Path, Tuple[bytes, int]]:
             relative = Path("skills") / skill_name / source.relative_to(skill_dir)
             mode = 0o755 if source.stat().st_mode & stat.S_IXUSR else 0o644
             expected[relative] = (plugin_source_bytes(source), mode)
+        interface_path = Path("skills") / skill_name / "agents" / "openai.yaml"
+        if interface_path in expected:
+            raise ValueError(
+                f"canonical skill already supplies generated interface path: {skill_name}"
+            )
+        expected[interface_path] = (
+            openai_yaml_bytes(SKILL_INTERFACES[skill_name]),
+            0o644,
+        )
     return expected
 
 

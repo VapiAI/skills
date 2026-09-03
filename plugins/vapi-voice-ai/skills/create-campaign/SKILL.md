@@ -2,10 +2,6 @@
 name: create-campaign
 description: Create, schedule, duplicate, inspect, cancel, archive, and troubleshoot Vapi outbound Campaigns. Use for persistent multi-contact calling, CSV or API contact personalization, campaign concurrency, campaign webhooks, pre-dial eligibility, contact outcomes, or rerunning an audience. Do not use for a single call or a simple one-off /call batch.
 license: MIT
-compatibility: Internet access is recommended for current Vapi schema verification; VAPI_API_KEY is required for live campaign operations.
-metadata:
-  author: vapi
-  version: "1.0"
 ---
 
 # Vapi Outbound Campaigns

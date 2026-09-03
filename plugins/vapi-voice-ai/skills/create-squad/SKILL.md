@@ -2,10 +2,6 @@
 name: create-squad
 description: Design, create, update, and verify Vapi Squads and documented handoff tools through the public API. Use for choosing a single assistant versus a multi-assistant Squad, persistent or transient members, entry-member ordering, specialization boundaries, context engineering, variable extraction, model-specific handoff patterns, assistant-version pins, and safe Squad updates.
 license: MIT
-compatibility: Internet access and VAPI_API_KEY are required only for live Vapi API operations.
-metadata:
-  author: vapi
-  version: "2.0"
 ---
 
 # Vapi Squad Creation

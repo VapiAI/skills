@@ -2,10 +2,6 @@
 name: setup-api-key
 description: Guide users through obtaining and configuring a Vapi API key. Use when the user needs to set up Vapi, when API calls fail due to missing keys, or when the user mentions needing access to Vapi's voice AI platform.
 license: MIT
-compatibility: Requires internet access to vapi.ai and api.vapi.ai.
-metadata:
-  author: vapi
-  version: "1.0"
 ---
 
 # Vapi API Key Setup

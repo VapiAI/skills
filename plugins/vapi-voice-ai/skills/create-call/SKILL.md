@@ -2,10 +2,6 @@
 name: create-call
 description: Create one-off outbound phone calls, web calls, scheduled calls, and simple batch calls using the Vapi API. Use when making or testing individual calls or initiating a bounded /call request programmatically. Use create-campaign for a persistent multi-contact Campaign with lifecycle, reporting, cancellation, duplication, or campaign webhooks.
 license: MIT
-compatibility: Requires internet access and a Vapi API key (VAPI_API_KEY).
-metadata:
-  author: vapi
-  version: "1.0"
 ---
 
 # Vapi Call Creation

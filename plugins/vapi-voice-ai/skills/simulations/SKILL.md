@@ -2,10 +2,6 @@
 name: simulations
 description: Design, create, run, monitor, and maintain Vapi Simulations for assistants and squads. Use for simulation personalities, scenarios, structured-output success criteria, simulations, suites, chat or voice runs, tool mocks, target variables, lifecycle webhooks, regression coverage, CI quality gates, run-result analysis, and simulation API validation errors. Do not use for fixed-turn mock-conversation Evals unless the user is deciding between Evals and Simulations.
 license: MIT
-compatibility: Internet access is recommended for current Vapi schema verification; VAPI_API_KEY is required for live simulation resource operations and runs.
-metadata:
-  author: vapi
-  version: "1.0"
 ---
 
 # Vapi Simulations

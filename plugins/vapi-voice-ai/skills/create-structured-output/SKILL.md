@@ -2,10 +2,6 @@
 name: create-structured-output
 description: Design, create, inspect, update, attach, detach, preview, execute, and verify reusable Vapi Structured Outputs through public API or Server SDK workflows. Use for post-call extraction, typed call artifacts, AI-versus-regex extraction, JSON Schema design, backfilling existing calls, or retrieving structured results programmatically.
 license: MIT
-compatibility: Internet access is recommended for current Vapi schema verification; VAPI_API_KEY is required for saved resources, assistant attachments, call execution, and result retrieval.
-metadata:
-  author: vapi
-  version: "1.0"
 ---
 
 # Vapi Structured Output Creation

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vapi Simulations"
+  short_description: "Design Vapi assistant simulation suites."
+  default_prompt: "Use $simulations to design a Vapi assistant simulation suite."

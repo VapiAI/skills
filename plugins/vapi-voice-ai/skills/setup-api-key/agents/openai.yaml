@@ -1,0 +1,4 @@
+interface:
+  display_name: "Set Up Vapi API Key"
+  short_description: "Configure a private Vapi API key safely."
+  default_prompt: "Use $setup-api-key to help me configure a Vapi API key safely."

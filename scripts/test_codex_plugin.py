@@ -50,6 +50,21 @@ def tree_digest(root: Path) -> dict[str, tuple[str, int]]:
     }
 
 
+def relative_luminance(hex_color: str) -> float:
+    channels = [int(hex_color[index : index + 2], 16) / 255 for index in (1, 3, 5)]
+    linear = [
+        channel / 12.92
+        if channel <= 0.04045
+        else ((channel + 0.055) / 1.055) ** 2.4
+        for channel in channels
+    ]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def contrast_against_white(hex_color: str) -> float:
+    return 1.05 / (relative_luminance(hex_color) + 0.05)
+
+
 class CodexPluginTests(unittest.TestCase):
     def test_exact_skill_allowlist_and_experimental_exclusion(self) -> None:
         build = load_build_module()
@@ -106,6 +121,31 @@ class CodexPluginTests(unittest.TestCase):
             if path.parts[:1] == ("skills",) and path.name == "SKILL.md":
                 self.assertNotIn(b"claude mcp add", contents)
 
+    def test_generated_skills_use_openai_interface_files(self) -> None:
+        build = load_build_module()
+        self.assertEqual(tuple(build.SKILL_INTERFACES), EXPECTED_SKILLS)
+        expected = build.expected_plugin_files(REPO_ROOT)
+
+        for skill_name in EXPECTED_SKILLS:
+            source_skill = REPO_ROOT / skill_name / "SKILL.md"
+            generated_skill = Path("skills") / skill_name / "SKILL.md"
+            interface_path = (
+                Path("skills") / skill_name / "agents" / "openai.yaml"
+            )
+            self.assertIn(b"\ncompatibility:", source_skill.read_bytes())
+            self.assertIn(b"\nmetadata:\n", source_skill.read_bytes())
+            self.assertNotIn(b"\ncompatibility:", expected[generated_skill][0])
+            self.assertNotIn(b"\nmetadata:\n", expected[generated_skill][0])
+            self.assertIn(interface_path, expected)
+
+            interface_contents = expected[interface_path][0].decode("utf-8")
+            settings = build.SKILL_INTERFACES[skill_name]
+            for key in ("display_name", "short_description", "default_prompt"):
+                self.assertIn(f"  {key}: ", interface_contents)
+            self.assertGreaterEqual(len(settings["short_description"]), 25)
+            self.assertLessEqual(len(settings["short_description"]), 64)
+            self.assertIn(f"${skill_name}", settings["default_prompt"])
+
     def test_official_brand_assets_are_included(self) -> None:
         build = load_build_module()
         expected = build.expected_plugin_files(REPO_ROOT)
@@ -142,12 +182,14 @@ class CodexPluginTests(unittest.TestCase):
         self.assertNotIn("apps", manifest)
         self.assertEqual(manifest["author"]["email"], "support@vapi.ai")
         interface = manifest["interface"]
+        self.assertLessEqual(len(interface["shortDescription"]), 30)
         self.assertEqual(interface["privacyPolicyURL"], "https://vapi.ai/privacy")
         self.assertEqual(
             interface["termsOfServiceURL"],
             "https://vapi.ai/terms-of-service",
         )
-        self.assertEqual(interface["brandColor"], "#0BD8B6")
+        self.assertEqual(interface["brandColor"], "#000714")
+        self.assertGreaterEqual(contrast_against_white(interface["brandColor"]), 2.0)
         for field in ("composerIcon", "logo"):
             asset_path = interface[field]
             self.assertTrue(asset_path.startswith("./assets/"))
@@ -174,6 +216,8 @@ class CodexPluginTests(unittest.TestCase):
         self.assertEqual(listing["pluginIdentifier"], "vapi-voice-ai")
         self.assertEqual(listing["websiteURL"], "https://vapi.ai")
         self.assertEqual(listing["supportURL"], "https://docs.vapi.ai/support")
+        self.assertEqual(listing["brandColor"], "#000714")
+        self.assertLessEqual(len(listing["shortDescription"]), 30)
         self.assertEqual(listing["privacyPolicyURL"], "https://vapi.ai/privacy")
         self.assertEqual(
             listing["termsOfServiceURL"],

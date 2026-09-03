@@ -1,0 +1,4 @@
+interface:
+  display_name: "Set Up Vapi Webhook"
+  short_description: "Configure Vapi server URLs and call events."
+  default_prompt: "Use $setup-webhook to configure a Vapi webhook and event subscriptions."

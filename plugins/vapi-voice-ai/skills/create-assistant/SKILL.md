@@ -2,10 +2,6 @@
 name: create-assistant
 description: Design, create, or validate saved and transient Vapi voice assistants. Use for new phone or web agents, production system prompts and first messages, saved-versus-transient architecture, model/voice/transcriber selection, multilingual compatibility, existing tool attachment, native call-control tools, assistant hooks, and Create Assistant API validation errors.
 license: MIT
-compatibility: Internet access is recommended for current Vapi schema and provider verification; VAPI_API_KEY is required to create or verify saved assistants through the API.
-metadata:
-  author: vapi
-  version: "3.0"
 ---
 
 # Vapi Assistant Creation

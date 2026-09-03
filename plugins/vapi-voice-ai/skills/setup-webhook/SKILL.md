@@ -2,10 +2,6 @@
 name: setup-webhook
 description: Configure Vapi server URLs and webhooks to receive real-time call events, transcripts, tool calls, and end-of-call reports. Use when setting up webhook endpoints, building tool servers, or integrating Vapi events into your application.
 license: MIT
-compatibility: Requires internet access and a Vapi API key (VAPI_API_KEY).
-metadata:
-  author: vapi
-  version: "1.0"
 ---
 
 # Vapi Webhook / Server URL Setup

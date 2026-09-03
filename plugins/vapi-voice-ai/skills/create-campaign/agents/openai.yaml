@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Vapi Campaign"
+  short_description: "Plan and manage persistent outbound campaigns."
+  default_prompt: "Use $create-campaign to plan a Vapi outbound campaign without launching it."

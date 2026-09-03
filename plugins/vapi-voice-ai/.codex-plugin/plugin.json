@@ -19,7 +19,7 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Vapi Voice AI",
-    "shortDescription": "Build and test production voice AI agents with Vapi.",
+    "shortDescription": "Build voice agents with Vapi.",
     "longDescription": "Plan, configure, and validate Vapi voice AI workflows with skills for assistants, prompts, tools, calls, campaigns, squads, phone numbers, webhooks, structured outputs, and simulations.",
     "developerName": "Vapi",
     "category": "Developer Tools",
@@ -35,7 +35,7 @@
       "Create a Vapi voice assistant configuration.",
       "Design a Vapi simulation suite."
     ],
-    "brandColor": "#0BD8B6",
+    "brandColor": "#000714",
     "composerIcon": "./assets/va-square-5.svg",
     "logo": "./assets/full-logo-square-5.svg"
   }
