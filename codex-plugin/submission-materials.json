@@ -1,7 +1,7 @@
 {
   "listing": {
     "pluginIdentifier": "vapi-voice-ai",
-    "pluginName": "Vapi Voice AI",
+    "pluginName": "Vapi",
     "shortDescription": "Build voice agents with Vapi.",
     "longDescription": "Plan, configure, and validate Vapi voice AI workflows with skills for assistants, prompts, tools, calls, campaigns, squads, phone numbers, webhooks, structured outputs, and simulations.",
     "category": "Developer Tools",
@@ -133,5 +133,5 @@
       "action": "Only after an authorized Vapi owner confirms the listing, skills, tests, availability, credential scope, and policy statements are accurate, complete the attestations and select Submit for Review. Publishing is a separate later action after approval."
     }
   ],
-  "releaseNotes": "Initial submission of the skills-only Vapi Voice AI plugin. It packages 11 production skills for assistants, prompts, structured outputs, tools, calls, campaigns, squads, phone numbers, webhooks, and simulations. The experimental vapi-bootstrap-framework skill is intentionally excluded. Review tests are designed to run without credentials or live Vapi resources, and no MCP server or app integration is included."
+  "releaseNotes": "Renamed the public listing from \"Vapi Voice AI\" to \"Vapi\". No functional changes; the plugin identifier remains vapi-voice-ai."
 }

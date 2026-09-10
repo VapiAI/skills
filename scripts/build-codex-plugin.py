@@ -14,7 +14,7 @@ from typing import Dict, Iterable, Tuple
 
 
 PLUGIN_NAME = "vapi-voice-ai"
-PLUGIN_VERSION = "1.2.0"
+PLUGIN_VERSION = "1.2.1"
 PLUGIN_ASSET_FILES = (
     "full-logo-square-5.svg",
     "va-square-5.svg",
@@ -142,7 +142,7 @@ PLUGIN_MANIFEST = {
     "keywords": ["vapi", "voice-ai", "agents", "telephony"],
     "skills": "./skills/",
     "interface": {
-        "displayName": "Vapi Voice AI",
+        "displayName": "Vapi",
         "shortDescription": "Build voice agents with Vapi.",
         "longDescription": (
             "Plan, configure, and validate Vapi voice AI workflows with skills for "

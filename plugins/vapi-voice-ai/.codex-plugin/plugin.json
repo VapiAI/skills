@@ -1,6 +1,6 @@
 {
   "name": "vapi-voice-ai",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Skills for building and testing voice AI agents with Vapi, including assistants, tools, calls, campaigns, squads, phone numbers, webhooks, structured outputs, prompts, and simulations.",
   "author": {
     "name": "Vapi",
@@ -18,7 +18,7 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Vapi Voice AI",
+    "displayName": "Vapi",
     "shortDescription": "Build voice agents with Vapi.",
     "longDescription": "Plan, configure, and validate Vapi voice AI workflows with skills for assistants, prompts, tools, calls, campaigns, squads, phone numbers, webhooks, structured outputs, and simulations.",
     "developerName": "Vapi",
