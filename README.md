@@ -25,12 +25,33 @@ npx skills add VapiAI/skills -a claude-code
 npx skills add VapiAI/skills -a cursor
 ```
 
-### Option 2: Claude Code Plugin (native integration)
+### Option 2: Claude plugin (native integration)
+
+The marketplace lives at `VapiAI/skills` and the plugin is `vapi-voice-ai`. How you add it depends on where you use Claude.
+
+**Claude Code in a terminal** — run inside a `claude` session:
 
 ```
 /plugin marketplace add VapiAI/skills
 /plugin install vapi-voice-ai@vapi-skills
 ```
+
+**Claude Desktop: Chat or Cowork**
+
+1. Open **Customize → Plugins**.
+2. Choose **Add → Add marketplace** and enter `VapiAI/skills`.
+3. Find **vapi-voice-ai** in the list and click **Install**.
+
+**Claude Desktop: Code tab** — the `/plugin` commands above don't run in the Code tab, and it has no control for adding a marketplace. Register the marketplace once from your shell with the [Claude Code CLI](https://code.claude.com/docs/en/setup); the Code tab reads the same settings:
+
+```bash
+claude plugin marketplace add VapiAI/skills
+claude plugin install vapi-voice-ai@vapi-skills
+```
+
+Start a new Code tab session to pick up the skills. To manage the plugin afterwards, use **+ → Plugins** in the prompt box.
+
+> Chat/Cowork plugins sync through your claude.ai account, while the CLI and the Code tab share `~/.claude` on your machine. Installing on one side does not install on the other.
 
 ### Option 3: Codex Plugin (local development)
 
