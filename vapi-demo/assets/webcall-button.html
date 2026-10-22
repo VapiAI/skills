@@ -1,0 +1,69 @@
+<!-- OPTIONAL: "Talk to the agent" web-call button (Vapi Web SDK).
+     Pairs with GET /webcall-token in assets/server-skeleton.mjs.
+     Markup: <button class="talk-btn" id="talk-btn">🎙 Talk to the agent</button>
+     Verified live: fresh restricted token per click, SDK imported lazily so
+     the page renders even if esm.sh is unreachable, and Vapi 403s the token
+     against any assistant other than the one it was minted for. -->
+<script>
+// Browser web call via the Vapi Web SDK. Auth: the server mints a fresh
+  // short-lived public-scoped JWT per click (GET /webcall-token) — the org
+  // key never reaches this page. The SDK is imported lazily on first click so
+  // the dashboard never depends on esm.sh just to render.
+  const talkBtn = document.getElementById('talk-btn');
+  let VapiCtor = null;
+  let vapi = null;
+  let callActive = false;
+  let connecting = false;
+
+  const btnIdle = () => {
+    callActive = false;
+    connecting = false;
+    vapi = null;
+    talkBtn.disabled = false;
+    talkBtn.classList.remove('live');
+    talkBtn.textContent = '🎙 Talk to the agent';
+  };
+
+  const btnLive = () => {
+    callActive = true;
+    connecting = false;
+    talkBtn.disabled = false;
+    talkBtn.classList.add('live');
+    talkBtn.textContent = '⏹ End call';
+  };
+
+  const webCallStart = async () => {
+    connecting = true;
+    talkBtn.disabled = true;
+    talkBtn.textContent = 'Connecting…';
+    try {
+      const res = await fetch('/webcall-token');
+      if (!res.ok) throw new Error(`token fetch failed: ${res.status}`);
+      const { token, assistantId } = await res.json();
+      if (!VapiCtor) {
+        ({ default: VapiCtor } = await import('https://esm.sh/@vapi-ai/web'));
+      }
+      // Fresh instance per call: each carries its own single-use short-lived token.
+      vapi = new VapiCtor(token);
+      vapi.on('call-start', btnLive);
+      vapi.on('call-end', btnIdle);
+      vapi.on('error', (err) => {
+        console.error('vapi error', err);
+        btnIdle();
+      });
+      await vapi.start(assistantId);
+    } catch (err) {
+      console.error('web call failed', err);
+      btnIdle();
+    }
+  };
+
+  talkBtn.addEventListener('click', () => {
+    if (connecting) return;
+    if (callActive) {
+      vapi?.stop();
+      return;
+    }
+    webCallStart();
+  });
+</script>

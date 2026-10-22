@@ -23,7 +23,7 @@ EXPECTED_ARCHIVE_SKILLS = (
     "simulations",
     "vapi-prompt-builder",
 )
-EXPERIMENTAL_SKILLS = ("vapi-bootstrap-framework",)
+EXPERIMENTAL_SKILLS = ("vapi-bootstrap-framework", "vapi-demo")
 EXPECTED_RELEASE_VERSION = "1.2.0"
 
 

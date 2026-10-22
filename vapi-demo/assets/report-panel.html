@@ -1,0 +1,103 @@
+<!-- DEFAULT RIGHT PANEL — "Call outcome", filled from the end-of-call report.
+
+     Use this whenever the agent has no state that visibly accumulates during a
+     call. It needs no use-case knowledge: it shows the ended reason and every
+     structured output the platform attached, so the third panel pays off at
+     hangup instead of sitting empty.
+
+     The worked example ships a ride-specific right panel. Swapping it for this
+     one is four small edits in your public/index.html. Every class and helper
+     used here already exists in that file.
+-->
+
+<!-- ============================================================ EDIT 1 of 4
+     MARKUP. Replace the whole third <section class="panel"> (the one holding
+     `id="ride"` and the `id="etaClock"` div) with this. -->
+
+<section class="panel">
+  <h2>Call outcome</h2>
+  <div class="body" id="outcome"></div>
+</section>
+
+<!-- Then delete the ride scenario's leftover JavaScript, which no longer has
+     anything to draw into: `renderRide`, the `STATUSES` / `STATUS_LABELS`
+     constants, and the SSE `case 'ride':` branch. The eta clock is defensive
+     (`renderEtaClock` returns early when its element is gone), so leaving that
+     one behind costs nothing but dead code. -->
+
+
+<!-- ============================================================ EDIT 2 of 4
+     PLACEHOLDER. In the PLACEHOLDERS object, replace the `ride:` entry with the
+     `outcome:` entry below, then change every `'ride'` to `'outcome'` in the
+     three placeholderShow lists (search the file for `'ride'`). -->
+
+<script>
+  outcome: {
+    icon: '<path d="M9 11.5l2.2 2.2L15.5 9"/><circle cx="12" cy="12" r="9"/>',
+  },
+</script>
+
+<!-- ============================================================ EDIT 3 of 4
+     STYLES. Paste into the <style> block, next to the .tool-card rules. -->
+
+<style>
+.outcome-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+  padding: 13px 15px; border: 1px solid var(--line); border-radius: 12px;
+  margin-bottom: 9px; background: var(--bg);
+  animation: cardIn .32s cubic-bezier(.2,.7,.3,1) both;
+}
+.outcome-row .k { color: var(--text-muted); font-size: 13px; }
+.outcome-row .v { font-weight: 600; text-align: right; word-break: break-word; }
+.outcome-row.good { border-color: var(--mint-tint-20); background: var(--mint-tint-5); }
+</style>
+
+<!-- ============================================================ EDIT 4 of 4
+     RENDER. Add outcomeRender() next to the other render functions, then call
+     it from the SSE `case 'call.report':` branch (add the one marked line).
+
+       case 'call.report':
+         setStatus('Call ended', false);
+         etaState = 'off';
+         transcriptSettle();
+         outcomeRender(d);          // <-- add this line
+         endedCallMark(d.callId);
+         break;
+-->
+
+<script>
+// Structured outputs arrive keyed by structured-output id, each carrying its own
+// name and result: { "<so-id>": { name: "booking_made", result: true } }. Some
+// results are objects, so stringify anything that is not a scalar. A demo with
+// no structured outputs configured still gets the ended reason, which is why
+// this panel is safe to ship before anyone decides what to measure.
+function outcomeRender(d) {
+  panelReady('outcome');
+  const rows = [];
+  if (d.endedReason) rows.push({ k: 'Ended', v: String(d.endedReason).replace(/-/g, ' ') });
+  for (const so of Object.values(d.structuredOutputs ?? {})) {
+    const value = (so && typeof so === 'object') ? so.result : so;
+    rows.push({
+      k: (so?.name ?? 'output').replace(/_/g, ' '),
+      v: (value !== null && typeof value === 'object') ? JSON.stringify(value) : String(value),
+      good: value === true,
+    });
+  }
+  if (!rows.length) rows.push({ k: 'Report', v: 'no outputs configured' });
+  $('outcome').innerHTML = rows
+    .map(r => '<div class="outcome-row' + (r.good ? ' good' : '') + '">'
+      + '<span class="k"></span><span class="v"></span></div>')
+    .join('');
+  // Fill via textContent so a result can never inject markup into the page.
+  [...$('outcome').children].forEach((el, i) => {
+    el.querySelector('.k').textContent = rows[i].k;
+    el.querySelector('.v').textContent = rows[i].v;
+  });
+}
+</script>
+
+<!-- Verify it without a phone call: `bash scripts/try-it.sh <url>` ends with an
+     end-of-call-report carrying one structured output, so the panel must show
+     "Ended: customer ended call" and "booking made: true" when the replay
+     finishes. If it stays on the placeholder, the `case 'call.report'` edit is
+     missing. -->

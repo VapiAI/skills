@@ -32,7 +32,7 @@ INCLUDED_SKILLS = (
     "setup-webhook",
     "simulations",
 )
-EXCLUDED_SKILLS = ("vapi-bootstrap-framework",)
+EXCLUDED_SKILLS = ("vapi-bootstrap-framework", "vapi-demo")
 IGNORED_NAMES = {".DS_Store", "__pycache__"}
 SKILL_INTERFACES = {
     "setup-api-key": {

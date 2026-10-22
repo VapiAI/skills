@@ -137,11 +137,13 @@ claude mcp add vapi-docs -- npx -y mcp-remote https://docs.vapi.ai/_mcp/server
 Experimental workflows are not included in the standard `vapi-voice-ai` plugin and are not the recommended path for ordinary Vapi builds. Install one explicitly only when you want to reproduce or adapt that particular architecture.
 
 - [vapi-bootstrap-framework](./vapi-bootstrap-framework) — An opt-in recreation of the Bun + TypeScript framework used to build Vapi's landing-page agents from a `ROUGH_DRAFT.md`
+- [vapi-demo](./vapi-demo) — Build a Vapi-branded live demo dashboard for an assistant or squad that already works: streaming transcript, tool calls, and a use-case panel, deployed to Railway
 
-Install it directly with:
+Install one directly with:
 
 ```bash
 npx skills add https://github.com/VapiAI/skills/tree/main/vapi-bootstrap-framework
+npx skills add https://github.com/VapiAI/skills/tree/main/vapi-demo
 ```
 
 ## Configuration

@@ -1,0 +1,271 @@
+<!-- SQUAD RIGHT PANEL — every member listed, the one talking right now lit up.
+
+     The best default right panel for a squad demo. It answers the question the
+     room actually has ("wait, which agent is this?") and it makes a handoff, an
+     invisible event, into the most visible thing on the screen.
+
+     THE SIGNAL (verified live on real calls):
+     every server message carries `message.assistant`, and that object is the
+     CURRENTLY ACTIVE member, re-pointed on every hop. `assistant.started` also
+     fires on every swap with the new member in `newAssistant`. So the active
+     member is read directly. Do NOT try to infer it from handoff tool calls:
+     handoff and transferCall are local tools and never produce a `tool-calls`
+     webhook at all.
+
+     Two requirements on the wiring:
+       - `assistant.started` must be in serverMessages (it is a valid value, and
+         it is the crisp transition event).
+       - EVERY member needs the demo `server.url` + `serverMessages`. Those are
+         read off the ACTIVE assistant, not the call, so a member you forget to
+         wire goes dark the moment it takes over.
+-->
+
+<!-- ======================================================= EDIT 1 of 5 — markup
+     Replace the third <section class="panel"> with this. -->
+
+<section class="panel">
+  <h2>Squad</h2>
+  <div class="body" id="squad"></div>
+</section>
+
+<!-- ======================================================= EDIT 2 of 5 — idle
+     Replace the third panel's PLACEHOLDERS entry, and change 'ride' (or
+     whatever the panel id was) to 'squad' in the three placeholderShow lists. -->
+
+<script>
+  squad: {
+    icon: '<circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9.5" r="2.4"/><path d="M3.5 19c.6-3 2.9-4.6 5.5-4.6S14 16 14.6 19"/>',
+  },
+</script>
+
+<!-- ======================================================= EDIT 3 of 5 — styles -->
+
+<style>
+.member {
+  position: relative; padding: 15px 17px; border: 1px solid var(--line);
+  border-radius: 14px; margin-bottom: 10px; background: var(--bg);
+  transition: border-color .3s ease, background .3s ease, transform .3s ease;
+}
+.member .role { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+.member .nm { font-weight: 600; margin-top: 3px; }
+.member .state { font-size: 12px; color: var(--text-muted); margin-top: 7px; }
+.member.active { border-color: var(--mint); background: var(--mint-tint-5); transform: translateX(3px); }
+.member.active .state { color: var(--text); font-weight: 600; }
+.member.handing { border-color: var(--mint-tint-20); background: var(--mint-tint-5); }
+.member.handing .state { color: var(--text); }
+.member.finished { border-color: var(--mint-tint-20); background: var(--mint-tint-5); }
+.member.done { opacity: .55; }
+/* The only motion in the panel, so the eye goes straight to who is speaking. */
+.member .live-dot {
+  position: absolute; top: 17px; right: 17px; width: 9px; height: 9px;
+  border-radius: 50%; background: var(--mint); opacity: 0; transition: opacity .3s ease;
+}
+.member.active .live-dot { opacity: 1; animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.35); opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .member .live-dot { animation: none; } }
+.handoff-mark {
+  display: flex; align-items: center; gap: 9px; margin: 0 0 10px 6px;
+  font-size: 12px; color: var(--mint); animation: cardIn .3s ease both;
+}
+</style>
+
+<!-- ======================================================= EDIT 4 of 5 — page JS
+     Add these, then wire four call sites. Getting these wrong is the most
+     likely way to ship a panel that looks right and misbehaves:
+
+       - AT BOOT (next to the boot-time placeholderShow loop, at the very bottom
+         of the file — NOT the identical-looking loop inside viewReset):
+             squadReset();
+             squadRosterFetch();
+       - IN viewReset(), the Reset button's handler: squadReset()
+         (drop 'squad' from that function's placeholderShow loop), and do NOT
+         call squadRosterFetch() here — re-fetching on reset re-renders the
+         panel from stale state and the old highlight comes straight back.
+       - IN resetForCall(), so a new call starts from a clean roster:
+             squadReset();
+
+     Then in the SSE switch:
+
+       case 'squad.active':
+         liveImply();            // if you added it; see the skill's demo craft
+         squadActiveSet(d);
+         break;
+
+     and route handoff tool calls to this panel instead of the tool list, since
+     a handoff is a squad event and not an integration call. Left in the tool
+     list it sits "running" for the length of the handoff window (7+ seconds on
+     a real call), which is exactly what makes the board look behind the audio:
+
+       case 'tool.called':
+         if (HANDOFF_TOOL.test(d.name)) { squadHandoffBegin(); break; }
+         ...
+       case 'tool.completed':
+         if (HANDOFF_TOOL.test(d.name)) break;
+         ...
+
+     plus squadCallEnd() in both places a call finishes (the `ended` branch of
+     case 'call.status', and case 'call.report').
+-->
+
+<script>
+let squadMembers = [];
+let squadActiveId = null;
+let squadEnded = false;
+let squadHandingOff = false;  // handoff fired, destination not yet active
+let squadPendingId = null;    // who is taking over, when that can be known
+let activeSpeakerName = null; // also used for the transcript speaker label
+
+// THE HANDOFF WINDOW — the single most important thing in this file.
+// Vapi speaks the handoff tool's request-start message on the OUTGOING
+// assistant, and only completes the handoff once that line has been spoken.
+// Measured on a real call: tool call at 8.4s, the outgoing member speaks the
+// incoming persona's intro ("this is Sam from Verification") from 8.9s, and
+// assistant.started for the new member does not arrive until 16.5s. That is
+// 7.4 seconds where the room hears the new agent while the board still shows
+// the old one, which reads as the dashboard lagging the call.
+// Showing that window as "handing off" fixes the perception without faking
+// the data: the panel moves when the audio moves, and assistant.started is
+// still what confirms the switch.
+const HANDOFF_TOOL = /^(handoff_to|handoff|transferCall)/i;
+
+function squadHandoffBegin() {
+  if (!squadMembers.length) return;
+  squadHandingOff = true;
+  const i = squadMembers.findIndex(m => m.id === squadActiveId);
+  // Naming the destination is only safe when there is exactly one candidate.
+  // The tool name is a mangled version of the destination and need not match
+  // the assistant's name (for example, a tool called handoff_to_intake can
+  // point at a member named "Scheduling Specialist"), so never guess with
+  // three or more members.
+  squadPendingId = (squadMembers.length === 2 && i === 0) ? squadMembers[1].id : null;
+  squadRender();
+}
+
+// The roster is static for the life of the demo, so it is fetched once over
+// HTTP instead of pushed over SSE. That way every member is on screen greyed
+// out from the first paint, rather than popping in as each one speaks.
+async function squadRosterFetch() {
+  try {
+    squadMembers = await (await fetch('/squad-roster')).json();
+  } catch { squadMembers = []; }
+  if (squadMembers.length) squadRender();
+}
+
+// If the roster call failed, or the agent is a plain assistant, the panel still
+// fills in from whoever speaks.
+function memberEnsure(id, name) {
+  if (!squadMembers.some(m => m.id === id)) {
+    squadMembers.push({ id, name, order: squadMembers.length });
+  }
+}
+
+function squadRender() {
+  if (!squadMembers.length) return;
+  panelReady('squad');
+  const active = squadMembers.findIndex(m => m.id === squadActiveId);
+  $('squad').innerHTML = squadMembers.map((m, i) => {
+    const isActive = m.id === squadActiveId;
+    const spoke = active > i;
+    const isPending = squadHandingOff && m.id === squadPendingId;
+    const state = squadEnded
+      ? (isActive ? 'Handled the call' : (spoke ? 'Handed off' : 'Did not speak'))
+      : (isActive && squadHandingOff ? 'Handing off'
+        : isPending ? 'Taking over'
+        : isActive ? 'Speaking now'
+        : (spoke ? 'Handed off' : 'Standing by'));
+    const liveClass = (isActive && !squadEnded && !squadHandingOff) ? ' active'
+      : (isActive && squadEnded) ? ' finished'
+      : (isActive || isPending) ? ' handing' : '';
+    return (i > 0 && active >= i ? '<div class="handoff-mark">handed off</div>' : '')
+      + '<div class="member' + liveClass + (spoke ? ' done' : '') + '">'
+      + '<span class="live-dot"></span>'
+      + '<div class="role">' + (i === 0 ? 'First responder' : 'Member ' + (i + 1)) + '</div>'
+      + '<div class="nm"></div><div class="state">' + state + '</div></div>';
+  }).join('');
+  // Names come from the API, so they are written as text and never as markup.
+  [...$('squad').querySelectorAll('.member .nm')].forEach((el, i) => {
+    el.textContent = squadMembers[i].name;
+  });
+}
+
+function squadActiveSet(d) {
+  squadEnded = false;
+  squadHandingOff = false;
+  squadPendingId = null;
+  memberEnsure(d.id, d.name);
+  squadActiveId = d.id;
+  activeSpeakerName = d.name;
+  squadRender();
+}
+
+function squadCallEnd() { squadEnded = true; squadRender(); }
+
+// 🔴 Reset must clear the STATE, not just the panel. Blanking the markup alone
+// looks fixed until the next render restores the old highlight from variables
+// nobody cleared — the presenter hits Reset, the transcript and tool panels go
+// idle, and the last member still reads "Handled the call". With a roster
+// loaded, reset means every member listed and standing by, which is a better
+// idle state than an empty card anyway.
+function squadReset() {
+  squadActiveId = null;
+  squadEnded = false;
+  squadHandingOff = false;
+  squadPendingId = null;
+  activeSpeakerName = null;
+  if (squadMembers.length) squadRender(); else placeholderShow('squad');
+}
+</script>
+
+<!-- Also make the transcript speaker label follow the active member, or every
+     bubble will carry one hardcoded name through the handoff:
+       bubble.querySelector('.who').textContent = activeSpeakerName || 'Agent';
+-->
+
+<!-- ======================================================= EDIT 5 of 5 — server
+     Add to server.mjs. Needs VAPI_API_KEY and SQUAD_ID in the environment
+     (Railway variables). -->
+
+<script>
+let squadRoster = [];
+
+async function squadRosterLoad() {
+  const { VAPI_API_KEY, SQUAD_ID } = process.env;
+  if (!VAPI_API_KEY || !SQUAD_ID) return;
+  try {
+    const auth = { headers: { Authorization: `Bearer ${VAPI_API_KEY}` } };
+    const squad = await (await fetch(`https://api.vapi.ai/squad/${SQUAD_ID}`, auth)).json();
+    squadRoster = await Promise.all((squad.members ?? []).map(async (m, i) => {
+      // A member is either a saved assistant id or an assistant defined inline.
+      if (m.assistant?.name) return { id: m.assistant.name, name: m.assistant.name, order: i };
+      const a = await (await fetch(`https://api.vapi.ai/assistant/${m.assistantId}`, auth)).json();
+      return { id: a.id, name: a.name ?? `Member ${i + 1}`, order: i };
+    }));
+    console.log(`[squad] roster: ${squadRoster.map(m => m.name).join(' -> ')}`);
+  } catch (err) {
+    console.log(`[squad] roster load failed: ${err.message}`);
+  }
+}
+
+let activeMemberLast = null;
+
+function activeMemberEmit(callId, message) {
+  const who = message?.newAssistant ?? message?.assistant;
+  if (!who?.name) return;
+  const key = `${callId}:${who.name}`;
+  if (key === activeMemberLast) return; // only transitions are interesting
+  activeMemberLast = key;
+  emitEvent('squad.active', { callId, id: who.id ?? who.name, name: who.name });
+}
+
+// Call activeMemberEmit(callId, message) in vapiHandler BEFORE the type switch,
+// serve the roster:
+//   if (req.url === '/squad-roster') { res.writeHead(200, {'content-type':'application/json'});
+//                                      res.end(JSON.stringify(squadRoster)); return; }
+// and load it on listen: .listen(PORT, () => { console.log(...); void squadRosterLoad(); })
+</script>
+
+<!-- Verify without a phone call: send two `assistant.started` messages with
+     different `newAssistant.name` values, with transcripts in between, and
+     watch the highlight move. Build the JSON with jq, not shell string
+     concatenation: an assistant name with a space in it will split an unquoted
+     payload across shell words and the POST silently becomes garbage. -->

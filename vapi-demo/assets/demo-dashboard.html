@@ -1,0 +1,1295 @@
+<!doctype html>
+<!-- WORKED EXAMPLE — a finished Vapi demo dashboard (ride booking scenario).
+     Everything here ran in front of real calls: the brand CSS, the idle
+     placeholders, the reset control, the assistant-request assembly strip
+     (with manual flatten/expand), the transcript reconciliation, the tool
+     cards, the stale-event guard (callScopeAccept), and the SSE client with
+     boot-token resume, the live-state fallback, and the authoritative
+     transcript correction from conversation-update.
+     The LAYOUT here is the default: a bounded shell, a card header, three
+     card panels that scroll internally. Keep it. Adapt the content, and don't
+     cargo-cult the ride-specific right panel — swap it for
+     assets/squad-panel.html or assets/report-panel.html.
+     The phone number is a placeholder — put the real demo line there. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vapi ride booking demo</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjE2IiBmaWxsPSIjMTExMDEzIi8+CjxwYXRoIGQ9Ik02LjkzODMxIDcuODAyMDNDNy41NTgxMiA4LjExOTczIDguMjYzMSA3Ljk1NzYyIDguNzEyMTEgNy40MjUxOEM5LjAwMTk1IDcuMDgxNDggOS4zMDg1MSA2LjY5MjUgOS41NDY3OCA2LjM4MzgyQzkuODE3ODkgNi4wMzI1OSAxMC4yMzQ3IDUuODIyNDYgMTAuNjc4NCA1LjgyMjQ2QzExLjI1MDYgNS44MjI0NiAxMS43NjU0IDYuMTcwMjQgMTEuOTc5IDYuNzAxMTFMMTMuOTk0NSAxMS43MTEzQzE0LjAyMDkgMTEuNzc2OSAxMy45NDYyIDExLjgzODIgMTMuODg4NyAxMS43OTcxQzEzLjI4NTEgMTEuMzY1NCAxMS40MjIyIDEwLjA2MDQgMTAuMDA2MyA5LjM2NTQ5QzkuMzk5NTQgOS4wNjc3MSA4LjcxNDkgOS4yMTA2MiA4LjI4NDY0IDkuNzMxODhDNy45MDU4OSAxMC4xOTA4IDcuNDkwNzkgMTAuNzU0NCA3LjE4ODE0IDExLjE3NzJDNi45MTEwMyAxMS41NjQzIDYuNDY2NzIgMTEuNzk5MSA1Ljk5MDY1IDExLjc5OTFDNS40MDE5MSAxMS43OTkxIDQuODcyMzkgMTEuNDQwOSA0LjY1MzMxIDEwLjg5NDRMMi4wMDU0NiA0LjI4OTY5QzEuOTc3NDQgNC4yMTk4IDIuMDYzNjcgNC4xNTc0NCAyLjExOTQgNC4yMDgwOEMyLjg0MjM0IDQuODY1MDEgNS4xMTI2NCA2Ljg2NjIxIDYuOTM4MzEgNy44MDIwM1oiIGZpbGw9IiNGRUZFRkUiLz4KPC9zdmc+Cg==">
+<style>
+@font-face { font-family: "Avantt"; font-weight: 400; src: url("/fonts/Avantt-Regular.woff2") format("woff2"); }
+@font-face { font-family: "Avantt"; font-weight: 600; src: url("/fonts/Avantt-SemiBold.woff2") format("woff2"); }
+@font-face { font-family: "Foundry Gridnik"; font-weight: 500; src: url("/fonts/FoundryGridnik-Medium.otf") format("opentype"); }
+
+:root {
+  --bg: #FEFEFE; --bg-dark: #111013;
+  --text: #111013; --text-inverse: #FEFEFE;
+  --text-muted: rgba(17,16,19,0.6);
+  --mint: #00CD8F; --mint-tint-5: rgba(0,205,143,0.05); --mint-tint-20: rgba(0,205,143,0.2);
+  --ocean: #2D6BFF; --sunset: #EF8E44;
+  --line: rgba(17,16,19,0.1);
+}
+* { box-sizing: border-box; margin: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: "Avantt", "Plus Jakarta Sans", sans-serif;
+  font-size: 15px; line-height: 1.5;
+  min-height: 100vh; display: flex; flex-direction: column;
+}
+.gridnik { font-family: "Foundry Gridnik", "Tomorrow", sans-serif; }
+.eyebrow {
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif; text-transform: uppercase;
+  font-size: 12px; letter-spacing: 0.1em; color: var(--mint); font-weight: 500;
+}
+.muted { color: var(--text-muted); }
+
+header {
+  display: flex; align-items: center; gap: 24px;
+  padding: 20px 32px; border-bottom: 1px solid var(--line);
+}
+header img { height: 26px; display: block; }
+header .titles { flex: 1; }
+header h1 { font-size: 20px; font-weight: 600; line-height: 1.2; }
+.call-number { text-align: right; }
+.call-number .num {
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif;
+  font-size: 22px; line-height: 1.2; letter-spacing: 0.02em;
+}
+.status-pill {
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif; text-transform: uppercase;
+  font-size: 12px; letter-spacing: 0.1em; padding: 8px 16px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--text-muted); background: var(--bg);
+}
+.status-pill.live { border-color: var(--mint); color: var(--mint); }
+.status-pill.live::before {
+  content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--mint); margin-right: 8px; animation: pulse 1.4s ease infinite;
+}
+@keyframes pulse { 50% { opacity: 0.3; } }
+
+main {
+  flex: 1; display: grid; gap: 24px; padding: 24px 32px;
+  grid-template-columns: 1fr 1.3fr 1fr; max-width: 1400px; width: 100%; margin: 0 auto;
+}
+.panel h2 {
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif; text-transform: uppercase;
+  font-size: 12px; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 500;
+  padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 16px;
+}
+.panel { display: flex; flex-direction: column; }
+.panel .body { display: flex; flex-direction: column; gap: 10px; overflow-y: auto;
+  flex: 1; min-height: 0; max-height: calc(100vh - 220px); }
+
+/* Transcript */
+.utterance { max-width: 92%; }
+.utterance .who { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif; color: var(--text-muted); margin-bottom: 2px; }
+.utterance .text { padding: 10px 14px; border-radius: 10px; }
+.utterance.user { align-self: flex-end; text-align: right; }
+.utterance.user .text { background: var(--bg-dark); color: var(--text-inverse); }
+.utterance.assistant .text { background: var(--mint-tint-5); border: 1px solid var(--mint-tint-20); }
+.utterance.partial .text { opacity: 0.55; }
+
+/* Tool feed */
+.tool-card { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.tool-card .row { display: flex; align-items: baseline; gap: 10px; }
+.tool-card .name { font-family: "Foundry Gridnik", "Tomorrow", sans-serif; font-size: 14px; }
+.tool-card .ms { margin-left: auto; font-family: "Foundry Gridnik", "Tomorrow", sans-serif;
+  font-size: 12px; color: var(--text-muted); }
+.tool-card .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--sunset); flex: none; align-self: center; }
+.tool-card.done .dot { background: var(--mint); animation: none; }
+.tool-card .args { font-size: 13px; color: var(--text-muted); margin-top: 6px; overflow-wrap: anywhere; }
+.tool-card .result { margin-top: 8px; padding: 10px 12px; background: var(--mint-tint-5); border-radius: 8px; font-size: 14px; }
+.tool-card.flash { animation: flash 0.9s ease; }
+@keyframes flash { 0% { background: var(--mint-tint-20); } 100% { background: transparent; } }
+.tool-card.announce { background: var(--mint-tint-5); }
+.tool-card.announce .name { color: var(--mint); }
+
+/* Ride card */
+.ride-empty { color: var(--text-muted); padding: 24px 0; }
+.ride-driver { display: flex; flex-direction: column; gap: 2px; margin-bottom: 18px; }
+.ride-driver .name { font-size: 26px; font-weight: 600; line-height: 1.15; }
+.ride-route { font-size: 14px; margin-bottom: 18px; }
+.ride-route .leg { display: flex; gap: 8px; align-items: baseline; margin-bottom: 4px; }
+.ride-route .leg .k { font-family: "Foundry Gridnik", "Tomorrow", sans-serif; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); width: 42px; flex: none; }
+.timeline { display: flex; flex-direction: column; gap: 0; }
+.step { display: flex; gap: 12px; align-items: flex-start; }
+.step .marker { display: flex; flex-direction: column; align-items: center; width: 14px; flex: none; }
+.step .marker .node { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg); }
+.step .marker .stem { width: 2px; flex: 1; min-height: 22px; background: var(--line); }
+.step:last-child .marker .stem { display: none; }
+.step .label { font-size: 14px; padding-bottom: 18px; color: var(--text-muted); }
+.step.reached .marker .node { border-color: var(--mint); background: var(--mint); }
+.step.reached .label { color: var(--text); }
+.step.current .label { font-weight: 600; }
+.ride-cancelled { margin-top: 12px; font-family: "Foundry Gridnik", "Tomorrow", sans-serif;
+  font-size: 13px; color: var(--sunset); text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* Driver ETA clock */
+.eta-clock {
+  display: none; align-items: baseline; justify-content: space-between;
+  padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 14px;
+}
+.eta-clock.on { display: flex; }
+.eta-clock .lbl {
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif; text-transform: uppercase;
+  font-size: 11px; letter-spacing: 0.1em; color: var(--text-muted); font-weight: 500;
+}
+.eta-clock .val { font-family: "Foundry Gridnik", "Tomorrow", sans-serif; font-size: 30px; line-height: 1; }
+.eta-clock .val.arrived { color: var(--mint); font-size: 16px; letter-spacing: 0.08em; text-transform: uppercase; }
+.eta-clock .val.due { color: var(--sunset); }
+
+
+/* Assistant request assembly line.
+   Always present so the layout never jumps when a call lands: dim outlines at
+   rest, then four lit stages while the request is answered. Once the agent is
+   ready it can be flattened by hand to a single summary row, which hands the
+   height back to the panels below. */
+.assembly {
+  position: relative;
+  max-width: 1400px; width: 100%; margin: 0 auto;
+  padding: 20px 32px 0;
+}
+
+/* Flatten and expand, driven by hand rather than by the call. Which state the
+   strip is in during a demo is a presenting decision, so it stays wherever it
+   was put. */
+.assembly-toggle {
+  position: absolute; top: 0; right: 32px;
+  display: none; align-items: center; gap: 6px;
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif; text-transform: uppercase;
+  font-size: 11px; letter-spacing: 0.1em;
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--text-muted);
+  cursor: pointer;
+}
+.assembly-toggle:hover { border-color: var(--mint-tint-20); color: var(--text); }
+.assembly-toggle:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+.assembly-toggle svg { width: 13px; height: 13px; transition: transform .25s ease; }
+.assembly-toggle[hidden] { display: none; }
+.assembly-toggle:not([hidden]) { display: inline-flex; }
+.assembly.collapsed .assembly-toggle svg { transform: rotate(-90deg); }
+.stages {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  align-items: stretch;
+}
+.stage {
+  position: relative; border-radius: 14px; padding: 14px 16px 16px;
+  border: 1px dashed var(--line); background: transparent;
+  min-height: 132px; display: flex; flex-direction: column; gap: 4px;
+  opacity: 0.45; transition: opacity .35s ease, border-color .35s ease,
+    background .35s ease, box-shadow .35s ease;
+}
+/* The arrow between cards. Drawn on the card rather than as an element so the
+   grid stays four columns and nothing reflows when a stage changes state. */
+.stage + .stage::before {
+  content: ""; position: absolute; left: -12px; top: 50%;
+  width: 12px; height: 1px; background: var(--line);
+}
+.stage.active, .stage.done {
+  opacity: 1; border-style: solid; border-color: var(--mint-tint-20);
+  background: var(--mint-tint-5);
+}
+.stage.active { box-shadow: 0 0 0 3px var(--mint-tint-5); }
+.stage.miss { border-color: rgba(239,142,68,0.35); background: rgba(239,142,68,0.06); }
+.stage .st-step {
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif;
+  font-size: 11px; letter-spacing: 0.1em; color: var(--mint);
+}
+.stage.miss .st-step { color: var(--sunset); }
+.stage .st-label {
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif; text-transform: uppercase;
+  font-size: 12px; letter-spacing: 0.08em; color: var(--text-muted);
+}
+.stage.active .st-label, .stage.done .st-label { color: var(--text); }
+/* Clipped so a chip in flight fades out at the card's edge rather than
+   floating across the gap and over its neighbour's border. */
+.stage .st-body { margin-top: 6px; display: flex; flex-direction: column; gap: 6px;
+  overflow: hidden; }
+.stage .st-lead {
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif;
+  font-size: 19px; line-height: 1.15; letter-spacing: 0.01em;
+}
+.stage .st-sub { font-size: 13px; color: var(--text-muted); }
+
+/* The three dots under a stage that is still working. */
+.st-working { display: flex; gap: 5px; margin-top: 2px; }
+.st-working i {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--mint);
+  opacity: 0.35; animation: phpulse 1.2s ease-in-out infinite;
+}
+.st-working i:nth-child(2) { animation-delay: .15s; }
+.st-working i:nth-child(3) { animation-delay: .3s; }
+
+/* Profile chips, and their trip into the agent card. */
+.st-chip {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 13px; padding: 5px 9px; border-radius: 8px;
+  background: var(--bg); border: 1px solid var(--mint-tint-20);
+  opacity: 0; transform: translateY(4px);
+  animation: chipIn .34s ease forwards;
+}
+.st-chip .k {
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif;
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-muted); flex: none;
+}
+.st-chip .v { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The chip is pushed toward the agent card and settles back rather than
+   leaving. The strip stays open after the call connects, so a chip that exits
+   leaves stage 3 looking empty for the rest of the demo, when what it should
+   show is the record of what was loaded. */
+.st-chip.sent { animation: chipFly .6s ease forwards; }
+@keyframes chipIn { to { opacity: 1; transform: translateY(0); } }
+@keyframes chipFly {
+  0%   { opacity: 1; transform: translateX(0); }
+  45%  { opacity: 0.3; transform: translateX(30px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+/* The agent card's build rows, revealed one after another. */
+.st-built { display: flex; align-items: center; gap: 8px; font-size: 13px;
+  opacity: 0; animation: chipIn .3s ease forwards; }
+.st-built .tick { color: var(--mint); flex: none; font-size: 12px; }
+.st-built.ready { color: var(--mint); font-family: "Foundry Gridnik", "Tomorrow", sans-serif;
+  text-transform: uppercase; letter-spacing: 0.08em; font-size: 12px; }
+
+/* Collapsed summary: the payoff, on one line, for the rest of the call. */
+.assembly-summary { display: none; }
+.assembly.collapsed .stages { display: none; }
+.assembly.collapsed .assembly-summary {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 12px 16px; border-radius: 12px;
+  border: 1px solid var(--mint-tint-20); background: var(--mint-tint-5);
+  animation: chipIn .3s ease forwards;
+}
+.assembly.collapsed.miss .assembly-summary {
+  border-color: rgba(239,142,68,0.35); background: rgba(239,142,68,0.06);
+}
+.assembly-summary .who {
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif; font-size: 16px;
+}
+.assembly-summary .sep { width: 1px; height: 16px; background: var(--line); }
+.assembly-summary .bit { font-size: 13px; color: var(--text-muted); }
+.assembly-summary .bit b { font-weight: 600; color: var(--text); }
+
+/* Motion is decoration here; the state changes carry the meaning. */
+@media (prefers-reduced-motion: reduce) {
+  .st-chip, .st-built, .assembly.collapsed .assembly-summary { animation: none; opacity: 1; transform: none; }
+  .st-working i { animation: none; }
+}
+
+/* Idle panels. Shown before a call and after a reset, so the screen looks
+   composed when it goes up in front of an audience rather than blank. */
+.placeholder {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; text-align: center; gap: 14px;
+  padding: 48px 24px; min-height: 260px;
+  border: 1px dashed var(--line); border-radius: 14px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, var(--mint-tint-5) 0%, transparent 70%);
+}
+.placeholder .ph-icon {
+  width: 46px; height: 46px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--mint-tint-5); border: 1px solid var(--mint-tint-20);
+  color: var(--mint);
+}
+.placeholder .ph-icon svg { width: 22px; height: 22px; display: block; }
+.placeholder .ph-title {
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif;
+  font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.placeholder .ph-dots { display: flex; gap: 5px; }
+.placeholder .ph-dots i {
+  width: 5px; height: 5px; border-radius: 50%; background: var(--mint);
+  opacity: 0.35; animation: phpulse 1.6s ease-in-out infinite;
+}
+.placeholder .ph-dots i:nth-child(2) { animation-delay: 0.2s; }
+.placeholder .ph-dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes phpulse { 50% { opacity: 1; } }
+
+/* Reset, so the board can be cleared before a screen share. */
+.btn-reset {
+  font-family: "Foundry Gridnik", "Tomorrow", sans-serif; text-transform: uppercase;
+  font-size: 11px; letter-spacing: 0.1em; padding: 9px 14px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--text-muted);
+  cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.btn-reset svg { width: 13px; height: 13px; display: block; }
+.btn-reset:hover { color: var(--mint); border-color: var(--mint); }
+.btn-reset:active { transform: translateY(1px); }
+
+footer {
+  padding: 16px 32px; border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+}
+footer .eyebrow { color: var(--text-muted); }
+
+/* ==========================================================================
+   THE DEFAULT LOOK. A bounded app shell with card surfaces, rather than a
+   full-bleed page: the header is a card in the same family as the panels, the
+   three panels fill the viewport exactly once, and each panel scrolls inside
+   its own body so the page itself never moves. Gridnik carries every label and
+   data value, Avantt carries prose. Keep this; restyle only if a customer's
+   brand demands it.
+   ========================================================================== */
+:root {
+  --panel-bg: #FFFFFF;
+  --panel-2: rgba(17, 16, 19, 0.03);
+  --ink-faint: rgba(17, 16, 19, 0.4);
+  --grid: "Foundry Gridnik", "Tomorrow", sans-serif;
+}
+body { display: block; min-height: 0; }
+.shell {
+  max-width: 1380px; height: 100vh; margin: 0 auto;
+  padding: 20px 24px; display: flex; flex-direction: column; gap: 16px;
+}
+header {
+  gap: 16px; padding: 12px 18px; border-bottom: none;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--panel-bg);
+}
+header img { height: 20px; width: auto; display: block; }
+.brand {
+  font-weight: 600; font-size: 15px; letter-spacing: -0.01em;
+  padding-left: 16px; border-left: 1px solid var(--line);
+}
+.phone {
+  font-family: var(--grid); font-size: 11.5px; color: var(--text-muted);
+  text-decoration: none; border: 1px solid var(--line); border-radius: 999px;
+  padding: 5px 12px; white-space: nowrap;
+}
+.phone:hover { color: var(--text); border-color: var(--text); }
+.spacer { flex: 1; }
+.call-id { font-family: var(--grid); font-size: 11.5px; color: var(--ink-faint); }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 11px; padding: 5px 12px; background: transparent;
+}
+.status-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-faint); }
+.status-pill.live { color: var(--text); border-color: var(--mint); }
+/* The pill drew its live dot with ::before before the dot became a real
+   element. Leaving both in shows two dots. */
+.status-pill.live::before { content: none; }
+.status-pill.live .dot { background: var(--mint); animation: pillPulse 1.4s ease-in-out infinite; }
+@keyframes pillPulse { 50% { opacity: 0.25; } }
+@media (prefers-reduced-motion: reduce) { .status-pill.live .dot { animation: none; } }
+.btn-reset { padding: 5px 12px; font-size: 11px; }
+
+main {
+  flex: 1; min-height: 0; gap: 16px; padding: 0; margin: 0; max-width: none;
+  grid-template-columns: 1.15fr 1fr 0.85fr;
+}
+@media (max-width: 980px) { main { grid-template-columns: 1fr; overflow-y: auto; } }
+.panel {
+  min-height: 0; background: var(--panel-bg);
+  border: 1px solid var(--line); border-radius: 10px;
+}
+.panel h2 {
+  margin: 0; padding: 12px 16px; font-size: 11px; letter-spacing: 0.12em;
+  border-bottom: 1px solid var(--line);
+}
+.panel h2 .n { color: var(--mint); }
+.panel .body { padding: 14px 16px; max-height: none; gap: 12px; }
+
+/* Transcript turns are flat tinted surfaces rather than chat bubbles. */
+.utterance .who { font-size: 10px; margin-bottom: 3px; color: var(--ink-faint); }
+.utterance .text { background: var(--panel-2); border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+.utterance.assistant .who { color: var(--mint); }
+.utterance.assistant .text { background: var(--mint-tint-5); border: none; }
+.utterance.user .text { background: var(--panel-2); color: var(--text); }
+.utterance.partial .text { opacity: 1; color: var(--text-muted); font-style: italic; }
+
+/* Cards inside panels sit on the panel surface, so they lose their own fill. */
+.tool-card, .outcome-row { background: var(--panel-bg); }
+/* The assembly strip is one more card in the shell when it is used at all —
+   and it hides itself until a call actually resolves through it. A demo that
+   is not showcasing caller recognition would otherwise show four empty grey
+   boxes across the top of a projector for the whole call. */
+.assembly { border-radius: 10px; }
+.assembly.idle { display: none; }
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+  <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwMSIgaGVpZ2h0PSIzMzEiIHZpZXdCb3g9IjAgMCAxMDAxIDMzMSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3Mi4yNDYgMTI5LjY0QzE5Mi4xNTcgMTM5Ljg0NiAyMTQuODA0IDEzNC42MzggMjI5LjIyOCAxMTcuNTM0QzIzOC41MzkgMTA2LjQ5MyAyNDguMzg3IDkzLjk5NzIgMjU2LjA0MSA4NC4wODFDMjY0Ljc1IDcyLjc5OCAyNzguMTQgNjYuMDQ3NCAyOTIuMzkzIDY2LjA0NzRDMzEwLjc3NiA2Ni4wNDc0IDMyNy4zMTMgNzcuMjE5NyAzMzQuMTczIDk0LjI3MzZMMzk4LjkyMyAyNTUuMjIyQzM5OS43NzEgMjU3LjMzIDM5Ny4zNyAyNTkuMyAzOTUuNTIyIDI1Ny45NzhDMzc2LjEzNCAyNDQuMTEgMzE2LjI4NyAyMDIuMTg4IDI3MC44MDMgMTc5Ljg2NUMyNTEuMzExIDE3MC4yOTkgMjI5LjMxOCAxNzQuODkgMjE1LjQ5NiAxOTEuNjM2QzIwMy4zMjkgMjA2LjM3NiAxODkuOTk0IDIyNC40ODMgMTgwLjI3MSAyMzguMDY1QzE3MS4zNjkgMjUwLjUgMTU3LjA5NiAyNTguMDQ0IDE0MS44MDMgMjU4LjA0NEMxMjIuODkgMjU4LjA0NCAxMDUuODc5IDI0Ni41MzcgOTguODQxNSAyMjguOTgyTDEzLjc4MDkgMTYuODA4NEMxMi44ODA4IDE0LjU2MzIgMTUuNjUxMSAxMi41NTk5IDE3LjQ0MTMgMTQuMTg2NkM0MC42NjUxIDM1LjI5MDEgMTEzLjU5NyA5OS41Nzc1IDE3Mi4yNDYgMTI5LjY0WiIgZmlsbD0iIzExMTAxMyIvPgo8cGF0aCBkPSJNNzg4LjE1NyA5Ny4zMjE1QzgwMy40NzIgNzguNjMyMiA4MjcuMDM2IDY2LjA4OTEgODU0LjMwNCA2Ni4wODkxQzkwNi42IDY2LjA4OTEgOTQ3LjY1OSAxMDcuMDM5IDk0Ny42NiAxNjIuMzZDOTQ3LjY2IDIxNy42OCA5MDYuOTQ0IDI1OC40MjMgODU0LjY0OCAyNTguNDIzQzgyNy4zNzkgMjU4LjQyMyA4MDMuNDcyIDI0Ni44MzYgNzg4LjE1NyAyMjguMTQ3VjMyNi44MzJINzU0LjE2NVY2Ni4wODkxSDc4OC4xNTdWOTcuMzIxNVpNNjU4LjgwNyA2Ni4wODkxQzcwNi40ODQgNjYuMDg5MSA3MzUuNzY2IDk1LjAxNDggNzM1Ljc2NiAxNDAuMDkzVjI1OC4yNTFINzAxLjk3OVYyMjkuMTIyQzY4OS45NjYgMjQ2LjQwMiA2NjcuODE3IDI1OC40MjMgNjQ0LjU0MiAyNTguNDIzQzYwMy45OTkgMjU4LjQyMyA1NzguMDk1IDIzNi42MzUgNTc4LjA5NSAyMDMuNTc4QzU3OC4wOTUgMTY3LjUxNiA2MDguNTAzIDE0My4wOTggNjY0LjA2MyAxNDMuMDk4SDcwMS4yMjhWMTM3LjA4OEM3MDEuMjI4IDExMC43OTMgNjg1LjA4NiA5NC42MzkxIDY1OC4wNTcgOTQuNjM4OUM2MzUuMTU3IDk0LjYzODkgNjE2LjAxMSAxMDkuNjY1IDYxNC41MDkgMTMwLjcwMUg1NzkuOTcyQzU4MS44NDkgOTMuMTM2NCA2MTQuODg1IDY2LjA4OTMgNjU4LjgwNyA2Ni4wODkxWk0xMDAwLjAxIDI1OC4yNTJIOTY1LjY0OFY2Ni4wOTAxSDEwMDAuMDFWMjU4LjI1MlpNNDg2LjYwNSAyMTMuMjY0TDU0My42NTcgNjYuMDg5MUg1ODAuOTM1TDUwMy4zNzcgMjU4LjI1MUg0NjcuOTdMMzkwLjAyOCA2Ni4wODkxSDQyNi4xNzZMNDg2LjYwNSAyMTMuMjY0Wk02NjUuMTg5IDE2OS4wMThDNjMwLjY1MiAxNjkuMDE4IDYxMS44ODEgMTgwLjY2MyA2MTEuODgxIDIwMi44MjZDNjExLjg4MSAyMTkuNzMxIDYyNC42NDUgMjMxLjM3NiA2NDcuMTY5IDIzMS4zNzZDNjc4LjMyOCAyMzEuMzc2IDcwMS45NzkgMjA2LjIwNyA3MDEuOTc5IDE3NC42NTNWMTY5LjAxOEg2NjUuMTg5Wk04NTEuMjg2IDk5LjkzNzdDODE1Ljc5OSA5OS45Mzc4IDc4OC4xNTcgMTI1LjcyOSA3ODguMTU3IDE2My4xMDhDNzg4LjE1NyAxOTkuMzY1IDgxNS43OTkgMjI1LjkwNCA4NTEuMjg2IDIyNS45MDRDODg2LjAyNSAyMjUuOTA0IDkxMy42NjcgMTk4LjI0NCA5MTMuNjY3IDE2My4xMDhDOTEzLjY2NyAxMjYuODUgODg2LjAyNSA5OS45Mzc3IDg1MS4yODYgOTkuOTM3N1pNMTAwMC4wMSA0OC4wMDQySDk2NS42NDhWMTMuNjE4NEgxMDAwLjAxVjQ4LjAwNDJaIiBmaWxsPSIjMTExMDEzIi8+Cjwvc3ZnPgo=" alt="Vapi">
+  <div class="brand">Ride booking agent</div>
+  <a class="phone" href="tel:+15550100000">&#128222; +1 (555) 010-0000</a>
+  <div class="spacer"></div>
+  <div class="call-id" id="callId"></div>
+  <div class="status-pill" id="callStatus"><span class="dot"></span><span class="st-text">Waiting for a call</span></div>
+  <button class="btn-reset" id="resetBtn" title="Clear the board before sharing your screen">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+    Reset
+  </button>
+</header>
+
+<!-- What happens between the phone ringing and the agent speaking. The number
+     carries no assistant, so Vapi asks this server for one; these four stages
+     are that exchange, slowed down enough to read. -->
+<div class="assembly idle" id="assembly">
+  <div class="stages" id="stages">
+    <div class="stage" data-stage="incoming">
+      <div class="st-step">01</div>
+      <div class="st-label">Incoming</div>
+      <div class="st-body"></div>
+    </div>
+    <div class="stage" data-stage="recognized">
+      <div class="st-step">02</div>
+      <div class="st-label">Recognized</div>
+      <div class="st-body"></div>
+    </div>
+    <div class="stage" data-stage="profile">
+      <div class="st-step">03</div>
+      <div class="st-label">Profile</div>
+      <div class="st-body"></div>
+    </div>
+    <div class="stage" data-stage="agent">
+      <div class="st-step">04</div>
+      <div class="st-label">Agent built</div>
+      <div class="st-body"></div>
+    </div>
+  </div>
+  <div class="assembly-summary" id="assemblySummary"></div>
+  <button class="assembly-toggle" id="assemblyToggle" aria-expanded="true" hidden>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    <span class="lbl">Flatten</span>
+  </button>
+</div>
+
+<main>
+  <section class="panel">
+    <h2><span class="n">01</span> &middot; <span class="label">Live transcript</span></h2>
+    <div class="body" id="transcript"></div>
+  </section>
+  <section class="panel">
+    <h2><span class="n">02</span> &middot; <span class="label">Tool calls</span></h2>
+    <div class="body" id="tools"></div>
+  </section>
+  <section class="panel">
+    <h2><span class="n">03</span> &middot; <span class="label">Ride status</span></h2>
+    <div class="eta-clock" id="etaClock"><span class="lbl">Driver ETA</span><span class="val">--:--</span></div>
+    <div class="body" id="ride">
+    </div>
+  </section>
+</main>
+
+</div><!-- /shell -->
+
+<script>
+const $ = (id) => document.getElementById(id);
+const STATUSES = ['en_route', 'arriving', 'arrived', 'in_progress', 'completed'];
+const STATUS_LABELS = {
+  en_route: 'Driver on the way',
+  arriving: 'Arriving now',
+  arrived: 'Driver arrived',
+  in_progress: 'Trip in progress',
+  completed: 'Dropped off',
+};
+
+let activeCallId = null;
+let etaTarget = null;
+let etaState = 'off'; // 'counting' | 'arrived' | 'off'
+
+// Transcript reconciliation state. The transcriber emits per-SEGMENT partial
+// streams and each transcript webhook is its own HTTP POST, so the dashboard
+// receives segment restarts mid-sentence, partials that arrive after their own
+// final, finals that never arrive, and partials that briefly shrink. Tracking
+// one open bubble per role is not enough to survive that.
+const PARKED_MAX = 4;
+let pendingByRole = {};   // role -> the bubble receiving the live partial stream
+let parkedByRole = {};    // role -> bubbles whose stream was interrupted, awaiting a late final
+let callEnded = false;
+// Tool calls render in their own panel here rather than as a row inside the
+// conversation, so adjacency alone cannot tell that two identical sentences sit
+// on opposite sides of a tool call. Stamping each bubble with the segment it
+// was spoken in keeps a genuine repeat after a tool call from collapsing into
+// the one before it.
+let toolSegment = 0;
+// The line the assistant speaks as it hands over. The switch tears the
+// transcriber down mid-sentence, so that line reaches us split across two
+// segments, or cut off with its final never sent. The server tells us the exact
+// wording when the switch starts, which is before any of it arrives, so
+// whatever turns up can be folded into one bubble reading the full line.
+let expectedHandover = null;
+
+// Idle panels, so the dashboard reads as composed rather than broken when it is
+// on screen before anyone dials. Each card is titled from its own panel
+// heading, which keeps the two from drifting apart.
+const PLACEHOLDERS = {
+  transcript: {
+    icon: '<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-4-.9L3 21l1.9-4.6A8.4 8.4 0 0 1 4 12a8.4 8.4 0 0 1 8.5-8.5A8.4 8.4 0 0 1 21 11.5z"/>',
+  },
+  tools: {
+    icon: '<path d="M13 2 3 14h8l-1 8 10-12h-8l1-8z"/>',
+  },
+  ride: {
+    icon: '<path d="M12 21.5s6.8-5.7 6.8-11a6.8 6.8 0 1 0-13.6 0c0 5.3 6.8 11 6.8 11z"/><circle cx="12" cy="10.3" r="2.5"/>',
+  },
+};
+
+function placeholderShow(panelId) {
+  const p = PLACEHOLDERS[panelId];
+  const h2 = $(panelId).closest('.panel').querySelector('h2');
+  const title = (h2.querySelector('.label') ?? h2).textContent;
+  $(panelId).innerHTML =
+    '<div class="placeholder">'
+    + '<div class="ph-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + p.icon + '</svg></div>'
+    + '<div class="ph-title">' + title + '</div>'
+    + '<div class="ph-dots"><i></i><i></i><i></i></div>'
+    + '</div>';
+}
+
+// Clear a panel's idle state the moment it has something real to show.
+function panelReady(panelId) {
+  const ph = $(panelId).querySelector('.placeholder');
+  if (ph) ph.remove();
+}
+
+// ---- Assistant request assembly line ----------------------------------
+//
+// The server answers the assistant request in about a millisecond and holds
+// the response open for a few seconds so this has time to play. All pacing
+// lives here rather than on the server: one event carries every fact, and the
+// stages are advanced by local timers. The final stage is the exception, and
+// deliberately so — it waits for the call to actually start, which makes the
+// sequence land on the greeting however long setup really took.
+
+const STAGE_AT_MS = [0, 1000, 2000, 3000];
+// If the call never reports in-progress, finish anyway. A strip frozen on
+// "building" in front of an audience is worse than one that finishes early.
+const READY_FALLBACK_MS = 6000;
+
+let assemblyTimers = [];
+let assemblyData = null;
+
+// Match the header's rendering of the demo line, so the two numbers on screen
+// look like the same kind of thing.
+function numberPretty(raw) {
+  if (!raw) return 'Withheld';
+  const d = String(raw).replace(/\D+/g, '');
+  const ten = d.length > 10 ? d.slice(-10) : d;
+  if (ten.length !== 10) return String(raw);
+  return '+1 (' + ten.slice(0, 3) + ') ' + ten.slice(3, 6) + '-' + ten.slice(6);
+}
+
+const stageEl = (name) => document.querySelector('#stages .stage[data-stage="' + name + '"]');
+
+function assemblyTimersClear() {
+  for (const t of assemblyTimers) clearTimeout(t);
+  assemblyTimers = [];
+}
+
+function assemblyIdle() {
+  assemblyTimersClear();
+  assemblyData = null;
+  const root = $('assembly');
+  // A demo that is not showcasing caller recognition deletes the strip's
+  // markup. These two guards, plus the optional-chained toggle listener at the
+  // bottom of the file, are what let that deletion be markup-only: the rest of
+  // this code goes inert instead of throwing.
+  if (!root) return;
+  root.className = 'assembly idle';
+  $('assemblySummary').innerHTML = '';
+  const btn = $('assemblyToggle');
+  btn.hidden = true;
+  btn.setAttribute('aria-expanded', 'true');
+  btn.querySelector('.lbl').textContent = 'Flatten';
+  for (const st of document.querySelectorAll('#stages .stage')) {
+    st.classList.remove('active', 'done', 'miss');
+    st.querySelector('.st-body').innerHTML = '';
+  }
+}
+
+function stageMark(name, state) {
+  const st = stageEl(name);
+  st.classList.remove('active', 'done');
+  st.classList.add(state);
+  return st.querySelector('.st-body');
+}
+
+function workingDots() {
+  return '<div class="st-working"><i></i><i></i><i></i></div>';
+}
+
+function assemblyStart(d) {
+  assemblyTimersClear();
+  assemblyData = d;
+  const root = $('assembly');
+  if (!root) return;
+  root.className = 'assembly running' + (d.recognized ? '' : ' miss');
+  $('assemblySummary').innerHTML = '';
+  $('assemblyToggle').hidden = true;
+  for (const st of document.querySelectorAll('#stages .stage')) {
+    st.classList.remove('active', 'done', 'miss');
+    st.querySelector('.st-body').innerHTML = '';
+  }
+  if (!d.recognized) {
+    stageEl('recognized').classList.add('miss');
+    stageEl('profile').classList.add('miss');
+  }
+
+  const at = (i, fn) => assemblyTimers.push(setTimeout(fn, STAGE_AT_MS[i]));
+
+  // 01 — the webhook itself, carrying nothing but a number.
+  at(0, () => {
+    const body = stageMark('incoming', 'active');
+    body.innerHTML = '<div class="st-lead"></div><div class="st-sub">assistant request</div>' + workingDots();
+    body.querySelector('.st-lead').textContent = numberPretty(d.number);
+  });
+
+  // 02 — matching that number against the profile table.
+  at(1, () => {
+    stageMark('incoming', 'done').querySelector('.st-working')?.remove();
+    const body = stageMark('recognized', 'active');
+    body.innerHTML = '<div class="st-lead"></div><div class="st-sub"></div>' + workingDots();
+    body.querySelector('.st-lead').textContent = d.recognized ? d.name : 'New caller';
+    body.querySelector('.st-sub').textContent = d.recognized ? 'matched a profile' : 'no match in the system';
+  });
+
+  // 03 — reading what is saved, one chip per field.
+  at(2, () => {
+    stageMark('recognized', 'done').querySelector('.st-working')?.remove();
+    const body = stageMark('profile', 'active');
+    body.innerHTML = d.recognized ? '' : '<div class="st-sub">nothing on file</div>';
+    (d.chips || []).forEach((chip, i) => {
+      const el = document.createElement('div');
+      el.className = 'st-chip';
+      el.style.animationDelay = (i * 90) + 'ms';
+      el.innerHTML = '<span class="k"></span><span class="v"></span>';
+      el.querySelector('.k').textContent = chip.label;
+      el.querySelector('.v').textContent = chip.value;
+      body.appendChild(el);
+    });
+  });
+
+  // 04 — the answer being assembled out of everything above.
+  at(3, () => {
+    const profileBody = stageMark('profile', 'done');
+    for (const chip of profileBody.querySelectorAll('.st-chip')) chip.classList.add('sent');
+    const body = stageMark('agent', 'active');
+    const rows = [
+      'Greeting for ' + (d.recognized ? d.name : 'a new caller'),
+      'Prompt rendered',
+      'Voice · ' + (d.agent?.persona || 'Sarah'),
+      'Tools · ' + (d.agent?.toolCount ?? 0),
+    ];
+    body.innerHTML = rows
+      .map((_, i) => '<div class="st-built" style="animation-delay:' + (i * 120) + 'ms"><span class="tick">✓</span><span class="t"></span></div>')
+      .join('') + workingDots();
+    body.querySelectorAll('.st-built .t').forEach((el, i) => { el.textContent = rows[i]; });
+  });
+
+  assemblyTimers.push(setTimeout(assemblyReady, READY_FALLBACK_MS));
+}
+
+// The call is live, so the agent it was building is the one now talking. The
+// strip stays open: whether the four stages or the one-line summary is on
+// screen is a presenting decision, so it is left to the button below rather
+// than taken automatically at the moment the call connects.
+function assemblyReady() {
+  if (!assemblyData) return;
+  const body = stageMark('agent', 'done');
+  body.querySelector('.st-working')?.remove();
+  if (!body.querySelector('.ready')) {
+    const el = document.createElement('div');
+    el.className = 'st-built ready';
+    el.textContent = 'Ready · on the call';
+    body.appendChild(el);
+  }
+  // Built now so flattening is instant whenever it is asked for.
+  assemblySummaryBuild();
+  $('assemblyToggle').hidden = false;
+}
+
+// The payoff on one line: who this is and what was loaded for them. Rendered
+// into the collapsed row, which only becomes visible once flattened.
+function assemblySummaryBuild() {
+  const d = assemblyData;
+  if (!d) return;
+  const box = $('assemblySummary');
+  box.innerHTML = '<span class="who"></span><span class="sep"></span><span class="bit num"></span>';
+  box.querySelector('.who').textContent = d.recognized ? d.name : 'New caller';
+  box.querySelector('.num').textContent = numberPretty(d.number);
+  for (const chip of d.chips || []) {
+    const sep = document.createElement('span');
+    sep.className = 'sep';
+    const bit = document.createElement('span');
+    bit.className = 'bit';
+    bit.innerHTML = '<b></b>';
+    bit.querySelector('b').textContent = chip.value;
+    box.appendChild(sep);
+    box.appendChild(bit);
+  }
+}
+
+/**
+ * Flatten the strip to its summary row, or open it back up to the four stages.
+ * Called by the button and safe to call directly.
+ */
+function assemblyExpandSet(expanded) {
+  const d = assemblyData;
+  if (!d) return;
+  // Nothing to flatten to until the summary exists, which is only after the
+  // sequence has reached the agent.
+  if (!expanded && !$('assemblySummary').textContent) return;
+  const miss = d.recognized ? '' : ' miss';
+  $('assembly').className = 'assembly ' + (expanded ? 'running' : 'collapsed') + miss;
+  const btn = $('assemblyToggle');
+  btn.setAttribute('aria-expanded', String(expanded));
+  btn.querySelector('.lbl').textContent = expanded ? 'Flatten' : 'Expand';
+}
+
+function assemblyExpandToggle() {
+  assemblyExpandSet($('assembly').classList.contains('collapsed'));
+}
+
+// Put the board back to how it looks before a call. Local to this page: it
+// clears what is on screen without touching the call or the server.
+function viewReset() {
+  activeCallId = null;
+  historySig = '';
+  pendingByRole = {};
+  parkedByRole = {};
+  callEnded = false;
+  toolSegment = 0;
+  expectedHandover = null;
+  etaTarget = null;
+  etaState = 'off';
+  for (const id of ['transcript', 'tools', 'ride']) placeholderShow(id);
+  assemblyIdle();
+  $('callId').textContent = '';
+  setStatus('Waiting for a call', false);
+  renderEtaClock();
+}
+
+// Which events are allowed to say "a new call has begun". An assistant request
+// is the first thing that happens on a call, so it is what establishes whose
+// board this is. Nothing else may take the board over.
+const CALL_OPENING = new Set(['caller.resolved']);
+
+// Calls that have already finished. Their stragglers must never claim a board
+// belonging to a call that is still live.
+const endedCalls = new Set();
+
+function endedCallMark(callId) {
+  if (!callId) return;
+  endedCalls.add(callId);
+  // Sets iterate in insertion order, so this drops the oldest.
+  if (endedCalls.size > 50) endedCalls.delete(endedCalls.values().next().value);
+}
+
+/**
+ * Whether an event belongs on the board, adopting the call if it opens one.
+ *
+ * The end-of-call report arrives seconds after a call ends, so hanging up and
+ * redialling puts the previous call's report in the middle of the next call's
+ * opening sequence. Resetting on it wiped the board and cleared the timers
+ * driving the assembly strip, which then never finished: four dead cards for
+ * the rest of the call. Anything carrying a call id that is neither the call on
+ * screen nor the start of a new one is late, and late events are dropped.
+ */
+function callScopeAccept(type, callId) {
+  if (!callId || callId === 'unknown-call') return true;
+  if (callId === activeCallId) return true;
+  if (endedCalls.has(callId)) return false;
+  // A new call may claim the board when: it announces itself (caller.resolved,
+  // demos with assistant-request), the page has no board yet (opened mid-call),
+  // or the call on screen has already ENDED. That last one matters for demos
+  // WITHOUT assistant-request: no opening event ever fires there, and without
+  // it the board would show the first call forever and silently drop the rest.
+  // Verified live: a real second call rendered nothing until this branch existed.
+  if (CALL_OPENING.has(type) || activeCallId === null || callEnded || endedCalls.has(activeCallId)) {
+    resetForCall(callId);
+    return true;
+  }
+  return false;
+}
+
+function resetForCall(callId) {
+  if (callId === activeCallId) return;
+  activeCallId = callId;
+  historySig = '';
+  assemblyIdle();
+  placeholderShow('transcript');
+  placeholderShow('tools');
+  placeholderShow('ride');
+  $('callId').textContent = 'Call ' + callId.slice(0, 8);
+  pendingByRole = {};
+  parkedByRole = {};
+  callEnded = false;
+  toolSegment = 0;
+  expectedHandover = null;
+  etaTarget = null;
+  etaState = 'off';
+}
+
+function renderEtaClock() {
+  const el = $('etaClock');
+  // This runs on a 250ms interval, so it outlives the markup it draws into.
+  // Anyone replacing the ride panel deletes that markup, and without this
+  // guard the page then throws four times a second behind a screen that still
+  // looks fine.
+  if (!el) return;
+  if (etaState === 'off') { el.classList.remove('on'); return; }
+  el.classList.add('on');
+  const v = el.querySelector('.val');
+  if (etaState === 'arrived') {
+    v.textContent = 'Arrived';
+    v.classList.add('arrived');
+    v.classList.remove('due');
+    return;
+  }
+  v.classList.remove('arrived');
+  const rem = Math.max(0, etaTarget - Date.now());
+  const m = Math.floor(rem / 60000);
+  const s = Math.floor((rem % 60000) / 1000);
+  v.textContent = m + ':' + String(s).padStart(2, '0');
+  v.classList.toggle('due', rem === 0);
+}
+setInterval(renderEtaClock, 250);
+
+// Any content event proves the call is live. Without this the board depends on
+// one status-update arriving: lose it (a dropped webhook, or an assistant that
+// never subscribed to status-update) and the pill reads "Ringing" for the whole
+// call while the transcript scrolls underneath. One in-progress event really
+// did go missing on a deployed demo.
+function liveImply() {
+  if (callEnded) return;
+  const el = $('callStatus');
+  if (!el.classList.contains('live') || el.querySelector('.st-text').textContent === 'Ringing') {
+    setStatus('Call in progress', true);
+  }
+}
+
+function setStatus(text, live) {
+  const el = $('callStatus');
+  el.querySelector('.st-text').textContent = text;
+  el.classList.toggle('live', !!live);
+  if (!live) etaState = 'off';
+}
+
+// Compare utterances ignoring case, punctuation, and diacritics: a final can
+// reformat the partials it replaces ("como estas" -> "¿Cómo estás?"), and this
+// demo speaks Spanish and French.
+function normText(s) {
+  return String(s == null ? '' : s)
+    .normalize('NFD')
+    .replace(/\p{M}+/gu, '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '');
+}
+
+function bubbleNorm(bubble) {
+  return normText(bubble.querySelector('.text').textContent);
+}
+
+// Identity test against text that is already settled or parked: exact match, or
+// one side fully containing the other where the shorter side is long enough to
+// be distinctive. The floor stops "yes" from claiming "yesterday...".
+function sameUtterance(priorNorm, nextNorm) {
+  if (!priorNorm || !nextNorm) return false;
+  if (priorNorm === nextNorm) return true;
+  if (!priorNorm.startsWith(nextNorm) && !nextNorm.startsWith(priorNorm)) return false;
+  return Math.min(priorNorm.length, nextNorm.length) >= 10;
+}
+
+// Looser test for the LIVE stream only: partials grow cumulatively and their
+// final may reformat them, so a shared leading window is enough evidence that
+// this is the same audio being revised.
+function continuesPending(bubble, nextNorm) {
+  if (!bubble) return false;
+  const prior = bubbleNorm(bubble);
+  if (!prior) return true;
+  return nextNorm.startsWith(prior.slice(0, 24)) || prior.startsWith(nextNorm.slice(0, 24));
+}
+
+function bubblePark(role, bubble) {
+  const parked = parkedByRole[role] || (parkedByRole[role] = []);
+  parked.push(bubble);
+  if (parked.length > PARKED_MAX) {
+    // Dropping the oldest reference means no late final can ever complete it,
+    // so settle its styling now or it stays dimmed forever.
+    parked.shift().classList.remove('partial');
+  }
+}
+
+// Close open bubbles when a tool fires: whatever is spoken next is a new
+// utterance, not a continuation. Parked bubbles can still be completed by a
+// straggler final.
+function pendingFlush() {
+  for (const role of Object.keys(pendingByRole)) bubblePark(role, pendingByRole[role]);
+  pendingByRole = {};
+  toolSegment += 1;
+}
+
+// Guarded writes accept only true extensions: a shorter re-send must not
+// truncate settled text, and divergent text must not overwrite what was said.
+function bubbleTextSet(bubble, text, growOnly) {
+  const target = bubble.querySelector('.text');
+  if (growOnly && !normText(text).startsWith(normText(target.textContent))) return;
+  target.textContent = text;
+}
+
+// Fold a fragment of the handover line into a single bubble showing the whole
+// line. Returns true when the fragment was consumed. Only assistant text is
+// considered, and only until something arrives that is not part of the line,
+// so the window this can affect is a moment wide.
+function handoverShow(line) {
+  panelReady('transcript');
+  // The tool always speaks this line, so draw it as soon as the switch starts
+  // rather than waiting to see whether the transcriber reports any of it. On
+  // one real call it reported the line in full, on another only its first
+  // clause, and on a third not at all.
+  const box = $('transcript');
+  const bubble = document.createElement('div');
+  bubble.className = 'utterance assistant';
+  bubble.dataset.role = 'assistant';
+  bubble.dataset.seg = String(toolSegment);
+  bubble.innerHTML = '<div class="who"></div><div class="text"></div>';
+  bubble.querySelector('.who').textContent = 'Sarah';
+  bubble.querySelector('.text').textContent = line;
+  box.appendChild(bubble);
+  box.scrollTop = box.scrollHeight;
+  expectedHandover = { text: line };
+}
+
+// Swallow the transcriber's own retelling of a line already drawn by
+// handoverShow, whether that arrives whole, in clauses, or cut off. Returns
+// true when the text was part of it. Only assistant text is considered, and
+// only until something arrives that is not part of the line.
+function handoverAbsorb(role, text) {
+  if (!expectedHandover || role !== 'assistant') return false;
+  const piece = normText(text);
+  if (!piece || !normText(expectedHandover.text).includes(piece)) {
+    expectedHandover = null;
+    return false;
+  }
+  return true;
+}
+
+// ---- Authoritative transcript ------------------------------------------
+// The live stream is what makes the demo feel alive, but speech-to-text does
+// not only append, it REVISES ("calling for" becomes "calling from the clinic"),
+// and a revision defeats any prefix-based match, so the panel accumulates
+// orphan fragments of one sentence. Vapi's conversation-update carries the
+// platform's own merged history, one message per turn with the speaker named.
+// So: stream for immediacy, then rewrite the settled turns from the
+// authoritative list at every turn boundary. Whatever is still being spoken is
+// re-appended so the live line never blinks out.
+let historySig = '';
+
+function historyBubbleAppend(box, turn) {
+  const bubble = document.createElement('div');
+  bubble.className = 'utterance ' + (turn.role === 'user' ? 'user' : 'assistant');
+  bubble.dataset.role = turn.role;
+  bubble.dataset.seg = String(toolSegment);
+  bubble.innerHTML = '<div class="who"></div><div class="text"></div>';
+  bubble.querySelector('.who').textContent = turn.role === 'user' ? 'Caller' : (turn.name || 'Agent');
+  bubble.querySelector('.text').textContent = turn.text;
+  box.appendChild(bubble);
+}
+
+function transcriptHistoryRender(turns) {
+  if (!turns || !turns.length) return;
+  const sig = turns.map(t => t.role + '\u0001' + t.text).join('\u0002');
+  if (sig === historySig) return; // nothing new settled since the last update
+  historySig = sig;
+
+  const live = [];
+  for (const role of Object.keys(pendingByRole)) {
+    const b = pendingByRole[role];
+    if (b && b.classList.contains('partial')) live.push({ role, text: b.querySelector('.text').textContent });
+  }
+  pendingByRole = {};
+  parkedByRole = {};
+
+  panelReady('transcript');
+  const box = $('transcript');
+  box.innerHTML = '';
+  for (const turn of turns) historyBubbleAppend(box, turn);
+
+  for (const l of live) {
+    const norm = normText(l.text);
+    const covered = turns.some(t => t.role === l.role && normText(t.text).startsWith(norm.slice(0, 18)));
+    if (!covered && norm) addTranscript(l.role, l.text, false);
+  }
+  box.scrollTop = box.scrollHeight;
+}
+
+function addTranscript(role, text, final) {
+  const norm = normText(text);
+  if (!norm) return; // empty transcripts render nothing and must match nothing
+  if (callEnded && !final) return; // a stray partial after the end stays dimmed forever
+  if (handoverAbsorb(role, text)) return;
+  panelReady('transcript');
+  const box = $('transcript');
+  const pending = pendingByRole[role];
+  const parked = parkedByRole[role] || [];
+
+  let bubble = null;
+  let growOnly = false;
+
+  if (pending) {
+    // A live bubble trusts the loose window, because its own stream may revise
+    // it. A settled bubble (a folded-in re-send) demands a strict match: once
+    // the re-send diverges it is new speech and must split out.
+    const matches = pending.classList.contains('partial')
+      ? continuesPending(pending, norm)
+      : sameUtterance(bubbleNorm(pending), norm);
+    if (matches) bubble = pending;
+  }
+
+  if (!bubble && final) {
+    // Straggler final for an interrupted utterance: complete its bubble where
+    // it already sits, because that position is the true chronology. Finals
+    // only, since a partial arriving after an interruption is new speech.
+    for (let i = parked.length - 1; i >= 0; i -= 1) {
+      if (sameUtterance(bubbleNorm(parked[i]), norm)) {
+        bubble = parked[i];
+        parked.splice(i, 1);
+        growOnly = true;
+        break;
+      }
+    }
+  }
+
+  if (!bubble && pending && (!final || !pending.classList.contains('partial'))) {
+    // Either a partial that does not continue the open bubble (the transcriber
+    // started a new segment and the previous final may lag or never arrive), or
+    // a settled bubble that no longer matches. Park it rather than overwrite
+    // it, and let a fresh bubble open below.
+    bubblePark(role, pending);
+    delete pendingByRole[role];
+  }
+
+  if (!bubble) {
+    bubble = document.createElement('div');
+    bubble.className = 'utterance ' + (role === 'user' ? 'user' : 'assistant') + ' partial';
+    bubble.dataset.role = role;
+    bubble.dataset.seg = String(toolSegment);
+    bubble.innerHTML = '<div class="who"></div><div class="text"></div>';
+    bubble.querySelector('.who').textContent = role === 'user' ? 'Caller' : 'Sarah';
+    box.appendChild(bubble);
+  }
+
+  bubbleTextSet(bubble, text, growOnly || !bubble.classList.contains('partial'));
+
+  if (!final) {
+    // A partial that arrives after its own final (the two POSTs raced) opens a
+    // stub that would otherwise sit dimmed forever. Once the stub grows enough
+    // to match the settled bubble directly above it, fold it back in.
+    const prev = bubble.previousElementSibling;
+    if (bubble.classList.contains('partial')
+        && prev && prev.classList.contains('utterance') && prev.dataset.role === role
+        && prev.dataset.seg === bubble.dataset.seg
+        && !prev.classList.contains('partial')
+        && sameUtterance(bubbleNorm(prev), bubbleNorm(bubble))) {
+      bubble.remove();
+      bubble = prev;
+      bubbleTextSet(bubble, text, true);
+    }
+  }
+
+  if (final) {
+    bubble.classList.remove('partial');
+    if (pendingByRole[role] === bubble) delete pendingByRole[role];
+    // Collapse a re-sent utterance into the bubble that already holds it.
+    const prev = bubble.previousElementSibling;
+    if (prev && prev.classList.contains('utterance') && prev.dataset.role === role
+        && prev.dataset.seg === bubble.dataset.seg
+        && sameUtterance(bubbleNorm(prev), bubbleNorm(bubble))) {
+      bubbleTextSet(prev, bubble.querySelector('.text').textContent, true);
+      prev.classList.remove('partial');
+      const prevParked = parkedByRole[role] || [];
+      const idx = prevParked.indexOf(prev);
+      if (idx !== -1) prevParked.splice(idx, 1);
+      bubble.remove();
+    }
+  } else {
+    pendingByRole[role] = bubble;
+  }
+
+  box.scrollTop = box.scrollHeight;
+}
+
+// Settle every in-flight bubble when the call ends, but keep the references so
+// a final that arrives after the status webhook still lands in place.
+function transcriptSettle() {
+  callEnded = true;
+  for (const role of Object.keys(pendingByRole)) bubblePark(role, pendingByRole[role]);
+  pendingByRole = {};
+  for (const role of Object.keys(parkedByRole)) {
+    for (const bubble of parkedByRole[role]) bubble.classList.remove('partial');
+  }
+}
+
+function addToolCall(name, args, toolCallId) {
+  // Speech before a tool call is finished; speech after it is new. Parking the
+  // open bubbles stops post-tool words from being appended to a pre-tool line.
+  pendingFlush();
+  panelReady('tools');
+  const box = $('tools');
+  const el = document.createElement('div');
+  el.className = 'tool-card flash';
+  el.dataset.name = name;
+  if (toolCallId) el.dataset.tcid = toolCallId;
+  el.innerHTML = '<div class="row"><span class="dot"></span><span class="name"></span><span class="ms">running</span></div><div class="args"></div>';
+  el.querySelector('.name').textContent = name;
+  const argText = Object.entries(args || {}).map(([k, v]) => k + ': ' + v).join('  ·  ');
+  el.querySelector('.args').textContent = argText || 'no arguments';
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+  return el;
+}
+
+function addAnnouncement(text) {
+  panelReady('tools');
+  const box = $('tools');
+  const el = document.createElement('div');
+  el.className = 'tool-card announce flash done';
+  el.innerHTML = '<div class="row"><span class="dot"></span><span class="name">live call control · say</span><span class="ms">server push</span></div><div class="args">The server injected speech into the live call, no caller prompt, no LLM turn.</div>';
+  const r = document.createElement('div');
+  r.className = 'result';
+  r.textContent = text;
+  el.appendChild(r);
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+
+function completeToolCall(name, result, ms, toolCallId) {
+  // Prefer an exact id match. Otherwise FIRST open card of the name (FIFO):
+  // parallel same-name calls complete in call order, and taking the last card
+  // instead cross-matched their results on a live call (verified 2026-08-18).
+  const open = [...document.querySelectorAll('.tool-card:not(.done)')];
+  const el = (toolCallId && open.find(c => c.dataset.tcid === toolCallId))
+    || open.find(c => c.dataset.name === name)
+    || addToolCall(name, {});
+  el.classList.add('done');
+  // Latency is what the OBSERVER saw, so it can legitimately be 0: when a call
+  // and its result land in the same conversation-update there is no gap to
+  // measure. Print "done" rather than "0 ms" or "undefined ms", both of which
+  // read as a broken dashboard from the back of a room.
+  el.querySelector('.ms').textContent = ms > 0 ? ms + ' ms' : 'done';
+  const r = document.createElement('div');
+  r.className = 'result';
+  r.textContent = result;
+  el.appendChild(r);
+  $('tools').scrollTop = $('tools').scrollHeight;
+}
+
+function renderRide(ride) {
+  panelReady('ride');
+  const box = $('ride');
+  const reachedIdx = STATUSES.indexOf(ride.status);
+  const steps = STATUSES.map((s, i) => {
+    const cls = 'step' + (reachedIdx >= i && ride.status !== 'cancelled' ? ' reached' : '') + (s === ride.status ? ' current' : '');
+    return '<div class="' + cls + '"><div class="marker"><div class="node"></div><div class="stem"></div></div><div class="label">' + STATUS_LABELS[s] + '</div></div>';
+  }).join('');
+  box.innerHTML =
+    '<div class="ride-driver">' +
+      '<div class="eyebrow">Your driver</div>' +
+      '<div class="name">' + ride.driver.name + '</div>' +
+      '<div class="muted">' + ride.driver.car + '</div>' +
+    '</div>' +
+    '<div class="ride-route">' +
+      '<div class="leg"><span class="k">From</span><span>' + ride.pickup + '</span></div>' +
+      '<div class="leg"><span class="k">To</span><span>' + ride.destination + '</span></div>' +
+    '</div>' +
+    '<div class="timeline">' + steps + '</div>' +
+    (ride.status === 'cancelled' ? '<div class="ride-cancelled">Ride cancelled</div>' : '');
+}
+
+for (const id of ['transcript', 'tools', 'ride']) placeholderShow(id);
+assemblyIdle();
+$('resetBtn').addEventListener('click', viewReset);
+$('assemblyToggle')?.addEventListener('click', assemblyExpandToggle);
+
+let serverVersion = null;
+const source = new EventSource('/events/stream');
+source.onmessage = (msg) => {
+  const event = JSON.parse(msg.data);
+  const d = event.data;
+  if (event.type === 'server.version') {
+    if (serverVersion && serverVersion !== d.v) { location.reload(); return; }
+    serverVersion = d.v;
+    return;
+  }
+  if (event.type === 'reset') {
+    // The server could not resume us from where we left off, so everything on
+    // screen may be stale or about to be duplicated by the replay that follows.
+    activeCallId = null;
+    $('transcript').innerHTML = '';
+    $('tools').innerHTML = '';
+    assemblyIdle();
+    pendingByRole = {};
+    parkedByRole = {};
+    callEnded = false;
+    return;
+  }
+  if (!callScopeAccept(event.type, d.callId)) return;
+  switch (event.type) {
+    case 'caller.resolved':
+      // A reconnect replays the buffer, so this can arrive again for the call
+      // already on screen. Replaying the build mid-call would read as the
+      // agent being assembled a second time.
+      if (!assemblyData || assemblyData.callId !== d.callId) assemblyStart(d);
+      break;
+    case 'call.status':
+      if (d.status === 'in-progress') { setStatus('Call in progress', true); assemblyReady(); }
+      else if (d.status === 'ringing' || d.status === 'queued') setStatus('Ringing', true);
+      else if (d.status === 'ended') { setStatus('Call ended', false); etaState = 'off'; transcriptSettle(); endedCallMark(d.callId); }
+      else setStatus(d.status, false);
+      break;
+    case 'transcript':
+      liveImply();
+      addTranscript(d.role, d.text, d.final);
+      break;
+    case 'transcript.history':
+      transcriptHistoryRender(d.turns);
+      break;
+    case 'tool.called':
+      liveImply();
+      addToolCall(d.name, d.args, d.toolCallId);
+      // A switch tells us in advance what the outgoing assistant just said, so
+      // the fragments of it that follow can be folded into one bubble.
+      if (d.handoverLine) handoverShow(d.handoverLine);
+      break;
+    case 'tool.completed':
+      completeToolCall(d.name, d.result, d.ms, d.toolCallId);
+      break;
+    case 'estimate':
+      // The quote does not start the countdown. No driver is assigned until
+      // the ride is booked, so a clock started here would be counting down to
+      // an arrival nobody has committed to, and it would already be seconds
+      // ahead of what the agent says by the time the booking lands.
+      break;
+    case 'announce':
+      addAnnouncement(d.text);
+      break;
+    case 'ride':
+      renderRide(d.ride);
+      if (d.ride.status === 'en_route' || d.ride.status === 'arriving') {
+        etaTarget = d.ride.bookedAt + d.ride.etaMinutes * 60000;
+        etaState = 'counting';
+      } else if (d.ride.status === 'arrived') {
+        etaState = 'arrived';
+      } else {
+        etaState = 'off';
+      }
+      break;
+    case 'call.report':
+      setStatus('Call ended', false);
+      etaState = 'off';
+      transcriptSettle();
+      endedCallMark(d.callId);
+      break;
+  }
+};
+</script>
+</body>
+</html>
