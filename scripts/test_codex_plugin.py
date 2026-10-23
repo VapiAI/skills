@@ -69,13 +69,16 @@ class CodexPluginTests(unittest.TestCase):
     def test_exact_skill_allowlist_and_experimental_exclusion(self) -> None:
         build = load_build_module()
         self.assertEqual(build.INCLUDED_SKILLS, EXPECTED_SKILLS)
-        self.assertEqual(build.EXCLUDED_SKILLS, ("vapi-bootstrap-framework",))
-        bootstrap_skill = REPO_ROOT / "vapi-bootstrap-framework" / "SKILL.md"
-        self.assertTrue(bootstrap_skill.is_file())
-        self.assertIn(
-            "experimental reference workflow",
-            bootstrap_skill.read_text(encoding="utf-8").lower(),
+        self.assertEqual(
+            build.EXCLUDED_SKILLS, ("vapi-bootstrap-framework", "vapi-demo")
         )
+        for excluded_name in build.EXCLUDED_SKILLS:
+            excluded_skill = REPO_ROOT / excluded_name / "SKILL.md"
+            self.assertTrue(excluded_skill.is_file())
+            self.assertIn(
+                "experimental reference workflow",
+                excluded_skill.read_text(encoding="utf-8").lower(),
+            )
 
         claude_marketplace = json.loads(
             (REPO_ROOT / ".claude-plugin" / "marketplace.json").read_text(
@@ -95,7 +98,8 @@ class CodexPluginTests(unittest.TestCase):
             sorted(path.name for path in generated_skills.iterdir() if path.is_dir()),
             sorted(EXPECTED_SKILLS),
         )
-        self.assertFalse((generated_skills / "vapi-bootstrap-framework").exists())
+        for excluded_name in build.EXCLUDED_SKILLS:
+            self.assertFalse((generated_skills / excluded_name).exists())
 
     def test_all_nested_skill_files_are_included(self) -> None:
         build = load_build_module()
