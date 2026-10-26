@@ -1,11 +1,11 @@
 ---
 name: simulations
-description: Design, create, run, monitor, and maintain Vapi Simulations for assistants and squads. Use for turning plain-language requirements into a coverage plan, simulation personalities, scenarios, structured-output success criteria, simulations, suites, extending an existing suite, chat or voice runs, tool mocks, target variables, lifecycle webhooks, regression coverage, launch readiness, CI quality gates, run-result analysis, and simulation API validation errors. Do not use for fixed-turn mock-conversation Evals unless the user is deciding between Evals and Simulations.
+description: Design, create, run, monitor, and maintain Vapi Simulations for assistants and squads. Use for turning plain-language requirements into a coverage plan or an agreed-requirements generated suite, simulation personalities, scenarios, structured-output success criteria, simulations, suites, extending an existing suite, chat or voice runs, tool mocks, target variables, lifecycle webhooks, regression coverage, launch readiness, CI quality gates, run-result analysis, and simulation API validation errors. Do not use for fixed-turn mock-conversation Evals unless the user is deciding between Evals and Simulations.
 license: MIT
 compatibility: Internet access is recommended for current Vapi schema verification; VAPI_API_KEY is required for live simulation resource operations and runs.
 metadata:
   author: vapi
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Vapi Simulations
@@ -14,7 +14,7 @@ Build realistic conversation tests in five layers: a personality controls the AI
 
 ## Source and Safety Rules
 
-- Verify live payloads against the current Vapi documentation MCP, API reference, or public OpenAPI before sending them. Simulations use the `/eval/simulation` API family.
+- Use the configured Vapi documentation MCP when available for current product guidance. Otherwise use the bundled references and their public Vapi links. Verify live payloads against the current public OpenAPI before sending them. Simulations use the `/eval/simulation` API family.
 - Never print, request in chat, or embed API keys, provider secrets, credential values, private webhook URLs, or real customer data.
 - Treat running a simulation as an external action. It can consume credits, use concurrency, send webhooks, and call the target's real tools unless they are mocked.
 - Do not run, cancel, update, or delete resources unless the user clearly requests that operation. Draft configurations when mutation is not requested.
@@ -29,6 +29,7 @@ Build realistic conversation tests in five layers: a personality controls the AI
    - Return a test plan or payload when the user asks to design, draft, review, or explain. Perform live mutations only when explicitly requested and `VAPI_API_KEY` is available.
 
 2. Inspect the target and existing test resources.
+   - For generating or editing a suite from agreed assistant requirements, read [Requirements-driven generation](references/requirements-generation.md). When its public API and organization access checks pass, follow it instead of manual construction in steps 3–8, then return here for any requested run. Otherwise continue with the manual procedure below. Squad suites use the manual procedure.
    - Fetch the assistant or squad and identify its core paths, guardrails, tools, variables, languages, and failure behavior.
    - List existing personalities, scenarios, simulations, suites, and reusable structured outputs before creating duplicates.
    - Reuse an existing resource only when its intent and configuration match unambiguously. Otherwise create a clearly named new resource or ask the user to choose among plausible matches.
@@ -37,6 +38,7 @@ Build realistic conversation tests in five layers: a personality controls the AI
    - Collect the requirements from the user, a document, a transcript, or the target's prompt and tools. Rewrite each one until two reviewers would reach the same pass or fail decision: "the agent handles errors gracefully" becomes "if the scheduling tool fails, the agent says the change is not confirmed and offers a safe next step".
    - Record where each requirement came from. Return vague or unsourced requirements as open questions instead of guessing.
    - Tag each requirement as high-impact (data, money, unauthorized changes, missed escalation, legal exposure), high-frequency (the agent's main job), or high-uncertainty (new, recently changed, inconsistent, tool-dependent), and cover those before anything else.
+   - Present the requirements and open questions for review. Keep assumptions explicit and distinguish transcript-checkable behavior, voice-only checks, and behavior the simulation cannot exercise. Agree on the requirements before generating or saving a suite.
    - Read [Coverage planning](references/coverage-planning.md) for the intake table, the per-goal checklist, the writing rules, and the launch readiness list. It is distilled from the Vapi testing guidance linked under Public Sources.
 
 4. Design coverage before payloads.
@@ -52,6 +54,7 @@ Build realistic conversation tests in five layers: a personality controls the AI
    - Prefer a suitable existing personality when available.
    - When creating one, provide a complete valid assistant configuration for the AI tester. Put stable temperament, speaking style, and caller behavior in its system prompt; put the situation-specific goal in the scenario.
    - Use the `create-assistant` skill to assemble or validate the personality's assistant configuration when available.
+   - Read [Opening order](references/coverage-planning.md#12-opening-order-and-greeting-coverage) before selecting a tester: its saved `firstMessageMode` determines which participant starts. Honor deliberate opening-order tests rather than imposing one starter on the whole suite.
    - Configure voice and transcriber only when voice runs need them. Chat runs use the personality's model but skip its audio path.
 
 6. Define the scenario and evaluations.
@@ -110,6 +113,7 @@ Return only the sections relevant to the request:
 - Test strategy: target behavior, coverage, and why Simulation rather than Eval
 - Coverage matrix: one row per requirement with its source, priority, and the scenarios, directions, and transports that cover it
 - Resource plan: personality, scenario, evaluations, simulation, and suite
+- Generated-suite review, when applicable: agreed requirements, suite ID, coverage counts and gaps, tool paths not exercised, voice-only checks, retryable generation gaps, and failed rewrites
 - Suite diff, when extending an existing suite: scenarios and simulations kept, updated, and created; suite IDs retained, added, and removed
 - Side-effect review: mocked tools, live tools, hooks, variables, transport, iterations, and expected cost/concurrency impact
 - Save-ready JSON or implementation code
