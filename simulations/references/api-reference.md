@@ -24,7 +24,7 @@ Use the private key only from a server-side environment:
 
 Base URL: `https://api.vapi.ai`
 
-Create operations return `201`. Reads, updates, cancellations, and deletes return `200` according to the current OpenAPI.
+Resource and run create operations return `201`. Reads, updates, cancellations, and deletes return `200` according to the current OpenAPI. When available, requirements drafting and generated-suite creation use `200`; their separate workflow and availability checks are in the requirements-generation reference linked from `SKILL.md`.
 
 The resource graph is:
 

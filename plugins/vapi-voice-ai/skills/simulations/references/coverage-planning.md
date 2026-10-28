@@ -23,6 +23,7 @@ Sources:
 9. [Iterations and review](#9-iterations-and-review)
 10. [Launch readiness](#10-launch-readiness)
 11. [Maintaining an existing suite](#11-maintaining-an-existing-suite)
+12. [Opening order and greeting coverage](#12-opening-order-and-greeting-coverage)
 
 ## 1. Simulations test outcomes, Evals test decisions
 
@@ -142,3 +143,13 @@ Source: Plan test coverage, "Launch readiness".
 - A suite update replaces its `simulationIds` list. Fetch the suite first, diff by name, send the retained ids followed by the new ones, and remove an id only when the user named that simulation.
 
 Source: Run and maintain tests, "Separate improvement tests from regression tests", "Triage failures consistently", "Give every critical journey an owner".
+
+## 12. Opening order and greeting coverage
+
+Read the target and tester's saved `firstMessageMode` before choosing a personality. A tester with `assistant-waits-for-user` lets the target start; a speaking tester starts the conversation. Normally choose the opposite of the target: speaking tester for a waiting target, waiting tester for a speaking target. When the target mode is omitted, a nonempty `firstMessage` means target-first; an absent or empty greeting means caller-first. Honor explicit requests and scenarios that intentionally test another order. Do not infer opening order from inbound or outbound call direction.
+
+Text greetings and disclosures can be checked in chat only when the participant configuration actually includes them in the conversation. For a waiting target with a deferred scripted greeting, use a speaking tester to trigger it. A waiting tester would force the target to start instead. For a speaking target, a speaking tester can suppress the greeting. Words from an audio-file `firstMessage` URL require a voice recording; a supplied transcript, filename, or expected words in the prompt do not prove the target said them.
+
+There is a runner limitation for `assistant-speaks-first-with-model-generated-message` with a nonempty saved `firstMessage`: target-first simulations can replay the saved words rather than the production-generated opening. Prefer a speaking tester and leave opening, greeting, and disclosure requirements unmapped for this combination until the current public API behavior demonstrates it is fixed. Do not count a pass on stale words as coverage.
+
+Sources: [Configure an AI tester](https://docs.vapi.ai/observability/simulations-configure-ai-tester), current [public OpenAPI](https://api.vapi.ai/api-json) for assistant and personality configuration.
