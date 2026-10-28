@@ -59,7 +59,7 @@ Default to a payload or implementation plan. Provision, import, route, or releas
 
 Vapi-hosted free numbers are for US national use and have a limit of five per account. The first free number can be requested without a payment method. Additional free numbers require a payment method on file, but the numbers themselves remain free.
 
-Free Vapi numbers support outbound calls only to US `+1` destinations and do not support international calling. Use an imported provider number or supported SIP/carrier path for international use. Do not describe free numbers as unlimited production telephony.
+Free Vapi numbers support inbound calls only. Use an imported provider number or supported SIP/carrier path for outbound or international calls. Do not describe free numbers as unlimited production telephony.
 
 ## Payload-Only Example
 
