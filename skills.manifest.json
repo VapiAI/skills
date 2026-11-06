@@ -1,0 +1,110 @@
+{
+  "$schema": "./schemas/skills.manifest.schema.json",
+  "schemaVersion": "2026-05-04",
+  "name": "vapi-skills",
+  "description": "Agent skills for building voice AI agents with Vapi.",
+  "repository": {
+    "owner": "VapiAI",
+    "name": "skills",
+    "defaultBranch": "main",
+    "htmlUrl": "https://github.com/VapiAI/skills",
+    "rawBaseUrl": "https://raw.githubusercontent.com/VapiAI/skills/main"
+  },
+  "skills": [
+    {
+      "name": "setup-api-key",
+      "title": "Vapi API Key Setup",
+      "description": "Guide users through obtaining and configuring a Vapi API key.",
+      "path": "setup-api-key/SKILL.md",
+      "rawUrl": "https://raw.githubusercontent.com/VapiAI/skills/main/setup-api-key/SKILL.md",
+      "tags": ["setup", "auth", "api-key"],
+      "references": []
+    },
+    {
+      "name": "create-assistant",
+      "title": "Vapi Assistant Creation",
+      "description": "Create and configure Vapi voice AI assistants with models, voices, transcribers, tools, hooks, and advanced settings.",
+      "path": "create-assistant/SKILL.md",
+      "rawUrl": "https://raw.githubusercontent.com/VapiAI/skills/main/create-assistant/SKILL.md",
+      "tags": ["assistants", "voice-agent", "configuration"],
+      "references": [
+        {
+          "name": "hooks",
+          "path": "create-assistant/references/hooks.md",
+          "rawUrl": "https://raw.githubusercontent.com/VapiAI/skills/main/create-assistant/references/hooks.md"
+        },
+        {
+          "name": "providers",
+          "path": "create-assistant/references/providers.md",
+          "rawUrl": "https://raw.githubusercontent.com/VapiAI/skills/main/create-assistant/references/providers.md"
+        }
+      ]
+    },
+    {
+      "name": "create-tool",
+      "title": "Vapi Tool Creation",
+      "description": "Create custom tools for Vapi voice assistants including function tools, API request tools, transfer call tools, end call tools, and integrations.",
+      "path": "create-tool/SKILL.md",
+      "rawUrl": "https://raw.githubusercontent.com/VapiAI/skills/main/create-tool/SKILL.md",
+      "tags": ["tools", "integrations", "function-calling"],
+      "references": [
+        {
+          "name": "tool-server",
+          "path": "create-tool/references/tool-server.md",
+          "rawUrl": "https://raw.githubusercontent.com/VapiAI/skills/main/create-tool/references/tool-server.md"
+        }
+      ]
+    },
+    {
+      "name": "create-call",
+      "title": "Vapi Call Creation",
+      "description": "Create outbound phone calls, web calls, and batch calls using the Vapi API.",
+      "path": "create-call/SKILL.md",
+      "rawUrl": "https://raw.githubusercontent.com/VapiAI/skills/main/create-call/SKILL.md",
+      "tags": ["calls", "outbound", "testing"],
+      "references": []
+    },
+    {
+      "name": "create-squad",
+      "title": "Vapi Squad Creation",
+      "description": "Create multi-assistant squads in Vapi with handoffs between specialized voice agents.",
+      "path": "create-squad/SKILL.md",
+      "rawUrl": "https://raw.githubusercontent.com/VapiAI/skills/main/create-squad/SKILL.md",
+      "tags": ["squads", "handoffs", "multi-agent"],
+      "references": []
+    },
+    {
+      "name": "create-phone-number",
+      "title": "Vapi Phone Number Setup",
+      "description": "Set up and manage phone numbers in Vapi for inbound and outbound voice AI calls.",
+      "path": "create-phone-number/SKILL.md",
+      "rawUrl": "https://raw.githubusercontent.com/VapiAI/skills/main/create-phone-number/SKILL.md",
+      "tags": ["phone-numbers", "telephony", "providers"],
+      "references": []
+    },
+    {
+      "name": "setup-webhook",
+      "title": "Vapi Webhook / Server URL Setup",
+      "description": "Configure Vapi server URLs and webhooks to receive real-time call events, transcripts, tool calls, and end-of-call reports.",
+      "path": "setup-webhook/SKILL.md",
+      "rawUrl": "https://raw.githubusercontent.com/VapiAI/skills/main/setup-webhook/SKILL.md",
+      "tags": ["webhooks", "server-url", "events"],
+      "references": [
+        {
+          "name": "webhook-events",
+          "path": "setup-webhook/references/webhook-events.md",
+          "rawUrl": "https://raw.githubusercontent.com/VapiAI/skills/main/setup-webhook/references/webhook-events.md"
+        }
+      ]
+    },
+    {
+      "name": "create-workflow",
+      "title": "Vapi Workflow Creation",
+      "description": "Build visual conversation workflows in Vapi with nodes for conversation steps, tool execution, conditional branching, and handoffs.",
+      "path": "create-workflow/SKILL.md",
+      "rawUrl": "https://raw.githubusercontent.com/VapiAI/skills/main/create-workflow/SKILL.md",
+      "tags": ["workflows", "branching", "conversation-flow"],
+      "references": []
+    }
+  ]
+}
