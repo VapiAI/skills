@@ -191,10 +191,8 @@ class CodexPluginTests(unittest.TestCase):
         self.assertLessEqual(len(interface["shortDescription"]), 30)
         self.assertEqual(interface["privacyPolicyURL"], "https://vapi.ai/privacy")
         self.assertEqual(interface["supportURL"], "https://docs.vapi.ai/support")
-        self.assertIn(
-            "MCP server source: https://github.com/VapiAI/mcp-server",
-            interface["longDescription"],
-        )
+        self.assertNotIn("MCP", interface["longDescription"])
+        self.assertNotIn("OAuth", interface["longDescription"])
         self.assertEqual(
             interface["termsOfServiceURL"],
             "https://vapi.ai/terms-of-service",
@@ -217,35 +215,29 @@ class CodexPluginTests(unittest.TestCase):
         self.assertEqual(entry["policy"]["installation"], "AVAILABLE")
         self.assertEqual(entry["policy"]["authentication"], "ON_INSTALL")
 
-    def test_mcp_oauth_package_and_review_contract(self) -> None:
+    def test_skills_only_archive_has_no_connection_references(self) -> None:
         build = load_build_module()
-        plugin_root = REPO_ROOT / "plugins" / build.PLUGIN_NAME
-        mcp = json.loads((plugin_root / "mcp.json").read_text())
-        self.assertEqual(set(mcp["mcpServers"]), {"vapi"})
-        server = mcp["mcpServers"]["vapi"]
-        self.assertEqual(server["url"], "https://mcp.vapi.ai/mcp")
-        self.assertEqual(server["type"], "streamable-http")
-        self.assertNotIn("headers", server)
-        auth = server["extensions"]["com.openai"]["auth"]
-        self.assertEqual(auth["type"], "oauth")
-        self.assertEqual(auth["client"], {"mode": "dcr"})
-        self.assertEqual(auth["baseScopes"], ["openid", "offline_access"])
-        manifest = json.loads((plugin_root / "plugin.json").read_text())
-        extension = manifest["extensions"]["com.openai"]
-        self.assertNotIn("countries", extension["publication"])
-        self.assertNotIn("demo_recording_url", extension["review"])
-        cases = extension["review"]["test_cases"]
-        self.assertEqual(len(cases["positive"]), 5)
-        self.assertEqual(len(cases["negative"]), 3)
-        for case in cases["positive"]:
-            for field in ("description", "prompt", "tools_triggered", "expected_behavior"):
-                self.assertTrue(case[field])
-        for skill in EXPECTED_SKILLS:
-            text = (plugin_root / "skills" / skill / "SKILL.md").read_text()
-            self.assertIn("## Connected Vapi account", text)
-            self.assertIn("not prerequisites for a supported connected MCP action", text)
-        webhook = (plugin_root / "skills" / "setup-webhook" / "SKILL.md").read_text()
-        self.assertNotIn("curl -sSL https://vapi.ai/install.sh | bash", webhook)
+        with tempfile.TemporaryDirectory() as directory:
+            archive_path = Path(directory) / "skills-only.zip"
+            build.write_archive(REPO_ROOT, archive_path)
+            with zipfile.ZipFile(archive_path) as archive:
+                for name in archive.namelist():
+                    self.assertNotIn("mcp", name.lower())
+                    contents = archive.read(name).lower()
+                    self.assertNotIn(b"mcp", contents, name)
+                    self.assertNotIn(b"model context protocol", contents, name)
+                manifest = json.loads(archive.read("plugin.json"))
+                self.assertEqual(manifest["name"], "vapi-voice-ai")
+                self.assertEqual(manifest["version"], "1.3.1")
+                self.assertNotIn("review", manifest["extensions"]["com.openai"])
+                self.assertNotIn("mcpServers", manifest)
+                self.assertNotIn("apps", manifest)
+                self.assertEqual(len([name for name in archive.namelist()
+                                     if name.endswith("/SKILL.md")]), 11)
+                tools = archive.read("skills/create-tool/references/tool-types.md").decode()
+                self.assertIn("## Custom Function Tools", tools)
+                self.assertIn("## Public Sources", tools)
+                self.assertEqual(tools.count("```json"), 3)
 
     def test_submission_materials_are_reviewer_ready(self) -> None:
         materials = json.loads(
@@ -273,7 +265,7 @@ class CodexPluginTests(unittest.TestCase):
         )
         self.assertEqual(
             materials["credentialArchitecture"]["submissionMode"],
-            "With MCP",
+            "Skills only",
         )
         self.assertEqual(len(materials["ownerActions"]), 6)
         self.assertTrue(materials["releaseNotes"].strip())
