@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble the repository's submission-shaped, skills-only Codex plugin."""
+"""Assemble the repository's skills and OAuth MCP plugin for ChatGPT and Codex."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from typing import Dict, Iterable, Tuple
 
 
 PLUGIN_NAME = "vapi-voice-ai"
-PLUGIN_VERSION = "1.2.1"
+PLUGIN_VERSION = "1.3.0"
 PLUGIN_ASSET_FILES = (
     "full-logo-square-5.svg",
     "va-square-5.svg",
@@ -127,7 +127,8 @@ PLUGIN_MANIFEST = {
     "name": PLUGIN_NAME,
     "version": PLUGIN_VERSION,
     "description": (
-        "Skills for building and testing voice AI agents with Vapi, including "
+        "Skills and an authenticated MCP connection for building and testing "
+        "voice AI agents with Vapi, including "
         "assistants, tools, calls, campaigns, squads, phone numbers, webhooks, "
         "structured outputs, prompts, and simulations."
     ),
@@ -145,19 +146,22 @@ PLUGIN_MANIFEST = {
         "displayName": "Vapi",
         "shortDescription": "Build voice agents with Vapi.",
         "longDescription": (
-            "Plan, configure, and validate Vapi voice AI workflows with skills for "
+            "Connect your Vapi account to inspect and manage voice AI resources "
+            "over OAuth. Plan, configure, and validate workflows with skills for "
             "assistants, prompts, tools, calls, campaigns, squads, phone numbers, "
-            "webhooks, structured outputs, and simulations."
+            "webhooks, structured outputs, and simulations. "
+            "MCP server source: https://github.com/VapiAI/mcp-server"
         ),
         "developerName": "Vapi",
         "category": "Developer Tools",
         "capabilities": ["Interactive", "Write"],
         "websiteURL": "https://vapi.ai",
+        "supportURL": "https://docs.vapi.ai/support",
         "privacyPolicyURL": "https://vapi.ai/privacy",
         "termsOfServiceURL": "https://vapi.ai/terms-of-service",
         "defaultPrompt": [
             "Plan a Vapi outbound campaign without launching it.",
-            "Create a Vapi voice assistant configuration.",
+            "List my Vapi assistants.",
             "Design a Vapi simulation suite.",
         ],
         "brandColor": "#000714",
@@ -165,6 +169,49 @@ PLUGIN_MANIFEST = {
         "logo": "./assets/full-logo-square-5.svg",
     },
 }
+
+MCP_MANIFEST = {
+    "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+    "mcpServers": {
+        "vapi": {
+            "type": "streamable-http",
+            "url": "https://mcp.vapi.ai/mcp",
+            "extensions": {
+                "com.openai": {
+                    "auth": {
+                        "type": "oauth",
+                        "client": {"mode": "dcr"},
+                        "resource": "https://mcp.vapi.ai/mcp",
+                        "baseScopes": ["openid", "offline_access"],
+                    }
+                }
+            },
+        }
+    },
+}
+
+
+def portable_manifest(repo_root: Path) -> dict:
+    materials = json.loads(
+        (repo_root / "codex-plugin" / "submission-materials.json").read_text()
+    )
+    manifest = {
+        "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+        **{
+            key: value
+            for key, value in PLUGIN_MANIFEST.items()
+            if key not in ("skills", "interface")
+        },
+        "extensions": {
+            "com.openai": {
+                "interface": PLUGIN_MANIFEST["interface"],
+                "review": {"test_cases": materials["mcpReviewTestCases"]},
+                "publication": {"release_notes": materials["releaseNotes"]},
+            }
+        },
+    }
+    return manifest
+
 
 MARKETPLACE_MANIFEST = {
     "name": "vapi-skills",
@@ -246,6 +293,11 @@ def plugin_source_bytes(source: Path) -> bytes:
     if source.name != "SKILL.md":
         return contents
     contents = normalize_openai_skill_frontmatter(contents, source)
+    # Transport guidance is generated for this MCP-enabled distribution only.
+    # Canonical skills retain their standalone API implementation examples.
+    usage = (source.parent.parent / "codex-plugin" / "mcp-usage.md").read_bytes()
+    frontmatter_end = contents.index(b"\n---", 4) + len(b"\n---")
+    contents = contents[:frontmatter_end] + b"\n\n" + usage + contents[frontmatter_end:]
     for block in CLAUDE_MCP_BLOCKS:
         contents = contents.replace(block, b"\n")
     if b"claude mcp add" in contents:
@@ -257,7 +309,8 @@ def expected_plugin_files(repo_root: Path) -> Dict[Path, Tuple[bytes, int]]:
     if tuple(SKILL_INTERFACES) != INCLUDED_SKILLS:
         raise ValueError("skill interface definitions must match the included skill allowlist")
     expected: Dict[Path, Tuple[bytes, int]] = {
-        Path(".codex-plugin/plugin.json"): (json_bytes(PLUGIN_MANIFEST), 0o644),
+        Path("plugin.json"): (json_bytes(portable_manifest(repo_root)), 0o644),
+        Path("mcp.json"): (json_bytes(MCP_MANIFEST), 0o644),
     }
     asset_root = repo_root / "codex-plugin" / "assets"
     for asset_name in PLUGIN_ASSET_FILES:
