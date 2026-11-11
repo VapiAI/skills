@@ -1,0 +1,24 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "vapi": {
+      "type": "streamable-http",
+      "url": "https://mcp.vapi.ai/mcp",
+      "extensions": {
+        "com.openai": {
+          "auth": {
+            "type": "oauth",
+            "client": {
+              "mode": "dcr"
+            },
+            "resource": "https://mcp.vapi.ai/mcp",
+            "baseScopes": [
+              "openid",
+              "offline_access"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

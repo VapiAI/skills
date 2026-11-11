@@ -192,12 +192,9 @@ For a bearer credential, compare the incoming `Authorization: Bearer <token>` va
 
 ## Local Development
 
-Use the Vapi CLI with a public tunnel. The CLI forwards from port 4242 to your app, but it does not create the public URL itself:
+For a local development environment where the Vapi CLI and ngrok are already installed, use the CLI with a public tunnel. Do not download or execute remote installation scripts as part of webhook setup. See the official installation documentation if a prerequisite is missing. The CLI forwards from port 4242 to your app, but it does not create the public URL itself:
 
 ```bash
-# Install the CLI
-curl -sSL https://vapi.ai/install.sh | bash
-
 # Terminal 1: expose the CLI listener
 ngrok http 4242
 

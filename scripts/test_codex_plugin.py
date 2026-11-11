@@ -175,19 +175,26 @@ class CodexPluginTests(unittest.TestCase):
         build = load_build_module()
         plugin_root = REPO_ROOT / "plugins" / build.PLUGIN_NAME
         manifest = json.loads(
-            (plugin_root / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8")
+            (plugin_root / "plugin.json").read_text(encoding="utf-8")
         )
         marketplace_path = REPO_ROOT / ".agents" / "plugins" / "marketplace.json"
         marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
 
         self.assertEqual(manifest["name"], "vapi-voice-ai")
-        self.assertEqual(manifest["skills"], "./skills/")
+        self.assertNotIn("skills", manifest)
+        self.assertTrue((plugin_root / "skills").is_dir())
         self.assertNotIn("mcpServers", manifest)
         self.assertNotIn("apps", manifest)
         self.assertEqual(manifest["author"]["email"], "support@vapi.ai")
-        interface = manifest["interface"]
+        self.assertEqual(manifest["repository"], "https://github.com/VapiAI/skills")
+        interface = manifest["extensions"]["com.openai"]["interface"]
         self.assertLessEqual(len(interface["shortDescription"]), 30)
         self.assertEqual(interface["privacyPolicyURL"], "https://vapi.ai/privacy")
+        self.assertEqual(interface["supportURL"], "https://docs.vapi.ai/support")
+        self.assertIn(
+            "MCP server source: https://github.com/VapiAI/mcp-server",
+            interface["longDescription"],
+        )
         self.assertEqual(
             interface["termsOfServiceURL"],
             "https://vapi.ai/terms-of-service",
@@ -209,6 +216,36 @@ class CodexPluginTests(unittest.TestCase):
         self.assertTrue((REPO_ROOT / entry["source"]["path"]).is_dir())
         self.assertEqual(entry["policy"]["installation"], "AVAILABLE")
         self.assertEqual(entry["policy"]["authentication"], "ON_INSTALL")
+
+    def test_mcp_oauth_package_and_review_contract(self) -> None:
+        build = load_build_module()
+        plugin_root = REPO_ROOT / "plugins" / build.PLUGIN_NAME
+        mcp = json.loads((plugin_root / "mcp.json").read_text())
+        self.assertEqual(set(mcp["mcpServers"]), {"vapi"})
+        server = mcp["mcpServers"]["vapi"]
+        self.assertEqual(server["url"], "https://mcp.vapi.ai/mcp")
+        self.assertEqual(server["type"], "streamable-http")
+        self.assertNotIn("headers", server)
+        auth = server["extensions"]["com.openai"]["auth"]
+        self.assertEqual(auth["type"], "oauth")
+        self.assertEqual(auth["client"], {"mode": "dcr"})
+        self.assertEqual(auth["baseScopes"], ["openid", "offline_access"])
+        manifest = json.loads((plugin_root / "plugin.json").read_text())
+        extension = manifest["extensions"]["com.openai"]
+        self.assertNotIn("countries", extension["publication"])
+        self.assertNotIn("demo_recording_url", extension["review"])
+        cases = extension["review"]["test_cases"]
+        self.assertEqual(len(cases["positive"]), 5)
+        self.assertEqual(len(cases["negative"]), 3)
+        for case in cases["positive"]:
+            for field in ("description", "prompt", "tools_triggered", "expected_behavior"):
+                self.assertTrue(case[field])
+        for skill in EXPECTED_SKILLS:
+            text = (plugin_root / "skills" / skill / "SKILL.md").read_text()
+            self.assertIn("## Connected Vapi account", text)
+            self.assertIn("not prerequisites for a supported connected MCP action", text)
+        webhook = (plugin_root / "skills" / "setup-webhook" / "SKILL.md").read_text()
+        self.assertNotIn("curl -sSL https://vapi.ai/install.sh | bash", webhook)
 
     def test_submission_materials_are_reviewer_ready(self) -> None:
         materials = json.loads(
@@ -236,7 +273,7 @@ class CodexPluginTests(unittest.TestCase):
         )
         self.assertEqual(
             materials["credentialArchitecture"]["submissionMode"],
-            "Skills only",
+            "With MCP",
         )
         self.assertEqual(len(materials["ownerActions"]), 6)
         self.assertTrue(materials["releaseNotes"].strip())

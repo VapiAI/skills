@@ -53,7 +53,7 @@ Start a new Code tab session to pick up the skills. To manage the plugin afterwa
 
 > Chat/Cowork plugins sync through your claude.ai account, while the CLI and the Code tab share `~/.claude` on your machine. Installing on one side does not install on the other.
 
-### Option 3: Codex Plugin (local development)
+### Option 3: ChatGPT and Codex plugin
 
 The checked-in Codex plugin is assembled from the canonical skill directories, so the
 Claude and `npx skills` layouts remain unchanged:
@@ -66,8 +66,18 @@ codex plugin marketplace add .
 codex plugin add vapi-voice-ai@vapi-skills
 ```
 
-The Codex package is skills-only. The repository-level MCP configuration remains available
-to agents that support it, but it is not declared as a dependency of this plugin.
+The generated portable package contains the eleven production skills and the hosted Vapi MCP
+connection at `https://mcp.vapi.ai/mcp`. Sign in to Vapi over OAuth and choose an organization;
+no API key is needed for connected MCP operations. Direct SDK and REST examples still require
+a private API key on a trusted backend. Live capabilities depend on the discovered tool catalog.
+The package uses root `plugin.json` and `mcp.json` manifests. Its source and build scripts
+live in this skills repository; the hosted server implementation lives in
+[`VapiAI/mcp-server`](https://github.com/VapiAI/mcp-server), which is also linked
+in the plugin listing metadata.
+
+For public submission, create a new combined **With MCP** draft: OpenAI currently does not
+support adding MCP to an existing skills-only listing. Keep the existing listing available
+until the replacement is approved. See the [submission guide](https://developers.openai.com/plugins/deploy/submission).
 The assembly step normalizes provider-specific frontmatter and adds OpenAI skill interface
 settings under each generated `skills/<name>/agents/openai.yaml`; canonical skill directories
 remain unchanged.
@@ -148,7 +158,8 @@ npx skills add https://github.com/VapiAI/skills/tree/main/vapi-demo
 
 ## Configuration
 
-All skills require a Vapi API key. Set it as an environment variable:
+For direct Vapi API operations, set a private API key as an environment variable.
+Planning and drafting require no key; the hosted MCP plugin uses OAuth instead:
 
 ```bash
 export VAPI_API_KEY="your-api-key"
