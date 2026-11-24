@@ -92,7 +92,7 @@ Simulations have five layers: a personality controls the AI caller, a scenario d
    - Poll `GET /eval/simulation/run/{id}` until `status` is `ended`. Do not judge `queued` or `running`.
    - Fetch every item (`GET /eval/simulation/run/{id}/item`) 100 at a time and deduplicate by item ID: page order isn't stable, and one request for a whole run can stall for a long time. Save them in the working folder as `sim_results/<baseline|candidate>/<run-id>.json`. The `model-migration` skill reads them from there.
    - Separate execution failures (an item that errored, timed out or was canceled) from evaluation failures. An execution failure is not a model result; rerun those items before comparing.
-   - Set aside test artifacts before comparing: the caller ended the chat before the assistant spoke, the conversation hit the turn limit after a transfer, or a tool call reached a tool with no mock.
+   - Set aside test artifacts before comparing: the caller ended the chat before the assistant spoke or before the assistant's last turn, the conversation hit the turn limit after a transfer, or a tool call reached a tool with no mock.
 
 10. **Report side by side.**
     - Compare the two copies on the same scenarios: only scenarios that produced a graded result on both copies.

@@ -13,7 +13,7 @@ How to read the side-by-side results from `migration-simulations` and decide wha
 ## Compare like with like
 
 - Compare only scenarios that produced a graded result on both copies. A conversation that errored, timed out or was canceled on one copy is an execution problem, reported separately and rerun; it is not a model result.
-- Set aside test artifacts first: the caller ended the chat before the assistant spoke; the conversation hit the turn limit after a transfer (a mocked transfer doesn't end the chat); a tool call reached a tool with no mock; repeated transfer calls after a mocked transfer succeeded.
+- Set aside test artifacts first: the caller ended the chat before the assistant spoke, or before the assistant's last turn (set aside only the closing checks for that conversation); the conversation hit the turn limit after a transfer (a mocked transfer doesn't end the chat); a tool call reached a tool with no mock; repeated transfer calls after a mocked transfer succeeded. A scenario set aside on one copy is set aside on both, so the comparison stays on the same scenarios.
 - With several runs per scenario, judge each scenario by its majority result, and list the scenarios whose runs disagree.
 
 ## What to report
@@ -21,9 +21,9 @@ How to read the side-by-side results from `migration-simulations` and decide wha
 In this order:
 
 1. **The team's metrics** from `metrics.md`, computed the same way for both copies. Compute rates from each run item's actual ending (the ending evaluation's `extractedValue`), not from whether it passed. With traffic weights from the flow map: weighted rate = sum of (weight × outcome) divided by the sum of weights, over scenarios with weight above 0 that were graded on both copies; report weight-0 scenarios (rules, failures, prompt-only) separately. Next to each, the production baseline from `metric_baselines.md`, or a note that there is none because the flow map was skipped. Simulated rates won't match production exactly: endings a simulation can't produce (a caller hanging up partway, silence timeouts) only happen in production. Judge the new model by the difference between the two copies, not by the gap to production.
-2. **Must-never-break rules:** every failure on either copy, with the scenario and transcript evidence. One failure of a critical rule is a blocker until explained.
+2. **Must-never-break rules:** for each rule in `metrics.md`, the checks that grade it and their result on each copy, then every failure with the scenario and transcript evidence. A rule with no check is reported as untested. One failure of a critical rule is a blocker until explained.
 3. **Rule and path checks:** pass rates per copy.
-4. **Every-check pass rate:** the share of scenarios that passed every evaluation.
+4. **Every-check pass rate:** the share of scenarios that passed every required evaluation, counted after setting aside test artifacts. Say how many scenarios it is out of.
 5. **Behavior signals** (below), per copy.
 6. **The largest differences:** the scenarios where the copies differ most, each with a one-line explanation.
 
@@ -63,4 +63,5 @@ On a first suite, expect about half of the differences to be the test or the pro
 
 - Simulated conversations vary from run to run, even on the same setup.
 - One conversation is worth 100 / (scenarios × runs) points. On a 20-scenario suite run once, one conversation is 5 points. Treat a difference of one or two conversations as noise.
-- Call a difference real only when the same scenario fails in most runs on one copy and passes in most runs on the other. Repeat the scenarios that matter most before drawing a conclusion from them.
+- Call a difference real only when the same scenario fails in most runs on one copy and passes in most runs on the other. A pattern counts too: the same check failing in several scenarios on one copy and not the other is real even at one run each.
+- Watch for unreliable graders: if one check passes on one copy and fails on the other for the same behavior (read both transcripts), it is the grader. Reword it or turn it into a regex check, then rerun both copies. Repeat the scenarios that matter most before drawing a conclusion from them.

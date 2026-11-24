@@ -18,7 +18,7 @@ Each `scenario_list.json` entry has an ID, the path it covers, its traffic weigh
 ## Caller instructions
 
 - Write the caller's goal and the facts they know (synthetic names, dates, numbers). Never script what the assistant should say.
-- Say when the caller ends the conversation, in terms of something the assistant does: "Hang up after the assistant confirms the new time", "Hang up once the assistant says it is transferring you." A transfer never ends a simulated chat (the transfer tool is mocked), so a caller told to stay on the line holds until the turn limit.
+- Say when the caller ends the conversation, in terms of something the assistant does: "Hang up after the assistant confirms the new time", "Hang up once the assistant says it is transferring you." A transfer never ends a simulated chat (the transfer tool is mocked), so a caller told to stay on the line holds until the turn limit. The caller's last line and the hang-up are separate turns: the caller says its last line, waits for the assistant's reply, and hangs up only after the assistant's goodbye. A caller that hangs up in the same turn as its last line cuts off the closing steps you want to grade.
 - Never let the caller bring up a step before the assistant does (a survey, a callback offer), or that step can't be graded.
 - Give the caller only the information this path needs. A caller who volunteers everything up front skips the steps you want to test.
 
@@ -48,6 +48,8 @@ Write each evaluation so a grader who sees only the transcript and the evaluatio
 - **Judge recorded facts.** A booking passes when the tool result shows success, not when the assistant says "you're all set".
 - **Tell the grader that tool calls and tool results in the transcript are not words the assistant said.** Chat transcripts can print them as assistant lines.
 - **A tool name written as text is not a tool call.** Say so in any evaluation about a tool.
+- **Use a regex check, not an AI grader, for whether a tool was called** (and with which argument). AI graders can disagree on identical transcripts; a regex structured output that matches the tool's name in the transcript's tool-call lines gives the same answer every time.
+- **Check that lookups use collected values.** A mock answers whatever arguments it gets, so a model that calls a lookup with a placeholder (a literal `{{dob}}`) still gets a patient back. Where the assistant must collect a value before a tool call, add a check that the call's arguments hold the caller's values, not `{{...}}` placeholders or empty strings.
 - **Allow equivalent wording and order.** Accept digits or words for numbers.
 - **Write counting rules as positive musts:** "transferred only after the caller's third request", not "did not transfer before the third request".
 - **Conditional checks pass when the condition never happened:** "If the caller asks for a human, the assistant offers one alternative before transferring. Pass if the caller never asks."
@@ -60,6 +62,7 @@ Use one caller personality for the whole suite unless a scenario needs a differe
 - Follow the scenario's facts; never invent account details.
 - Never mention a step before the assistant offers it.
 - Let the assistant answer "anything else?" before hanging up, unless the scenario says otherwise.
+- Never hang up in the same turn as your last line; wait for the assistant's reply and its goodbye first.
 - Hang up once a transfer starts.
 
 Keep the personality and its model the same for every model you compare.
