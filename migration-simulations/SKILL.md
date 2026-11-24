@@ -64,14 +64,14 @@ Simulations have five layers: a personality controls the AI caller, a scenario d
 
 5. **Define the caller personality.**
    - One personality for the suite, plus extra ones only where a scenario needs a different temperament (upset, rushed, confused). See the personality rules in [Building scenarios from a flow map](references/from-flow-map.md#caller-personality).
-   - A new personality needs a complete, valid assistant configuration. Use the `create-assistant` skill to assemble it when available. Add a voice and transcriber only to a personality used for voice runs (step 11).
+   - A new personality needs a complete, valid assistant configuration, including an end-call tool so the caller can hang up. Use the `create-assistant` skill to assemble it when available. Add a voice and transcriber only to a personality used for voice runs (step 11).
    - Use the same personalities and the same caller model for both copies.
    - Read [Opening order](references/coverage-planning.md#12-opening-order-and-greeting-coverage): the personality's `firstMessageMode` decides who speaks first.
 
 6. **Create and verify resources.**
    - Create in order: personalities and scenarios, then simulations, then one suite per level.
    - Require `201` for creates. Verify the returned IDs and the fields that define the test.
-   - Name every resource with the migration and the scenario ID (`<assistant> migration MIG-007 ...`) so it can't be mistaken for another test.
+   - Name every resource with the migration and the scenario ID (`<assistant> migration MIG-007 ...`) so it can't be mistaken for another test. Names are limited: 80 characters for personalities, scenarios, simulations and suites, 40 for evaluation (structured output) names.
    - Keep a local record of every created ID (`sims_created.json` in the working folder, by default `~/vapi-migration/<slug>/`). Update or delete only what is recorded there.
    - Before any update, fetch the resource and read the planned change back to the user. Arrays you send replace the existing ones (`simulationIds`, `evaluations`, `toolMocks`, `hooks`).
    - Configure `simulation.run.started` or `simulation.run.ended` hooks only when the user asks for them, and prefer `server.credentialId` over inline authorization headers.

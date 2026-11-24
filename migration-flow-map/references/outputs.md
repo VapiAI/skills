@@ -129,6 +129,9 @@ One entry per tool the assistant (or any squad member) called in the sample, plu
       ],
       "metrics": ["Deflection"],
       "covers": ["reschedule.find_and_offer"],
+      "branch_checks": [
+        {"branch": "reschedule.no_slots_this_week", "check": "If no slot fits the caller's week, offers the next available week. Pass if every week had slots."}
+      ],
       "source": "flow tree path, 69 calls read"
     }
   ]
@@ -137,6 +140,7 @@ One entry per tool the assistant (or any squad member) called in the sample, plu
 
 - `level` is `critical` or `all`. An All suite includes every entry; a Critical suite includes only `critical` entries. The rules are in [Planning the scenario list](scenario-plan.md).
 - `kind` is one of `route`, `variant`, `ending`, `compliance`, `tool_answer`, `state_rule`, `tool_failure`, `human_request`, `upset_caller`, `prompt_only`, `regression`. `admission` is `common`, `at_risk` or `severe`. `covers` lists the branch IDs the scenario stands for after merging.
+- `branch_checks` holds the branches that became checks on this scenario instead of scenarios of their own (scenario-plan.md, All item 6): the branch ID and the check, worded as a conditional that passes when the moment doesn't come up.
 - `weight` is the scenario's share of production traffic, used to weight rates. Route and variant scenarios carry traffic weight; every other kind has weight 0 and is reported separately. When no calls were read, `weight` and every `share` are `null`, `example_calls` is empty, and rates are reported unweighted.
 - `tool_answers` names an answer `kind` from the tool catalog for every tool the scenario can reach.
 - Every rule quotes its source: the prompt, the team's policy, or a decision agreed with the owner.

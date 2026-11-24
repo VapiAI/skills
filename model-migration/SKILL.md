@@ -17,6 +17,7 @@ Before starting, read [Model tendencies](references/model-tendencies.md). It des
 ## Safety rules
 
 - **Never edit the live assistant or squad.** Every change goes to a copy. Moving the change to production is the user's decision, after the report.
+- **Copies must not send events to the org's production webhook.** When an assistant or squad has no `server` of its own, its server messages go to the org-level server URL. If the copies live in the org that runs production, check that URL (the org settings, or ask the user). If it is a production webhook, give both copies a test `server.url` or turn their `serverMessages` off.
 - **Copies must not reach production systems.** Copies take no calls (no phone number attached). On both copies, remove `server` and anything that reaches outside Vapi: a server URL, a phone number or SIP destination (including `transferCall` destinations inside hooks), and custom storage. Keep hooks whose actions only `say` something or end the call, identical on both copies. Turn off custom-storage uploads (`artifactPlan` options that use custom storage) and `observabilityPlan`, or point each at a test destination. Simulations mock every tool (see `migration-simulations`).
 - **Copies share saved tools with the live assistant.** A copy keeps the same `model.toolIds`, so editing one of those tools (`PATCH /tool/{id}`) changes production. Never edit a tool a live assistant uses. To change a tool's name, description or parameters, create a new tool from the fetched one (`POST /tool`), point only the copy at it, and record it in `copies.json`.
 - **Keep working files out of the customer's repository.** Create the working folder outside any git repository (for example `~/vapi-migration/<slug>/`). If the user wants it inside a repo, add the folder to `.gitignore` first and confirm with `git check-ignore`.
@@ -60,7 +61,7 @@ Some findings are defects on any model (a tool name that doesn't match). Fix tho
 
 ### 4. Make two copies
 
-- **Baseline:** a copy of the live assistant (or squad) on the current model, unchanged apart from the safety changes above. For a transient configuration, create the baseline from the configuration the user provided.
+- **Baseline:** a copy of the live assistant (or squad) on the current model, unchanged apart from the safety changes above. For a transient configuration, create the baseline from the configuration the user provided. A configuration captured from a live call has that call's values filled in (the caller's number, names, dates): replace them with the original `{{variables}}` or synthetic values before making the copies, and check no real caller value is left.
 - **Candidate:** a second copy of the baseline with only these fields changed inside its existing `model` object. Keep every other `model` field as it is (`messages`, `tools`, `toolIds`, `knowledgeBase` and the rest): the prompt and tools live inside `model`, so replacing the whole object deletes them. The recommended settings for Terra and Luna are low reasoning and fast mode:
 
   ```json
