@@ -26,7 +26,7 @@ Before starting, read [Model tendencies](references/model-tendencies.md). It des
 
 ## Inputs
 
-- The assistant ID or squad ID, and the org's API key.
+- The assistant ID or squad ID, and the org's API key. For a transient assistant or squad (sent per call through `assistant-request` or inline), ask the user to paste the full configuration JSON instead; the copies are created from it as stored assistants or squads.
 - The new model. If the user hasn't chosen, see [Choosing between Terra and Luna](#choosing-between-terra-and-luna).
 - The team's metrics and how they measure them, or time to define them (step 1).
 
@@ -59,7 +59,7 @@ Some findings are defects on any model (a tool name that doesn't match). Fix tho
 
 ### 4. Make two copies
 
-- **Baseline:** a copy of the live assistant (or squad) on the current model, unchanged apart from the safety changes above.
+- **Baseline:** a copy of the live assistant (or squad) on the current model, unchanged apart from the safety changes above. For a transient configuration, create the baseline from the configuration the user provided.
 - **Candidate:** a second copy of the baseline with only these fields changed inside its existing `model` object. Keep every other `model` field as it is (`messages`, `tools`, `toolIds`, `knowledgeBase` and the rest): the prompt and tools live inside `model`, so replacing the whole object deletes them. The recommended settings for Terra and Luna are low reasoning and fast mode:
 
   ```json
@@ -115,7 +115,7 @@ Write `report.md` in the working folder:
 - The exact changes in the candidate: model block, prompt diff, tool changes.
 - Voice latency and cost per minute.
 - What the tests couldn't cover and the manual checks to run.
-- A rollout plan: keep the current configuration saved for rollback, keep a fallback model configured, move a small share of traffic first, compare the team's metrics and complaints against the previous weeks, and widen only when they hold.
+- A rollout plan: keep the current configuration saved for rollback, keep a fallback model configured, move a small share of traffic first, compare the team's metrics and complaints against the previous weeks, and widen only when they hold. For a transient assistant or squad, the switch happens on the team's server: it changes the model fields, and any prompt fixes, in the configuration it sends.
 
 Clean up with the user's yes, one list at a time, since deletes are permanent: the copies and new tools in `copies.json`, the extra candidate versions, and the simulation resources in `sims_created.json`. Remind them to delete the `raw/` folder from `migration-flow-map` (call data and configuration snapshots).
 

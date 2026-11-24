@@ -26,7 +26,7 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
 
 ## Inputs
 
-- The assistant ID or squad ID.
+- The assistant ID or squad ID. For a transient assistant or squad (sent per call by the team's server through `assistant-request`, or inline when the call is created), there is no ID to fetch: ask the user to paste the full configuration JSON or give a file path, and to say which phone number or traffic it serves.
 - The team's metrics, or time with the user to define them (step 1).
 - The sample size: how many calls to read. This is the one cost setting. See [Reading call data](references/call-data.md#sampling).
 
@@ -38,7 +38,7 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
    - Ask whether post-call analysis or structured outputs already capture any of them (`analysis`, `artifact.structuredOutputs` on each call).
 
 2. **Snapshot the configuration.**
-   - Fetch the assistant (`GET /assistant/{id}`), or the squad (`GET /squad/{id}`) and every member assistant. Resolve every tool (`GET /tool/{id}`).
+   - Fetch the assistant (`GET /assistant/{id}`), or the squad (`GET /squad/{id}`) and every member assistant. For a transient configuration, use the one the user provided, and compare it with the `assistant` or `squad` object on one recent call to confirm it's the version in production. Resolve every tool (`GET /tool/{id}`).
    - Save the responses in `raw/config_snapshot/`, with server URLs, headers and credential values replaced by `<redacted>`. Record the prompt, the first message, every tool's function name and description, handoff destinations, and every `{{variable}}` the prompt uses.
    - **Decide the source.** Use [Prompt-only mode](#prompt-only-mode) instead of steps 3 to 5 when any of these holds, and tell the user which one:
      - The org has zero data retention, or the calls are stored without transcripts or messages (check one recent call).

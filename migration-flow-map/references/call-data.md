@@ -28,6 +28,7 @@ Read the current configuration first, so every call can be measured against it:
 
 - Assistant: `GET /assistant/{id}`. The prompt is in `model.messages` (system role), the tools in `model.tools` (inline) and `model.toolIds` (resolve each with `GET /tool/{id}`).
 - Squad: `GET /squad/{id}`, then every member's assistant. Record each member's name, prompt, tools and handoff destinations.
+- Transient assistant or squad: there is no stored ID. Use the configuration the user pasted, and check it against the `assistant` or `squad` object on a recent call, which holds the configuration that call ran with.
 - Save the responses in `raw/config_snapshot/`, with `server.url`, `server.headers` and any credential values replaced by `<redacted>`. Never copy server URLs, headers or credential values into any other output.
 
 ## Listing calls
@@ -93,6 +94,7 @@ From these, build per call: the ordered tool path (names), each tool's arguments
 
 - `GET /call` filters by `assistantId` but not by squad. List calls by each of the squad's phone numbers (`phoneNumberId`) and keep calls whose `squadId` matches. Listing by time window alone pulls every call in the org; use it only when the squad has no number of its own, with short windows. For outbound squads, expect high volume and sample per day.
 - A call belongs to the member it started on. Record the full member path from `artifact.assistantActivations`.
+- Transient calls carry no `assistantId` or `squadId`. List them by phone number (`phoneNumberId`) and keep calls whose inline `assistant.name` or `squad.name` matches the configuration you were given. If several configurations share a number, say how you told them apart.
 - Report traffic per member as well as per conversation: how many calls reached each member and where each handed off.
 
 ## Example: list and sample in Python
