@@ -38,7 +38,7 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
    - Ask whether post-call analysis or structured outputs already capture any of them (`analysis`, `artifact.structuredOutputs` on each call).
 
 2. **Snapshot the configuration.**
-   - Fetch the assistant (`GET /assistant/{id}`), or the squad (`GET /squad/{id}`) and every member assistant, including the squad's `membersOverrides` (hooks, voice and transcriber settings) and each member's handoff tools (`assistantOverrides`). For a transient configuration, use the one the user provided, and compare it with the `assistant` or `squad` object on one recent call to confirm it's the version in production. Resolve every tool (`GET /tool/{id}`).
+   - Fetch the assistant (`GET /assistant/{id}`), or the squad (`GET /squad/{id}`) and every member assistant, including the squad's `membersOverrides` (hooks, voice and transcriber settings) and each member's handoff tools (`assistantOverrides`). For a transient configuration, use the one the user provided. Resolve every tool (`GET /tool/{id}`).
    - Save the responses in `raw/config_snapshot/`, with server URLs, headers and credential values replaced by `<redacted>`. Record the prompt, the first message, every tool's function name and description, handoff destinations, and every `{{variable}}` the prompt uses.
    - **Check whether calls can be read.** Skip steps 4 and 6 (pulling and reading calls) when any of these holds, and tell the user which one:
      - The org has zero data retention, or the calls are stored without transcripts or messages (check one recent call).
@@ -63,7 +63,7 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
 5. **Compute metric baselines.**
    - For each metric in `metrics.md`, compute its value over the sample the same way production does, as far as call data allows (for example: share of calls with no transfer; share of calls whose structured output marks the issue resolved).
    - Without calls, write in `metric_baselines.md` that there is no production baseline and why, and record the team's own current numbers if they give them.
-   - Write `metric_baselines.md`: each value, the number of calls behind it, the exact rule used, and anything that couldn't be computed from calls (callbacks, survey scores collected elsewhere). Compare with the team's own number if they gave one; a big gap means the definitions differ, so resolve it with the user before going on.
+   - Write `metric_baselines.md`: each value, the number of calls behind it, the exact rule used, and anything that couldn't be computed from calls (callbacks, survey scores collected elsewhere). Also record the share of calls whose ending a simulation can't produce (the caller hung up partway, a silence timeout). Simulated rates will differ from production by about that much, so the two copies are compared with each other, not with this baseline. Compare with the team's own number if they gave one; a big gap means the definitions differ, so resolve it with the user before going on.
 
 6. **Read calls into labels.**
    - Follow [Reading calls into a flow tree](references/reading.md): a pilot of about 50 calls that refines the category list drafted from the prompt (adding what callers actually do, and caller traits), agreed with the user, then the rest of the sample in batches with the fixed list.

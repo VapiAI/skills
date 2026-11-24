@@ -28,7 +28,7 @@ Read the current configuration first, so every call can be measured against it:
 
 - Assistant: `GET /assistant/{id}`. The prompt is in `model.messages` (system role), the tools in `model.tools` (inline) and `model.toolIds` (resolve each with `GET /tool/{id}`).
 - Squad: `GET /squad/{id}`, then every member's assistant. Record each member's name, prompt, tools and handoff destinations.
-- Transient assistant or squad: there is no stored ID. Use the configuration the user pasted, and check it against the `assistant` or `squad` object on a recent call, which holds the configuration that call ran with.
+- Transient assistant or squad: there is no stored ID. Use the configuration the user pasted.
 - Save the responses in `raw/config_snapshot/`, with `server.url`, `server.headers` and any credential values replaced by `<redacted>`. Never copy server URLs, headers or credential values into any other output.
 
 ## Listing calls

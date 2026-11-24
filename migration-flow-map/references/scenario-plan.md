@@ -58,6 +58,7 @@ Before writing the list, merge scenarios that test the same handling:
 
 - The same step reached with different wording, or by a different member that shares the rule, is one scenario.
 - A family of near-identical branches (one per symptom, one per procedure, one per form type) becomes one scenario per kind of handling, plus at most one or two variants.
+- **A situation that needs a tool to answer differently on a later call** (not found, then found after the caller corrects a detail) can't be run as written: each tool gives one answer per scenario. Plan it as two scenarios, or as one where the caller gets it right the first time. If the change itself is the point of the scenario, set it aside and say why.
 - **Only merge branches that need the same answer from every tool and the same expected ending.** A simulation gives each tool one fixed answer for the whole conversation and grades one ending, so branches that differ in either can't be tested in one scenario. Keep them separate, or make one a variant.
 
 In a large squad this usually cuts the All list by half or more. Record each merge in the scenario's `covers` field (the branch IDs it stands for).
