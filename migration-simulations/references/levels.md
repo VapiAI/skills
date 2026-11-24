@@ -16,8 +16,8 @@ The smallest suite that can tell you whether a model change is safe. Usually 10 
 Include, in this order:
 
 1. **Routes.** One scenario per route (a primary intent with its main steps), highest traffic first, until about 80% of conversations are covered or the next route is under about 3% of traffic. Without traffic data, one route per intent the prompt defines.
-2. **Every ending at least once.** Resolved, transferred or handed off, callback, refused, caller hangs up. If a route already ends that way, it counts.
-3. **The severe compliance situations, once each,** grouped by what the assistant must do: one emergency scenario covers every symptom the prompt lists.
+2. **Every ending the model can produce, at least once.** Endings the platform or the caller produce (a transfer that fails to connect, a silence timeout, a caller hanging up) can't be produced in chat; leave them to voice runs. For example resolved, transferred or handed off, callback offered, refused. If a route already ends that way, it counts.
+3. **The severe compliance situations, once each, and every must-never-break rule that needs a caller to trigger it,** grouped by what the assistant must do: one emergency scenario covers every symptom the prompt lists.
 4. **One tool failure on the main route.** The main tool returns an error or no result, so you see what the assistant says when things go wrong.
 5. **One request for a person,** following the prompt's escalation rules.
 6. **One upset caller** on a main route, if tone matters to the team (it usually does).

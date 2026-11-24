@@ -17,7 +17,7 @@ Before starting, read [Model tendencies](references/model-tendencies.md). It des
 ## Safety rules
 
 - **Never edit the live assistant or squad.** Every change goes to a copy. Moving the change to production is the user's decision, after the report.
-- **Copies must not reach production systems.** Copies take no calls (no phone number attached). On both copies, remove `server` and any hooks whose actions call a server or a tool, and turn off custom-storage uploads (`artifactPlan` options that use custom storage) and `observabilityPlan`, or point each at a test destination. Simulations mock every tool (see `migration-simulations`).
+- **Copies must not reach production systems.** Copies take no calls (no phone number attached). On both copies, remove `server` and anything that reaches outside Vapi: a server URL, a phone number or SIP destination (including `transferCall` destinations inside hooks), and custom storage. Keep hooks whose actions only `say` something or end the call, identical on both copies. Turn off custom-storage uploads (`artifactPlan` options that use custom storage) and `observabilityPlan`, or point each at a test destination. Simulations mock every tool (see `migration-simulations`).
 - **Copies share saved tools with the live assistant.** A copy keeps the same `model.toolIds`, so editing one of those tools (`PATCH /tool/{id}`) changes production. Never edit a tool a live assistant uses. To change a tool's name, description or parameters, create a new tool from the fetched one (`POST /tool`), point only the copy at it, and record it in `copies.json`.
 - **Keep working files out of the customer's repository.** Create the working folder outside any git repository (for example `~/vapi-migration/<slug>/`). If the user wants it inside a repo, add the folder to `.gitignore` first and confirm with `git check-ignore`.
 - Running simulations uses credits and concurrency. State how many conversations a run will start and get the user's yes before each run.
@@ -47,7 +47,8 @@ If calls can't be read (zero data retention, compliance limits) or traffic is to
 Without running anything, check the prompt and tools against [Fixes: before you test](references/fixes.md#before-you-test-prompt-and-tool-hygiene) and write `review.md`. Each finding names the line or tool and the risk:
 
 - tool names in the prompt that don't exactly match the real tool names;
-- tools the prompt never uses or forbids, and tool or parameter descriptions that disagree with the prompt;
+- tools the prompt never uses or forbids, and tool or parameter descriptions that disagree with the prompt (for a squad, include each member's `assistantOverrides`, where handoff tools often live, and the squad's `membersOverrides`);
+- `model.maxTokens` unset or low on any member: unset means the platform default of 250 output tokens, which cuts off long replies and handoff arguments;
 - per-call values early in the prompt (they defeat prompt caching);
 - rules that forbid acknowledgments or cap replies very short;
 - example lines that will become scripts, and closing steps that live in a separate section from the branches that need them;
@@ -68,10 +69,11 @@ Some findings are defects on any model (a tool name that doesn't match). Fix tho
 
   Use `gpt-5.6-terra` for Terra, and also set `"provider": "openai"` if the current model is from another provider. See [Luna](references/luna.md) and [Terra](references/terra.md) for what each setting does.
 - Check `model.fallbackModels` on the candidate. Remove GPT-4.1 entries: they hide candidate failures during tests and stop working when GPT-4.1 is retired. Decide the production fallback explicitly before rollout.
-- Check `model.maxTokens` on the candidate. A low value carried over from GPT-4.1 can cut replies short or leave them empty on reasoning models.
+- Check `model.maxTokens` on both copies. If it is unset (the platform default is 250) or low, set the same explicit value on both, for example 2048: a low cap cuts replies short, leaves them empty on reasoning models, and truncates handoff arguments. Tell the user production has the same problem.
 - To copy an assistant: `GET /assistant/{id}`, remove the read-only fields (`id`, `orgId`, `createdAt`, `updatedAt`, `latestVersion`, `modelDeprecations`, and any other field the create endpoint rejects), name it clearly (`<name> - migration baseline`, `<name> - migration candidate`), and `POST /assistant`. Require `201`.
+- To copy a squad: `GET /squad/{id}`, remove `id`, `orgId`, `createdAt`, `updatedAt` and `latestVersion`, rename it, and `POST /squad`. Members defined inline are copied with it; members that point at saved assistants need those assistants copied first and the squad pointed at the copies.
 - For a squad, copy every member and build two squads from the copies. Squad members keep their `name` unchanged, because handoffs refer to members by name; tell the copies apart by the squad name and `copies.json`. See [Migrating a squad](references/squads.md).
-- Fetch both copies and compare them field by field. They must be identical except `model.model`, `model.reasoningEffort`, `model.serviceTier` and `model.promptCacheRetention`, plus `model.provider`, `model.fallbackModels` and `model.maxTokens` where you changed them above. Compare `model.messages`, `model.tools` and `model.toolIds`, the first message, voice, transcriber, hooks and variables explicitly. Record every created ID (assistants, squads, new tools) in `copies.json`.
+- Fetch both copies and compare them field by field. They must be identical except `model.model`, `model.reasoningEffort`, `model.serviceTier` and `model.promptCacheRetention`, plus `model.provider`, `model.fallbackModels` and `model.maxTokens` where you changed them above. Compare `model.messages`, `model.tools` and `model.toolIds`, the first message, voice, transcriber, hooks and variables explicitly, and for a squad also each member's `assistantOverrides` and the squad's `membersOverrides`. Record every created ID (assistants, squads, new tools) in `copies.json`.
 - Test the candidate on the **unchanged prompt first**. The first comparison shows what the model does on its own; prompt changes come after.
 - If the current model can no longer run (already retired), skip the baseline copy and compare the candidate with the production baselines from `migration-flow-map`.
 

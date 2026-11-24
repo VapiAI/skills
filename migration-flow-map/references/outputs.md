@@ -98,7 +98,7 @@ One entry per tool the assistant (or any squad member) called in the sample, plu
 ```
 
 - `name` is the function name the model calls, which is what a mock must match.
-- `example` values are synthetic, with the same fields, order and formats as real answers. Never copy a real value.
+- `example` values are synthetic, with the same fields, order and formats as real answers: a date stays a date in the same format, an ID keeps its prefix and length. Never copy a real value, and never truncate the structure; a mock is built from this example.
 - `state_rules` describe answers that depend on earlier steps. Simulation mocks return one fixed answer per scenario, so each rule usually means separate scenarios for each state.
 - A tool with `never_called: true` is a candidate for removal before migration: newer models tend to call tools the prompt never uses.
 

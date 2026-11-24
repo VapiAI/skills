@@ -24,7 +24,7 @@ Each `scenario_list.json` entry has an ID, the path it covers, its traffic weigh
 
 ## Mocks
 
-- Every tool in the target's configuration needs a mock in every scenario, except tools of type `endCall` and static squad handoffs, which act inside Vapi only. A custom function named `end_call` needs a mock. A dynamic handoff (which asks a server for its destination) is not exempt either: point it at a test endpoint or make it static on both copies. A static handoff with more than one destination needs `destination` as a required parameter on both copies, because a simulation refuses a handoff call that leaves it out (see the `model-migration` skill's squad notes). Use the tool's function name exactly as the model sees it (`toolCall.function.name`), not its display name.
+- Every tool in the target's configuration needs a mock in every scenario, except tools of type `endCall` and static squad handoffs, which act inside Vapi only. A custom function named `end_call` needs a mock. A dynamic handoff (which asks a server for its destination) is not exempt either: point it at a test endpoint or make it static on both copies. Every static handoff tool needs `destination` as a required parameter on both copies, even one with a single destination, because a simulation refuses a handoff call that leaves it out (see the `model-migration` skill's squad notes). Use the tool's function name exactly as the model sees it (`toolCall.function.name`), not its display name.
 - **One fixed answer per tool per scenario.** Vapi returns the same mock result every time that tool is called in that scenario. Design around it:
   - A situation where the same tool should answer differently on a second call (a wrong date of birth, then a right one) becomes two scenarios, or one scenario where the caller gets it right the first time.
   - A value the assistant is supposed to ask for (an amount, a date) should not be baked into the mock in a way that lets the assistant skip asking.
@@ -37,7 +37,7 @@ Each `scenario_list.json` entry has an ID, the path it covers, its traffic weigh
 
 Each scenario gets:
 
-1. **Ending** (required): a string output whose allowed values are the endings from the flow map, compared with `=` to this scenario's expected ending. Deflection, containment and booking rates are computed from the ending each conversation actually reached (the evaluation's extracted value), not from whether it matched.
+1. **Ending** (required): a string output whose allowed values are the endings from the flow map, compared with `=` to this scenario's expected ending. A conversation can reach more than one (a booking fails, then a transfer), so list the endings in priority order in the evaluation and tell the grader to pick the first that applies. Deflection, containment and booking rates are computed from the ending each conversation actually reached (the evaluation's extracted value), not from whether it matched.
 2. **Path** (required): one Boolean per step the path must include ("verified identity before reading the balance").
 3. **Rules** (required): one Boolean per compliance situation this scenario exists to test, plus one per general rule (from the flow map's rules list) that can come up in this scenario. General rules are checks, not scenarios of their own; attach only the ones the conversation can actually reach.
 4. **Metric proxies** (optional): from `metrics.md`, marked `required: false`.

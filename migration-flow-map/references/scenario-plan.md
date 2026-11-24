@@ -32,8 +32,8 @@ A general rule that applies on every turn ("never give medical advice", "verify 
 The smallest suite that can show whether a model change is safe. Usually 10 to 25 scenarios; a large squad may need up to about 40.
 
 1. **Routes:** one scenario per route (a primary intent with its main steps), highest traffic first, until about 80% of conversations are covered or the next route is under about 3% of traffic. *Without calls:* one route per primary intent the prompt defines, on its main path.
-2. **Every ending at least once.** If a route already ends that way, it counts.
-3. **The severe compliance situations, once each.** Group them by what the assistant must do: one scenario per kind of handling, not one per trigger word (one emergency scenario covers every symptom the prompt lists, for example).
+2. **Every ending the model can produce, at least once.** Endings the platform or the caller produce (a transfer that fails to connect, a silence timeout, a caller hanging up) can't be produced in chat; leave them to voice runs. If a route already ends that way, it counts.
+3. **The severe compliance situations, once each, and every must-never-break rule from `metrics.md` that needs a caller to trigger it.** Group them by what the assistant must do: one scenario per kind of handling, not one per trigger word (one emergency scenario covers every symptom the prompt lists, for example).
 4. **One tool failure** on the main route.
 5. **One request for a person,** handled by the prompt's escalation rules.
 6. **One upset caller** on a main route, if tone matters to the team.
