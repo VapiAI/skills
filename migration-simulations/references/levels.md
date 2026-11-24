@@ -36,6 +36,7 @@ The exhaustive suite. Everything in Critical, plus:
 - Each compliance situation twice, with a different caller, wording and point in the call.
 - Branches the prompt describes that no production call reached (`prompt_only` in the flow map), weighted zero.
 - About 8 upset-caller copies of existing scenarios, and regression scenarios for every defect found earlier.
+- Silence and timing cases (a caller who never speaks, a slow responder), in voice runs only: chat has no silence timer, so these can't finish in chat.
 
 Merge scenarios that test the same handling before building: the same step reached with different wording, or a family of near-identical branches (one per symptom or form type), becomes one scenario per kind of handling. Expect 60 to 200 scenarios for a busy assistant after merging, more for a large squad.
 

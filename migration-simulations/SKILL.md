@@ -59,7 +59,7 @@ Simulations have five layers: a personality controls the AI caller, a scenario d
      - Evaluations quote the words they grade, judge tool results rather than the assistant's claims, and tell the grader that tool calls and tool names written as text are not things the assistant said.
    - Every scenario that runs in chat needs at least one text-based required evaluation. Audio-only evaluations are skipped in chat, and a scenario whose required evaluations are all skipped passes without testing anything.
    - Provide either `structuredOutputId` or inline `structuredOutput`, never both. Inline outputs need `name` and a JSON `schema`. Match the expected `value` type to the output: `=` or `!=` for Boolean and string, any comparator for numbers.
-   - Put test values for `{{variables}}` in `targetOverrides.variableValues`. If the prompt reads the current date or time, pin it to a fixed test value so business-hours paths don't change with the hour the suite runs.
+   - Put test values for `{{variables}}` in `targetOverrides.variableValues`. If the prompt reads the current date or time, pin it to a fixed test value so business-hours paths don't change with the hour the suite runs. If the team's server writes the date into the prompt text itself (not a `{{variable}}`), replace that line with the same fixed date on both copies, and say so in the report.
 
 5. **Define the caller personality.**
    - One personality for the suite, plus extra ones only where a scenario needs a different temperament (upset, rushed, confused). See the personality rules in [Building scenarios from a flow map](references/from-flow-map.md#caller-personality).
@@ -89,13 +89,14 @@ Simulations have five layers: a personality controls the AI caller, a scenario d
 
 9. **Collect and check results.**
    - Poll `GET /eval/simulation/run/{id}` until `status` is `ended`. Do not judge `queued` or `running`.
-   - Fetch every item (`GET /eval/simulation/run/{id}/item`), page by page, and save them in the working folder as `sim_results/<baseline|candidate>/<run-id>.json`. The `model-migration` skill reads them from there.
+   - Fetch every item (`GET /eval/simulation/run/{id}/item`) 100 at a time and deduplicate by item ID: page order isn't stable, and one request for a whole run can stall for a long time. Save them in the working folder as `sim_results/<baseline|candidate>/<run-id>.json`. The `model-migration` skill reads them from there.
    - Separate execution failures (an item that errored, timed out or was canceled) from evaluation failures. An execution failure is not a model result; rerun those items before comparing.
    - Set aside test artifacts before comparing: the caller ended the chat before the assistant spoke, the conversation hit the turn limit after a transfer, or a tool call reached a tool with no mock.
 
 10. **Report side by side.**
     - Compare the two copies on the same scenarios: only scenarios that produced a graded result on both copies.
     - Lead with the team's metrics from `metrics.md`, computed the same way for both copies. Compute rates from each item's actual ending (the ending evaluation's extracted value), not from whether the evaluation passed. With flow-map weights: weighted rate = sum of (weight × outcome) divided by the sum of weights, over scenarios with weight above 0 graded on both copies; report weight-0 scenarios separately. Then rule checks, then every-check pass rate.
+    - With a flow map, also report each copy's rates per intent and per ending (the tree's nodes) and name the weakest, and list the checks that fail on every run. Read those transcripts before blaming the model: they are often test problems.
     - List the scenarios where the two copies differ most, with the transcript evidence for each.
     - Say which differences could be run-to-run noise. One conversation is worth 100 / (scenarios × runs) points, so on a 20-scenario suite run once, one conversation is 5 points. A difference is real only when the same scenario fails in most runs on one copy and passes in most runs on the other.
     - Hand the results to the `model-migration` skill, which explains the differences and suggests fixes.

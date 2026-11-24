@@ -100,6 +100,8 @@ Scenarios are shared by both copies: fix a test problem once in the scenario, th
 - Pick fixes by symptom from [Fixes](references/fixes.md), plus [Luna](references/luna.md) or [Terra](references/terra.md). Each is a wording, tool-list or setting change.
 - Plan the tone work from the start: the new models sound more neutral than GPT-4.1, and callers notice. Add upset-caller scenarios and tone proxy checks to the suite before the first run, and apply tone fixes after the first comparison shows the gap.
 - Apply all chosen fixes to a new candidate version (keep the previous one for comparison), ask the user before rerunning it on the same suite, and compare again.
+- The prompt and settings you ship must be the ones that were scored. If wording or a setting changed after a run, rerun before reporting the result.
+- Keep the model, its settings and the prompt fixes together as one candidate, so the version that was tested is the version that rolls out.
 - Stop when the candidate holds the team's metrics and the must-never-break rules within noise, or after about three rounds with every remaining difference explained.
 
 ### 8. Check voice
@@ -115,7 +117,7 @@ Write `report.md` in the working folder:
 - The exact changes in the candidate: model block, prompt diff, tool changes.
 - Voice latency and cost per minute.
 - What the tests couldn't cover and the manual checks to run.
-- A rollout plan: keep the current configuration saved for rollback, keep a fallback model configured, move a small share of traffic first, compare the team's metrics and complaints against the previous weeks, and widen only when they hold. For a transient assistant or squad, the switch happens on the team's server: it changes the model fields, and any prompt fixes, in the configuration it sends.
+- A rollout plan: before every rollout step, diff the whole configuration that will go live against the current live one, not just the prompt and model (voice, transcriber, endpointing and turn-taking plans, denoising, hooks, fallback models), and confirm every difference is intended; keep the current configuration saved for rollback, keep a fallback model configured, move a small share of traffic first, compare the team's metrics and complaints against the previous weeks, and widen only when they hold. For a transient assistant or squad, the switch happens on the team's server: it changes the model fields, and any prompt fixes, in the configuration it sends.
 
 Clean up with the user's yes, one list at a time, since deletes are permanent: the copies and new tools in `copies.json`, the extra candidate versions, and the simulation resources in `sims_created.json`. Remind them to delete the `raw/` folder from `migration-flow-map` (call data and configuration snapshots).
 
