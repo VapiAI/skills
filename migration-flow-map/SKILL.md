@@ -1,8 +1,8 @@
 ---
 name: migration-flow-map
-description: Map how a Vapi assistant or squad is used in production before changing its model. Reads a sample of its real calls through the Vapi API, builds a traffic-weighted flow tree (intent, path, ending), a tool catalog of every tool and the answers it returns, production baselines for the team's own metrics (deflection, containment, transfer or booking rate), and a scenario list tagged Critical or All for the migration-simulations skill. Use before a model migration (for example GPT-4.1 to gpt-5.6-terra or gpt-5.6-luna), or when the user wants to know what callers actually do with an assistant. Read-only; never changes the assistant.
+description: Map how a Vapi assistant or squad is used in production before changing its model. Reads a sample of its real calls through the Vapi API, builds a traffic-weighted flow tree (intent, path, ending), a tool catalog of every tool and the answers it returns, production baselines for the team's own metrics (deflection, containment, transfer or booking rate), and a scenario list tagged Critical or All for the migration-simulations skill. When call content can't be read (zero data retention, compliance limits, no access) or traffic is too thin, it builds the same files from the system prompt and tool definitions instead. Use before a model migration (for example GPT-4.1 to gpt-5.6-terra or gpt-5.6-luna), or when the user wants to know what callers actually do with an assistant. Read-only; never changes the assistant.
 license: MIT
-compatibility: Requires VAPI_API_KEY with read access to the org's assistants, squads, tools and calls, and calls with transcripts. Reading many calls works best in an agent that supports sub-agents.
+compatibility: Requires VAPI_API_KEY with read access to the org's assistants, squads and tools; call reading also needs access to calls with transcripts, otherwise the skill runs from the prompt alone. Reading many calls works best in an agent that supports sub-agents.
 metadata:
   author: vapi
   version: "0.1"
@@ -11,6 +11,8 @@ metadata:
 # Migration flow map
 
 Before testing a new model, find out what the assistant really does: which reasons people call for, which paths those calls take, how they end, which tools answer what, and how the team's metrics look today. The result is the input to `migration-simulations`, so the tests reflect real traffic instead of guesses.
+
+When production calls can't be used, the skill falls back to the system prompt: see [Prompt-only mode](#prompt-only-mode).
 
 This skill is read-only. It never creates, updates or deletes anything in Vapi.
 
@@ -38,6 +40,11 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
 2. **Snapshot the configuration.**
    - Fetch the assistant (`GET /assistant/{id}`), or the squad (`GET /squad/{id}`) and every member assistant. Resolve every tool (`GET /tool/{id}`).
    - Save the responses in `raw/config_snapshot/`, with server URLs, headers and credential values replaced by `<redacted>`. Record the prompt, the first message, every tool's function name and description, handoff destinations, and every `{{variable}}` the prompt uses.
+   - **Decide the source.** Use [Prompt-only mode](#prompt-only-mode) instead of steps 3 to 5 when any of these holds, and tell the user which one:
+     - The org has zero data retention, or the calls are stored without transcripts or messages (check one recent call).
+     - The user says call content may not be read (step 1 and the compliance rule above).
+     - The key can't list the org's calls.
+     - Fewer than about 50 calls ended in a conversation in the window.
 
 3. **Pull and sample calls.**
    - Agree the window (default: the last 4 weeks, or since the current prompt version went live) and the sample size (default about 300 calls; more for busy assistants and squads).
@@ -81,10 +88,21 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
     - Write `flow_map_report.md`: window and sample, the top of the tree, metric baselines, tool catalog highlights (never-called tools, common failures), prompt-only situations, the Critical and All scenario counts, and the owner questions.
     - Hand the folder to `migration-simulations`. Remind the user to delete `raw/` when the migration is done.
 
+## Prompt-only mode
+
+The fallback when production calls can't be read or are too few. It produces the same files from the system prompt (every member's, for a squad) and the tool definitions, so `migration-simulations` works the same way. What changes:
+
+- **Skip steps 3 to 5.** No calls are listed, sampled or read, and nothing is saved under `raw/` except the redacted configuration.
+- **Metric baselines.** Write `metric_baselines.md` saying there is no production baseline and why. If the team gives its own current numbers, record them with their source.
+- **Flow tree.** Build it from the workflows the prompt defines: each reason to call the prompt handles, the steps it lays out, and the endings it allows. `share` is `null` everywhere, `example_calls` is empty, and the tree carries `"source": "prompt"`.
+- **Tool catalog.** Take each tool's arguments and answer kinds from its definition, its description and what the prompt says about its results. Ask the user for one example response per tool in the real format, with synthetic values. Where none is available, mark the example `"example_source": "inferred"` and list the tool in `owner_questions.md`, because a mock that doesn't match the real format tests the wrong thing.
+- **Scenario list.** Critical covers every workflow the prompt defines, every ending once, each must-never-break rule in both directions, one tool failure, one request for a human and one upset caller. All adds the variants and the rarer branches. `weight` is `null` on every scenario, so rates are reported unweighted.
+- **Report.** `flow_map_report.md` says prompt-only mode was used and why, so nobody reads the tree as traffic.
+
 ## Output contract
 
 - `metrics.md` and `metric_baselines.md`
-- `flow_tree.json`, `tool_catalog.json`, `scenario_list.json` (formats in [Output files](references/outputs.md))
+- `flow_tree.json`, `tool_catalog.json`, `scenario_list.json` (formats in [Output files](references/outputs.md)), built from calls or, in prompt-only mode, from the prompt
 - `owner_questions.md` and `flow_map_report.md`
 - Supporting files: `call_records.jsonl`, `labels.jsonl`, `categories.md` (and, in `raw/`, the redacted `config_snapshot/` and the raw calls)
 - A short summary for the user: sample size, top intents with shares, metric baselines, Critical and All counts, open owner questions

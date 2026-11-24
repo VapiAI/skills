@@ -40,7 +40,7 @@ Ask which metrics the team tracks for this assistant and how production measures
 
 Run the `migration-flow-map` skill. It reads a sample of production calls and produces the flow tree, the tool catalog, production baselines for the metrics, the Critical and All scenario list, and questions for the owner.
 
-For a small or brand-new assistant with little traffic, skip it and build the scenario list from the prompt in `migration-simulations` step 3.
+If calls can't be read (zero data retention, compliance limits) or traffic is too thin, `migration-flow-map` builds the same files from the system prompt and tool definitions instead (its prompt-only mode). There is no production baseline in that case.
 
 ### 3. Review the prompt and tools before testing
 

@@ -107,6 +107,7 @@ One entry per tool the assistant (or any squad member) called in the sample, plu
 - `level` is `critical` or `all`. An All suite includes every entry; a Critical suite includes only `critical` entries. The level rules are in SKILL.md step 8.
 - `kind` is one of `core_path`, `ending`, `rule_act`, `rule_hold_back`, `tool_failure`, `human_request`, `upset_caller`, `variant`, `tool_answer`, `prompt_only`, `regression`.
 - `weight` is the scenario's share of production traffic, used to weight rates. Entries that exist for coverage rather than traffic (rules, failures, prompt-only) have weight 0 and are reported separately.
+- In prompt-only mode (no call data), `weight` and every `share` are `null`, `example_calls` is empty, and rates are reported unweighted.
 - `tool_answers` names an answer `kind` from the tool catalog for every tool the scenario can reach.
 - Every rule quotes its source: the prompt, the team's policy, or a decision agreed with the owner.
 
