@@ -46,9 +46,9 @@ Everything in Critical, plus:
 2. **Variants:** every route with at least 1% of traffic gets one more scenario for each variant that makes up at least 15% of that route. A variant is a different ending, or a caller trait that changes the conversation (another language, a request for a person, a caller acting for someone else).
 3. **Tool answers:** every answer kind that makes up at least 0.1% of its tool's calls appears in some scenario. Group answers by what the assistant must do differently, not one scenario per raw shape.
 4. **Compliance situations twice,** with a different caller, different wording and a different point in the call, so one run can't decide a gate.
-5. **State rules and failure triggers:** every one the tool catalog shows (a lookup that finds nothing, an action refused until the caller is verified).
-6. **Prompt-only branches:** one scenario per branch no call reached, weight 0, after merging (below).
-7. **Upset callers:** about 8 copies of existing scenarios with an upset caller.
+5. **State rules and failure triggers:** every one the tool catalog shows (a lookup that finds nothing, an action refused until the caller is verified). Tool failures are one scenario per kind of failure handling, not one per tool: if several tools fail and the prompt handles them the same way, one scenario covers them.
+6. **Prompt-only branches:** a branch no call reached gets its own scenario (weight 0) only if it changes what the assistant does: a different tool call, a transfer or handoff, a different ending, or a failure path. A branch that only changes wording or which question is asked becomes a check on an existing scenario that passes through that point. A rule shared by every member is a check, never a scenario.
+7. **Upset callers:** about 4 copies of existing scenarios with an upset caller, spread across the main routes.
 
 *Without calls:* there are no shares, so items 1 to 3 become one scenario per route the prompt defines, one per variant the prompt handles differently, and one per tool answer kind the prompt says how to handle.
 
@@ -58,6 +58,7 @@ Before writing the list, merge scenarios that test the same handling:
 
 - The same step reached with different wording, or by a different member that shares the rule, is one scenario.
 - A family of near-identical branches (one per symptom, one per procedure, one per form type) becomes one scenario per kind of handling, plus at most one or two variants.
+- **Only merge branches that need the same answer from every tool and the same expected ending.** A simulation gives each tool one fixed answer for the whole conversation and grades one ending, so branches that differ in either can't be tested in one scenario. Keep them separate, or make one a variant.
 
 In a large squad this usually cuts the All list by half or more. Record each merge in the scenario's `covers` field (the branch IDs it stands for).
 
@@ -73,6 +74,7 @@ When the prompt is silent or contradicts itself:
 
 - Compare the share of scenarios (weighted) that end with a person with the tree's share. A plan that misses it gives a deflection rate that won't line up with production. *Without calls:* skip.
 - Every expected ending is one of the endings in the category list.
+- Every scenario that covers more than one branch uses one set of tool answers and one ending that fit all of them.
 - Every compliance situation and every must-never-break rule is either a scenario or a check on at least one scenario.
 - Show the user the Critical and All counts, the merges, and the scenarios set aside. They lock the list before `migration-simulations` builds anything.
 

@@ -34,11 +34,12 @@ The exhaustive suite. Everything in Critical, plus:
 - Variants: every route with at least 1% of traffic gets one more scenario for each variant that makes up at least 15% of it (a different ending, another language, a request for a person, a caller acting for someone else).
 - Every tool answer kind that makes up at least 0.1% of its tool's calls, grouped by what the assistant must do differently, and every state rule (not found, locked, refused until verified).
 - Each compliance situation twice, with a different caller, wording and point in the call.
-- Branches the prompt describes that no production call reached (`prompt_only` in the flow map), weighted zero.
-- About 8 upset-caller copies of existing scenarios, and regression scenarios for every defect found earlier.
+- Branches the prompt describes that no production call reached (`prompt_only` in the flow map), weighted zero, but only those that change what the assistant does (a different tool call, transfer, ending or failure path). The rest are checks on existing scenarios.
+- Tool failures as one scenario per kind of failure handling, not one per tool.
+- About 4 upset-caller copies of existing scenarios, and regression scenarios for every defect found earlier.
 - Silence and timing cases (a caller who never speaks, a slow responder), in voice runs only: chat has no silence timer, so these can't finish in chat.
 
-Merge scenarios that test the same handling before building: the same step reached with different wording, or a family of near-identical branches (one per symptom or form type), becomes one scenario per kind of handling. Expect 60 to 200 scenarios for a busy assistant after merging, more for a large squad.
+Merge scenarios that test the same handling before building: the same step reached with different wording, or a family of near-identical branches (one per symptom or form type), becomes one scenario per kind of handling. Only merge branches that need the same answer from every tool and the same ending, since each scenario has one mock answer per tool. Expect 60 to 200 scenarios for a busy assistant after merging, more for a large squad.
 
 ## Choosing
 
