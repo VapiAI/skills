@@ -36,7 +36,7 @@ The three files `migration-simulations` reads, the prompt branch list they are b
 
 - One entry per distinct handling, quoted exactly. `member` is omitted for a single assistant; a rule shared by several members uses `"any"`, and squad hooks use `"squad"`.
 - `kind` is one of `route`, `decision`, `ending`, `compliance`, `trigger`, `failure_handling`. `parts` names come from `categories.md`.
-- `status` is `seen` or `prompt_only` after the calls are read; `share` is the share of calls that reached the branch. In prompt-only mode both are `null`.
+- `status` is `seen` or `prompt_only` after the calls are read; `share` is the share of calls that reached the branch. When no calls were read, every branch is `prompt_only` and `share` is `null`.
 
 ## flow_tree.json
 
@@ -137,7 +137,7 @@ One entry per tool the assistant (or any squad member) called in the sample, plu
 
 - `level` is `critical` or `all`. An All suite includes every entry; a Critical suite includes only `critical` entries. The rules are in [Planning the scenario list](scenario-plan.md).
 - `kind` is one of `route`, `variant`, `ending`, `compliance`, `tool_answer`, `state_rule`, `tool_failure`, `human_request`, `upset_caller`, `prompt_only`, `regression`. `admission` is `common`, `at_risk` or `severe`. `covers` lists the branch IDs the scenario stands for after merging.
-- `weight` is the scenario's share of production traffic, used to weight rates. Route and variant scenarios carry traffic weight; every other kind has weight 0 and is reported separately. In prompt-only mode (no call data), `weight` and every `share` are `null`, `example_calls` is empty, and rates are reported unweighted.
+- `weight` is the scenario's share of production traffic, used to weight rates. Route and variant scenarios carry traffic weight; every other kind has weight 0 and is reported separately. When no calls were read, `weight` and every `share` are `null`, `example_calls` is empty, and rates are reported unweighted.
 - `tool_answers` names an answer `kind` from the tool catalog for every tool the scenario can reach.
 - Every rule quotes its source: the prompt, the team's policy, or a decision agreed with the owner.
 

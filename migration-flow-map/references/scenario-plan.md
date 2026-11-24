@@ -1,6 +1,6 @@
 # Planning the scenario list
 
-How step 9 turns the flow tree, the prompt branches and the tool catalog into a scenario list tagged Critical or All. The rules are the same in both modes; prompt-only mode has no traffic numbers, so it uses the fallbacks marked below.
+How step 9 turns the flow tree, the prompt branches and the tool catalog into a scenario list tagged Critical or All. When no calls were read there are no traffic numbers, so the steps use the fallbacks marked *Without calls* below.
 
 ## Contents
 
@@ -31,7 +31,7 @@ A general rule that applies on every turn ("never give medical advice", "verify 
 
 The smallest suite that can show whether a model change is safe. Usually 10 to 25 scenarios; a large squad may need up to about 40.
 
-1. **Routes:** one scenario per route (a primary intent with its main steps), highest traffic first, until about 80% of conversations are covered or the next route is under about 3% of traffic. *Prompt-only mode:* one route per primary intent the prompt defines, on its main path.
+1. **Routes:** one scenario per route (a primary intent with its main steps), highest traffic first, until about 80% of conversations are covered or the next route is under about 3% of traffic. *Without calls:* one route per primary intent the prompt defines, on its main path.
 2. **Every ending at least once.** If a route already ends that way, it counts.
 3. **The severe compliance situations, once each.** Group them by what the assistant must do: one scenario per kind of handling, not one per trigger word (one emergency scenario covers every symptom the prompt lists, for example).
 4. **One tool failure** on the main route.
@@ -50,7 +50,7 @@ Everything in Critical, plus:
 6. **Prompt-only branches:** one scenario per branch no call reached, weight 0, after merging (below).
 7. **Upset callers:** about 8 copies of existing scenarios with an upset caller.
 
-*Prompt-only mode:* there are no shares, so items 1 to 3 become one scenario per route the prompt defines, one per variant the prompt handles differently, and one per tool answer kind the prompt says how to handle.
+*Without calls:* there are no shares, so items 1 to 3 become one scenario per route the prompt defines, one per variant the prompt handles differently, and one per tool answer kind the prompt says how to handle.
 
 ## Merging repeated tests
 
@@ -71,7 +71,7 @@ When the prompt is silent or contradicts itself:
 
 ## Checks before the gate
 
-- Compare the share of scenarios (weighted) that end with a person with the tree's share. A plan that misses it gives a deflection rate that won't line up with production. *Prompt-only mode:* skip.
+- Compare the share of scenarios (weighted) that end with a person with the tree's share. A plan that misses it gives a deflection rate that won't line up with production. *Without calls:* skip.
 - Every expected ending is one of the endings in the category list.
 - Every compliance situation and every must-never-break rule is either a scenario or a check on at least one scenario.
 - Show the user the Critical and All counts, the merges, and the scenarios set aside. They lock the list before `migration-simulations` builds anything.
@@ -79,4 +79,4 @@ When the prompt is silent or contradicts itself:
 ## Weights
 
 - Route and variant scenarios carry their traffic share. Every other kind (compliance, tool answers, failures, prompt-only) has weight 0 and is reported separately, so the weighted rate counts each real call once.
-- In prompt-only mode every weight is `null` and rates are reported unweighted.
+- Without calls, every weight is `null` and rates are reported unweighted.

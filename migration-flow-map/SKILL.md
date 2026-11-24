@@ -12,7 +12,7 @@ metadata:
 
 Before testing a new model, find out what the assistant really does: which reasons people call for, which paths those calls take, how they end, which tools answer what, and how the team's metrics look today. The result is the input to `migration-simulations`, so the tests reflect real traffic instead of guesses.
 
-When production calls can't be used, the skill falls back to the system prompt: see [Prompt-only mode](#prompt-only-mode).
+It always uses both the system prompt and production calls. When calls can't be read, it uses the prompt alone and produces the same files; each step says what changes.
 
 This skill is read-only. It never creates, updates or deletes anything in Vapi.
 
@@ -40,7 +40,7 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
 2. **Snapshot the configuration.**
    - Fetch the assistant (`GET /assistant/{id}`), or the squad (`GET /squad/{id}`) and every member assistant, including the squad's `membersOverrides` (hooks, voice and transcriber settings) and each member's handoff tools (`assistantOverrides`). For a transient configuration, use the one the user provided, and compare it with the `assistant` or `squad` object on one recent call to confirm it's the version in production. Resolve every tool (`GET /tool/{id}`).
    - Save the responses in `raw/config_snapshot/`, with server URLs, headers and credential values replaced by `<redacted>`. Record the prompt, the first message, every tool's function name and description, handoff destinations, and every `{{variable}}` the prompt uses.
-   - **Decide the source.** Use [Prompt-only mode](#prompt-only-mode) instead of steps 4 to 6 when any of these holds, and tell the user which one:
+   - **Check whether calls can be read.** Skip steps 4 and 6 (pulling and reading calls) when any of these holds, and tell the user which one:
      - The org has zero data retention, or the calls are stored without transcripts or messages (check one recent call).
      - The user says call content may not be read (step 1 and the compliance rule above).
      - The key can't list the org's calls.
@@ -62,6 +62,7 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
 
 5. **Compute metric baselines.**
    - For each metric in `metrics.md`, compute its value over the sample the same way production does, as far as call data allows (for example: share of calls with no transfer; share of calls whose structured output marks the issue resolved).
+   - Without calls, write in `metric_baselines.md` that there is no production baseline and why, and record the team's own current numbers if they give them.
    - Write `metric_baselines.md`: each value, the number of calls behind it, the exact rule used, and anything that couldn't be computed from calls (callbacks, survey scores collected elsewhere). Compare with the team's own number if they gave one; a big gap means the definitions differ, so resolve it with the user before going on.
 
 6. **Read calls into labels.**
@@ -73,17 +74,20 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
 7. **Build the flow tree.**
    - Intent > path > ending, each node with its share of traffic and example call IDs. For squads, also the share of calls that reached each member.
    - Map the tree onto `prompt_branches.json`: mark each branch with the share of calls that reached it, or `prompt_only` if no sampled call did. A path that matches no branch is a situation the prompt doesn't cover; add it to the owner questions.
+   - Without calls, build the tree from the category list and the branches: each intent the prompt handles, its steps and its endings. Every share is `null`, every branch is `prompt_only`, and the tree carries `"source": "prompt"` so nobody reads it as traffic.
    - Write `flow_tree.json` (format in [Output files](references/outputs.md#flow_treejson)) and walk the user through the top of the tree.
 
 8. **Build the tool catalog.**
    - For every tool: its function name (what a mock must match), how often it is called, the arguments the assistant sends, every kind of answer it returns with its share and one synthetic example in the real format, and rules about when its answer changes (for example "returns not found until the caller is verified").
    - Include tools that were never called in the sample. They are candidates for removal before migration.
+   - Without calls, take each tool's arguments and answer kinds from its definition, its description and what the prompt says about its results. Ask the user for one example response per tool in the real format, with synthetic values. Where none is available, mark the example `"example_source": "inferred"` and list the tool in `owner_questions.md`, because a mock that doesn't match the real format tests the wrong thing.
    - Write `tool_catalog.json` (format in [Output files](references/outputs.md#tool_catalogjson)). Check that no real value leaked into an example.
 
 9. **Write the scenario list.**
    - Follow [Planning the scenario list](references/scenario-plan.md): the admission test, rules as checks rather than scenarios, the Critical and All coverage rules, merging repeated tests, setting aside what the prompt doesn't cover, and the checks before the gate.
    - Each scenario has: its level and kind, the reason it was admitted, the path, its traffic weight, the caller's goal and synthetic facts, when the caller hangs up, the tool answer kind for every tool it can reach, the expected ending, the rules it checks with their quoted source, the metrics it informs, and the branches it covers.
    - Expected endings and rules come from the prompt and the team's rules, never from what the assistant did on the source call.
+   - Without calls, every `weight` is `null` (rates are reported unweighted) and the routes are the intents the prompt defines.
    - Write `scenario_list.json` (format in [Output files](references/outputs.md#scenario_listjson)). **Gate:** the user locks the list (its size, merges and set-aside scenarios) before `migration-simulations` builds anything.
 
 10. **Collect questions for the owner.**
@@ -91,26 +95,15 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
    - Write `owner_questions.md`, one question per item, each with the prompt quote and how often the situation occurred in the sample.
 
 11. **Report and hand over.**
-    - Write `flow_map_report.md`: window and sample, the top of the tree, metric baselines, tool catalog highlights (never-called tools, common failures), prompt-only situations, the Critical and All scenario counts, and the owner questions.
+    - Write `flow_map_report.md`: whether calls were read (and if not, why), window and sample, the top of the tree, metric baselines, tool catalog highlights (never-called tools, common failures), prompt-only situations, the Critical and All scenario counts, and the owner questions.
     - Hand the folder to `migration-simulations`. Remind the user to delete `raw/` when the migration is done.
-
-## Prompt-only mode
-
-The fallback when production calls can't be read or are too few. It produces the same files from the system prompt (every member's, for a squad) and the tool definitions, so `migration-simulations` works the same way. What changes:
-
-- **Skip steps 4 to 6.** No calls are listed, sampled or read, and nothing is saved under `raw/` except the redacted configuration.
-- **Metric baselines.** Write `metric_baselines.md` saying there is no production baseline and why. If the team gives its own current numbers, record them with their source.
-- **Flow tree.** Build it from the category list and `prompt_branches.json` (step 3): each intent the prompt handles, the steps it lays out, and the endings in the category list. `share` is `null` everywhere, `example_calls` is empty, and the tree carries `"source": "prompt"`.
-- **Tool catalog.** Take each tool's arguments and answer kinds from its definition, its description and what the prompt says about its results. Ask the user for one example response per tool in the real format, with synthetic values. Where none is available, mark the example `"example_source": "inferred"` and list the tool in `owner_questions.md`, because a mock that doesn't match the real format tests the wrong thing.
-- **Scenario list.** Same rules as step 9, using the prompt-only fallbacks in [Planning the scenario list](references/scenario-plan.md): routes are the intents the prompt defines, and merging matters even more, because every branch would otherwise become a scenario. `weight` is `null` on every scenario, so rates are reported unweighted.
-- **Report.** `flow_map_report.md` says prompt-only mode was used and why, so nobody reads the tree as traffic.
 
 ## Output contract
 
 - `metrics.md` and `metric_baselines.md`
-- `prompt_branches.json`, `flow_tree.json`, `tool_catalog.json`, `scenario_list.json` (formats in [Output files](references/outputs.md)), built from calls or, in prompt-only mode, from the prompt
+- `prompt_branches.json`, `flow_tree.json`, `tool_catalog.json`, `scenario_list.json` (formats in [Output files](references/outputs.md)), built from the prompt and calls, or from the prompt alone when calls can't be read
 - `owner_questions.md` and `flow_map_report.md`
-- Supporting files: `call_records.jsonl`, `labels.jsonl`, `categories.md` (and, in `raw/`, the redacted `config_snapshot/` and the raw calls)
+- Supporting files: `categories.md`, plus `call_records.jsonl` and `labels.jsonl` when calls were read (and, in `raw/`, the redacted `config_snapshot/` and the raw calls)
 - A short summary for the user: sample size, top intents with shares, metric baselines, Critical and All counts, open owner questions
 
 ## Public sources
