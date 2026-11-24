@@ -26,7 +26,7 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
 
 ## Inputs
 
-- The assistant ID or squad ID. For a transient assistant or squad (sent per call by the team's server through `assistant-request`, or inline when the call is created), there is no ID to fetch: ask the user to paste the full configuration JSON or give a file path, and to say which phone number or traffic it serves.
+- The assistant ID or squad ID. For a transient assistant or squad (sent per call by the team's server through `assistant-request`, or inline when the call is created), there is no ID to fetch: ask the user to paste the full configuration JSON or give a file path. A transient configuration is mapped from the configuration alone (step 2).
 - The team's metrics, or time with the user to define them (step 1).
 - The sample size: how many calls to read. This is the one cost setting. See [Reading call data](references/call-data.md#sampling).
 
@@ -41,6 +41,7 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
    - Fetch the assistant (`GET /assistant/{id}`), or the squad (`GET /squad/{id}`) and every member assistant, including the squad's `membersOverrides` (hooks, voice and transcriber settings) and each member's handoff tools (`assistantOverrides`). For a transient configuration, use the one the user provided. Resolve every tool (`GET /tool/{id}`).
    - Save the responses in `raw/config_snapshot/`, with server URLs, headers and credential values replaced by `<redacted>`. Record the prompt, the first message, every tool's function name and description, handoff destinations, and every `{{variable}}` the prompt uses.
    - **Check whether calls can be read.** Skip steps 4 and 6 (pulling and reading calls) when any of these holds, and tell the user which one:
+     - The assistant or squad is transient. Its calls carry no assistant or squad ID, so they can't be reliably matched to the configuration the user gave.
      - The org has zero data retention, or the calls are stored without transcripts or messages (check one recent call).
      - The user says call content may not be read (step 1 and the compliance rule above).
      - The key can't list the org's calls.
