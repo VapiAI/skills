@@ -22,6 +22,8 @@ The three files `migration-simulations` reads, the prompt branch list they are b
       "quote": "If the date of birth doesn't match, ask once more. After two misses, offer a callback.",
       "reached_by": "Caller gives a date of birth that doesn't match the record, twice.",
       "expected": "Asks again once, then offers a callback.",
+      "kind": "failure_handling",
+      "parts": {"intent": "reschedule_appointment", "steps": ["verify_identity"], "ending": "callback_offered"},
       "status": "seen",
       "share": 0.04
     }
@@ -32,7 +34,8 @@ The three files `migration-simulations` reads, the prompt branch list they are b
 }
 ```
 
-- One entry per distinct handling, quoted exactly. `member` is omitted for a single assistant.
+- One entry per distinct handling, quoted exactly. `member` is omitted for a single assistant; a rule shared by several members uses `"any"`, and squad hooks use `"squad"`.
+- `kind` is one of `route`, `decision`, `ending`, `compliance`, `trigger`, `failure_handling`. `parts` names come from `categories.md`.
 - `status` is `seen` or `prompt_only` after the calls are read; `share` is the share of calls that reached the branch. In prompt-only mode both are `null`.
 
 ## flow_tree.json
@@ -103,12 +106,13 @@ One entry per tool the assistant (or any squad member) called in the sample, plu
 
 ```json
 {
-  "level_rules": {"critical_traffic_cover": 0.8, "critical_min_path_share": 0.03, "all_min_share": 0.005},
+  "level_rules": {"critical_traffic_cover": 0.8, "critical_min_route_share": 0.03, "all_traffic_cover": 0.9, "variant_min_route_share": 0.01, "variant_min_share_of_route": 0.15, "tool_answer_min_share": 0.001},
   "scenarios": [
     {
       "id": "MIG-001",
       "level": "critical",
-      "kind": "core_path",
+      "kind": "route",
+      "admission": "common",
       "intent": "reschedule_appointment",
       "path": ["identify_caller", "find_appointment", "offer_new_times", "confirm_change"],
       "weight": 0.22,
@@ -124,16 +128,16 @@ One entry per tool the assistant (or any squad member) called in the sample, plu
         {"rule": "Verifies the caller's date of birth before discussing the appointment.", "source": "prompt: \"Always confirm the date of birth before sharing appointment details.\""}
       ],
       "metrics": ["Deflection"],
+      "covers": ["reschedule.find_and_offer"],
       "source": "flow tree path, 69 calls read"
     }
   ]
 }
 ```
 
-- `level` is `critical` or `all`. An All suite includes every entry; a Critical suite includes only `critical` entries. The level rules are in SKILL.md step 8.
-- `kind` is one of `core_path`, `ending`, `rule_act`, `rule_hold_back`, `tool_failure`, `human_request`, `upset_caller`, `variant`, `tool_answer`, `prompt_only`, `regression`.
-- `weight` is the scenario's share of production traffic, used to weight rates. Entries that exist for coverage rather than traffic (rules, failures, prompt-only) have weight 0 and are reported separately.
-- In prompt-only mode (no call data), `weight` and every `share` are `null`, `example_calls` is empty, and rates are reported unweighted.
+- `level` is `critical` or `all`. An All suite includes every entry; a Critical suite includes only `critical` entries. The rules are in [Planning the scenario list](scenario-plan.md).
+- `kind` is one of `route`, `variant`, `ending`, `compliance`, `tool_answer`, `state_rule`, `tool_failure`, `human_request`, `upset_caller`, `prompt_only`, `regression`. `admission` is `common`, `at_risk` or `severe`. `covers` lists the branch IDs the scenario stands for after merging.
+- `weight` is the scenario's share of production traffic, used to weight rates. Route and variant scenarios carry traffic weight; every other kind has weight 0 and is reported separately. In prompt-only mode (no call data), `weight` and every `share` are `null`, `example_calls` is empty, and rates are reported unweighted.
 - `tool_answers` names an answer `kind` from the tool catalog for every tool the scenario can reach.
 - Every rule quotes its source: the prompt, the team's policy, or a decision agreed with the owner.
 

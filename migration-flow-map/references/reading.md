@@ -37,8 +37,8 @@ One record per call, written by a reader who sees only that call's transcript, t
 
 ## Pilot: build the category list
 
-1. Read about 50 calls from across the sample with no fixed categories. Readers name intents, steps and endings freely.
-2. Merge the names into a category list: each category gets a short definition and the alternative names readers used.
+1. Read about 50 calls from across the sample, starting from the category list drafted from the prompt (SKILL.md step 3). Readers use its names where they fit and propose new ones for what the prompt didn't anticipate.
+2. Merge the proposals into the category list: each new category gets a short definition and the alternative names readers used.
 3. Show the list to the user and agree it. The user knows which distinctions matter to the business (for example whether "change payment date" and "make a payment" are one intent or two).
 
 ## Label the rest
@@ -62,12 +62,11 @@ Stop reading when new batches stop adding categories. A practical rule: stop whe
 
 The calls only show what callers did. A rare situation the prompt handles explicitly (an escalation, a legal edge case) may never appear in the sample, yet it is often the first thing a new model gets wrong. So the prompt is read for its own list of branches before any call is read (SKILL.md step 3), and the calls are mapped onto it.
 
-- Read the whole prompt, section by section, and every member's prompt for a squad. Work through each workflow from start to end: every decision point and each of its options, every ending, every rule that fires on a trigger, and every tool result the prompt says how to handle.
-- One entry per distinct handling. Two quotes that lead to the same behavior are one branch; the same trigger handled differently by two members is two.
-- Each entry has an ID (`<member>.<short-name>`), the exact quote, what the caller would say or do to reach it, and what the prompt says to do.
-- Rules that apply on every turn are not branches. List them separately as rules; they become checks on every scenario.
-- After reading calls, mark each branch `seen` (with the share of calls that reached it) or `prompt_only`. Show the `prompt_only` list to the user. Each one they keep becomes a zero-weight scenario in the All level.
-- Expect many branches for a long prompt or a squad: a large squad can have well over 100. That is fine; the Critical level still picks only the core paths.
+- **What counts as a branch:** a situation the prompt tells the assistant to handle differently. Group the sentences that describe one handling. A general rule ("never make things up") is a check on every scenario, not a branch.
+- **Quote, don't infer:** each branch carries the prompt's exact words. A situation you expect an assistant like this to need, but the prompt doesn't state, is not a branch; put it in `owner_questions.md`.
+- **Anchor to the category list:** each branch names its intent, steps and ending from the category list. A branch that needs a name the list doesn't have means the list is missing something: add it there first, with a definition.
+- **Size:** one branch per distinct handling, at the level of the category list's steps. A list of lookup results, symptoms, form types or provider names that all get the same handling is one branch, not one per item. The same rule in several members is one branch. A seven-member squad with long prompts landed at about 175 branches; several hundred means branches are being split below one handling.
+- **Seen or not:** after the calls are read, a branch is `seen` when some read call has its intent, steps and ending, with the share of calls that did. Otherwise it is `prompt_only`. Show the `prompt_only` list to the user. Each one they keep becomes a zero-weight scenario in the All level, after merging.
 
 ## Common mistakes
 

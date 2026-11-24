@@ -11,31 +11,33 @@ Pick the level with the user before writing any scenario. Both levels use the sa
 
 ## Critical
 
-The smallest suite that can tell you whether a model change is safe. Usually 10 to 25 scenarios.
+The smallest suite that can tell you whether a model change is safe. Usually 10 to 25 scenarios; a large squad may need up to about 40.
 
 Include, in this order:
 
-1. **Core workflows.** The paths that make up most of the traffic, highest share first, until about 80% of conversations are covered or the next path is under about 3% of traffic. One scenario per path, with a cooperative caller.
-2. **Every ending at least once.** Resolved, transferred or handed off, callback, refused, caller hangs up. An ending nobody tests is the one that breaks quietly.
-3. **Rules that must never break, in both directions.** Compliance lines, identity checks before account details, payment gates, required disclosures, escalation rules. For each, one scenario where the assistant must act and one where it must hold back.
-4. **One tool failure on the main path.** The main tool returns an error or no result, so you see what the assistant says when things go wrong.
-5. **One request for a human,** following the prompt's escalation rules.
-6. **One upset caller** on the main path, if tone matters to the team (it usually does).
+1. **Routes.** One scenario per route (a primary intent with its main steps), highest traffic first, until about 80% of conversations are covered or the next route is under about 3% of traffic. Without traffic data, one route per intent the prompt defines.
+2. **Every ending at least once.** Resolved, transferred or handed off, callback, refused, caller hangs up. If a route already ends that way, it counts.
+3. **The severe compliance situations, once each,** grouped by what the assistant must do: one emergency scenario covers every symptom the prompt lists.
+4. **One tool failure on the main route.** The main tool returns an error or no result, so you see what the assistant says when things go wrong.
+5. **One request for a person,** following the prompt's escalation rules.
+6. **One upset caller** on a main route, if tone matters to the team (it usually does).
 
-Leave out: rare paths, caller variations, every tool answer type, language variants unless a language is a large share of traffic, and paths only the prompt mentions.
+General rules that apply on every turn (identity checks before account details, required disclosures, never giving medical or legal advice) are not scenarios of their own: they are checks graded on every scenario where they can come up.
+
+Leave out: rare routes, variants, every tool answer type, and branches only the prompt mentions.
 
 ## All
 
 The exhaustive suite. Everything in Critical, plus:
 
-- Every path in the flow map down to a small share of traffic (for example 0.5%), and variants of the big paths (a caller who gives information out of order, changes their mind, asks a side question).
-- Every tool answer type that makes up a meaningful share of that tool's calls, and every state the tools can be in (not found, locked, already done).
-- Each compliance situation at least twice, with different callers.
-- Paths the prompt describes that no production call reached (`prompt_only` in the flow map), weighted zero.
-- Language variants, silence and timing cases (voice only), and about 8 upset-caller copies of existing scenarios.
-- Regression scenarios for every defect found earlier.
+- Routes up to about 90% of engaging traffic.
+- Variants: every route with at least 1% of traffic gets one more scenario for each variant that makes up at least 15% of it (a different ending, another language, a request for a person, a caller acting for someone else).
+- Every tool answer kind that makes up at least 0.1% of its tool's calls, grouped by what the assistant must do differently, and every state rule (not found, locked, refused until verified).
+- Each compliance situation twice, with a different caller, wording and point in the call.
+- Branches the prompt describes that no production call reached (`prompt_only` in the flow map), weighted zero.
+- About 8 upset-caller copies of existing scenarios, and regression scenarios for every defect found earlier.
 
-Expect 60 to 200 scenarios for a busy assistant, more for a squad.
+Merge scenarios that test the same handling before building: the same step reached with different wording, or a family of near-identical branches (one per symptom or form type), becomes one scenario per kind of handling. Expect 60 to 200 scenarios for a busy assistant after merging, more for a large squad.
 
 ## Choosing
 

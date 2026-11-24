@@ -38,7 +38,7 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
    - Ask whether post-call analysis or structured outputs already capture any of them (`analysis`, `artifact.structuredOutputs` on each call).
 
 2. **Snapshot the configuration.**
-   - Fetch the assistant (`GET /assistant/{id}`), or the squad (`GET /squad/{id}`) and every member assistant. For a transient configuration, use the one the user provided, and compare it with the `assistant` or `squad` object on one recent call to confirm it's the version in production. Resolve every tool (`GET /tool/{id}`).
+   - Fetch the assistant (`GET /assistant/{id}`), or the squad (`GET /squad/{id}`) and every member assistant, including the squad's `membersOverrides` (hooks, voice and transcriber settings) and each member's handoff tools (`assistantOverrides`). For a transient configuration, use the one the user provided, and compare it with the `assistant` or `squad` object on one recent call to confirm it's the version in production. Resolve every tool (`GET /tool/{id}`).
    - Save the responses in `raw/config_snapshot/`, with server URLs, headers and credential values replaced by `<redacted>`. Record the prompt, the first message, every tool's function name and description, handoff destinations, and every `{{variable}}` the prompt uses.
    - **Decide the source.** Use [Prompt-only mode](#prompt-only-mode) instead of steps 4 to 6 when any of these holds, and tell the user which one:
      - The org has zero data retention, or the calls are stored without transcripts or messages (check one recent call).
@@ -46,10 +46,12 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
      - The key can't list the org's calls.
      - Fewer than about 50 calls ended in a conversation in the window.
 
-3. **List the prompt's branches.**
-   - Read the whole system prompt (every member's, for a squad) and the tool definitions, and list every branch the prompt gives specific handling for: each reason to call, each decision point and its options, each ending, each triggered rule (an escalation, a compliance line, a safety check) and each tool failure the prompt says how to handle. One entry per distinct handling, with an ID, the member, the exact quote, what the caller would say or do to reach it, and what the prompt says to do. Follow [Branches the prompt defines](references/reading.md#branches-the-prompt-defines).
-   - Rules that apply on every turn (disclosures, tone, never-do lists) are rules, not branches: list them separately; they become checks.
-   - Write `prompt_branches.json` (format in [Output files](references/outputs.md#prompt_branchesjson)). Calls are mapped onto it in the steps that follow, and in prompt-only mode it becomes the tree.
+3. **Draft the category list and the prompt's branches.**
+   - Read the whole system prompt (every member's, for a squad, and the squad's own hooks) and the tool definitions. Draft the category list from it: the reasons to call (intents), the named steps, and the endings the prompt allows. Endings must separate what the team's metrics count (for deflection, an ending with a person apart from one without). Write `categories.md`.
+   - List the branches: each situation the prompt tells the assistant to handle differently, with the exact quote, what the caller would say or do to reach it, what the prompt says to do, and the intent, steps and ending it maps to (names from the category list). Group the sentences that describe one handling into one branch. A rule repeated by several members is one branch for all of them.
+   - General rules that apply on every turn (disclosures, tone, never-do lists) are rules, not branches: list them separately; they become checks.
+   - Check the list: every quote appears word for word in the prompt, and every intent, step and ending exists in the category list. Follow [Branches the prompt defines](references/reading.md#branches-the-prompt-defines).
+   - Write `prompt_branches.json` (format in [Output files](references/outputs.md#prompt_branchesjson)) and show the user the category list and the branch counts per member.
 
 4. **Pull and sample calls.**
    - Agree the window (default: the last 4 weeks, or since the current prompt version went live) and the sample size (default about 300 calls; more for busy assistants and squads).
@@ -63,7 +65,7 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
    - Write `metric_baselines.md`: each value, the number of calls behind it, the exact rule used, and anything that couldn't be computed from calls (callbacks, survey scores collected elsewhere). Compare with the team's own number if they gave one; a big gap means the definitions differ, so resolve it with the user before going on.
 
 6. **Read calls into labels.**
-   - Follow [Reading calls into a flow tree](references/reading.md): a pilot of about 50 calls to build the category list (intents, path steps, endings, caller traits), agreed with the user, then the rest of the sample in batches with the fixed list.
+   - Follow [Reading calls into a flow tree](references/reading.md): a pilot of about 50 calls that refines the category list drafted from the prompt (adding what callers actually do, and caller traits), agreed with the user, then the rest of the sample in batches with the fixed list.
    - Align the endings with the metrics. If the team counts deflection as "no transfer and no callback", the endings must separate those cases.
    - Name path steps after the branch IDs from `prompt_branches.json` where they match, so the tree maps onto the branch list.
    - Stop when new batches stop adding categories (the stopping rule is in the reading reference).
@@ -79,12 +81,10 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
    - Write `tool_catalog.json` (format in [Output files](references/outputs.md#tool_catalogjson)). Check that no real value leaked into an example.
 
 9. **Write the scenario list.**
-   - Turn the tree, the prompt-only branches, the tool catalog and the must-never-break rules into scenarios, each tagged `critical` or `all`:
-     - **Critical:** the core paths, highest traffic first, until about 80% of conversations are covered or the next path is under about 3% of traffic; every ending at least once; each must-never-break rule in both directions (one scenario where the assistant must act, one where it must hold back); one tool failure on the main path; one request for a human; one upset caller. Usually 10 to 25 scenarios.
-     - **All:** everything else worth testing: smaller paths down to about 0.5% of traffic, variants of big paths, every meaningful tool answer and state, each compliance situation at least twice, every prompt-only branch (weight 0), language variants, and more upset callers.
-   - Each scenario has: the path, its traffic weight, the caller's goal and synthetic facts, when the caller hangs up, the tool answer kind for every tool it can reach, the expected ending, the rules it checks with their quoted source, and the metrics it informs.
+   - Follow [Planning the scenario list](references/scenario-plan.md): the admission test, rules as checks rather than scenarios, the Critical and All coverage rules, merging repeated tests, setting aside what the prompt doesn't cover, and the checks before the gate.
+   - Each scenario has: its level and kind, the reason it was admitted, the path, its traffic weight, the caller's goal and synthetic facts, when the caller hangs up, the tool answer kind for every tool it can reach, the expected ending, the rules it checks with their quoted source, the metrics it informs, and the branches it covers.
    - Expected endings and rules come from the prompt and the team's rules, never from what the assistant did on the source call.
-   - Write `scenario_list.json` (format in [Output files](references/outputs.md#scenario_listjson)).
+   - Write `scenario_list.json` (format in [Output files](references/outputs.md#scenario_listjson)). **Gate:** the user locks the list (its size, merges and set-aside scenarios) before `migration-simulations` builds anything.
 
 10. **Collect questions for the owner.**
    - While reading the prompt and calls, note contradictions (two rules that disagree), situations the prompt doesn't cover, and tools the prompt never mentions. These show up later as false model differences if nobody resolves them.
@@ -100,9 +100,9 @@ The fallback when production calls can't be read or are too few. It produces the
 
 - **Skip steps 4 to 6.** No calls are listed, sampled or read, and nothing is saved under `raw/` except the redacted configuration.
 - **Metric baselines.** Write `metric_baselines.md` saying there is no production baseline and why. If the team gives its own current numbers, record them with their source.
-- **Flow tree.** Build it from `prompt_branches.json` (step 3): each reason to call the prompt handles, the steps it lays out, and the endings it allows. `share` is `null` everywhere, `example_calls` is empty, and the tree carries `"source": "prompt"`.
+- **Flow tree.** Build it from the category list and `prompt_branches.json` (step 3): each intent the prompt handles, the steps it lays out, and the endings in the category list. `share` is `null` everywhere, `example_calls` is empty, and the tree carries `"source": "prompt"`.
 - **Tool catalog.** Take each tool's arguments and answer kinds from its definition, its description and what the prompt says about its results. Ask the user for one example response per tool in the real format, with synthetic values. Where none is available, mark the example `"example_source": "inferred"` and list the tool in `owner_questions.md`, because a mock that doesn't match the real format tests the wrong thing.
-- **Scenario list.** Critical covers every workflow the prompt defines, every ending once, each must-never-break rule in both directions, one tool failure, one request for a human and one upset caller. All adds the variants and the rarer branches. `weight` is `null` on every scenario, so rates are reported unweighted.
+- **Scenario list.** Same rules as step 9, using the prompt-only fallbacks in [Planning the scenario list](references/scenario-plan.md): routes are the intents the prompt defines, and merging matters even more, because every branch would otherwise become a scenario. `weight` is `null` on every scenario, so rates are reported unweighted.
 - **Report.** `flow_map_report.md` says prompt-only mode was used and why, so nobody reads the tree as traffic.
 
 ## Output contract

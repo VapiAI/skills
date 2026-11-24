@@ -39,7 +39,7 @@ Each scenario gets:
 
 1. **Ending** (required): a string output whose allowed values are the endings from the flow map, compared with `=` to this scenario's expected ending. Deflection, containment and booking rates are computed from the ending each conversation actually reached (the evaluation's extracted value), not from whether it matched.
 2. **Path** (required): one Boolean per step the path must include ("verified identity before reading the balance").
-3. **Rules** (required): one Boolean per rule this scenario exists to test, in the direction it tests.
+3. **Rules** (required): one Boolean per compliance situation this scenario exists to test, plus one per general rule (from the flow map's rules list) that can come up in this scenario. General rules are checks, not scenarios of their own; attach only the ones the conversation can actually reach.
 4. **Metric proxies** (optional): from `metrics.md`, marked `required: false`.
 
 Write each evaluation so a grader who sees only the transcript and the evaluation text reaches the right answer:
@@ -68,6 +68,6 @@ Keep the personality and its model the same for every model you compare.
 
 - Every target tool except `endCall` tools and static handoffs has a mock in every scenario.
 - Every scenario has a required, text-based ending evaluation.
-- Every rule from `metrics.md` "Rules that must never break" is covered in both directions.
+- Every rule from `metrics.md` "Rules that must never break" is checked on at least one scenario, and every compliance situation in the scenario list has its scenario.
 - No real customer data anywhere: names, numbers, addresses and IDs are synthetic.
 - Names are unique per scenario, so run results can be read by scenario name.
