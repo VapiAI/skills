@@ -9,7 +9,7 @@ How to label sampled calls with intents, paths and endings, decide when enough c
 - [Label the rest](#label-the-rest)
 - [When to stop](#when-to-stop)
 - [Build the tree](#build-the-tree)
-- [Paths the prompt describes but no call reached](#paths-the-prompt-describes-but-no-call-reached)
+- [Branches the prompt defines](#branches-the-prompt-defines)
 - [Common mistakes](#common-mistakes)
 
 ## What a label records
@@ -58,13 +58,16 @@ Stop reading when new batches stop adding categories. A practical rule: stop whe
 - Merge paths that differ only in order of trivial steps. Keep paths separate when a step changes the outcome (a failed verification, a tool error).
 - Report traffic shares as percentages with the number of calls behind them, and a share for "other" (intents too rare to list).
 
-## Paths the prompt describes but no call reached
+## Branches the prompt defines
 
-The tree only shows what calls did. A rare situation the prompt handles explicitly (an escalation, a legal edge case) may never appear in the sample, yet it is often the first thing a new model gets wrong.
+The calls only show what callers did. A rare situation the prompt handles explicitly (an escalation, a legal edge case) may never appear in the sample, yet it is often the first thing a new model gets wrong. So the prompt is read for its own list of branches before any call is read (SKILL.md step 3), and the calls are mapped onto it.
 
-- Read the whole prompt and list every situation it gives specific handling for, each with the exact quote, what the caller would say, and what the prompt says to do.
-- Mark each one `seen` (some call in the sample shows it) or `prompt_only`.
-- Show the `prompt_only` list to the user. Each one they keep becomes a zero-weight scenario in the All level.
+- Read the whole prompt, section by section, and every member's prompt for a squad. Work through each workflow from start to end: every decision point and each of its options, every ending, every rule that fires on a trigger, and every tool result the prompt says how to handle.
+- One entry per distinct handling. Two quotes that lead to the same behavior are one branch; the same trigger handled differently by two members is two.
+- Each entry has an ID (`<member>.<short-name>`), the exact quote, what the caller would say or do to reach it, and what the prompt says to do.
+- Rules that apply on every turn are not branches. List them separately as rules; they become checks on every scenario.
+- After reading calls, mark each branch `seen` (with the share of calls that reached it) or `prompt_only`. Show the `prompt_only` list to the user. Each one they keep becomes a zero-weight scenario in the All level.
+- Expect many branches for a long prompt or a squad: a large squad can have well over 100. That is fine; the Critical level still picks only the core paths.
 
 ## Common mistakes
 

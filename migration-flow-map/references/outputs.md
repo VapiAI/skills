@@ -1,13 +1,39 @@
 # Output files
 
-The three files `migration-simulations` reads, and the supporting files. All live in the working folder (by default `~/vapi-migration/<slug>/`) and contain no personal data.
+The three files `migration-simulations` reads, the prompt branch list they are built on, and the supporting files. All live in the working folder (by default `~/vapi-migration/<slug>/`) and contain no personal data.
 
 ## Contents
 
+- [prompt_branches.json](#prompt_branchesjson)
 - [flow_tree.json](#flow_treejson)
 - [tool_catalog.json](#tool_catalogjson)
 - [scenario_list.json](#scenario_listjson)
 - [Supporting files](#supporting-files)
+
+## prompt_branches.json
+
+```json
+{
+  "source": "prompt",
+  "branches": [
+    {
+      "id": "verification.dob_mismatch",
+      "member": "Verification",
+      "quote": "If the date of birth doesn't match, ask once more. After two misses, offer a callback.",
+      "reached_by": "Caller gives a date of birth that doesn't match the record, twice.",
+      "expected": "Asks again once, then offers a callback.",
+      "status": "seen",
+      "share": 0.04
+    }
+  ],
+  "rules": [
+    {"id": "any.ai_disclosure", "quote": "If asked, say you are an AI assistant."}
+  ]
+}
+```
+
+- One entry per distinct handling, quoted exactly. `member` is omitted for a single assistant.
+- `status` is `seen` or `prompt_only` after the calls are read; `share` is the share of calls that reached the branch. In prompt-only mode both are `null`.
 
 ## flow_tree.json
 
@@ -115,6 +141,7 @@ One entry per tool the assistant (or any squad member) called in the sample, plu
 
 | File | Contents |
 |---|---|
+| `prompt_branches.json` | Every branch the prompt defines, with its quote, and whether calls reached it |
 | `raw/config_snapshot/` | The assistant or squad configuration as fetched, with server URLs, headers and credential values replaced by `<redacted>`. Kept in `raw/` and deleted with it. |
 | `call_records.jsonl` | One structured row per sampled call: ended reason, duration, tool path, failed tools, transfers, handoffs, cost. No transcript text. |
 | `labels.jsonl` | One label per read call (see the reading reference) |
