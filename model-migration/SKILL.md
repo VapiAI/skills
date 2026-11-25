@@ -12,7 +12,7 @@ metadata:
 
 A model change is measured, not guessed: build a test set, measure the current setup on it, measure the new model on the same set, and change only what the differences show. Expect a few rounds of fixes before the new model holds the team's metrics. That iteration happens on copies, before any caller hears the new model.
 
-Before starting, read [Model tendencies](references/model-tendencies.md). It describes how Terra and Luna behave differently from GPT-4.1, and most of this procedure exists to catch those differences.
+Before starting, load the model card for this migration (see [Model cards](#model-cards)). A card describes how the target model behaves differently from the starting model, and most of this procedure exists to catch those differences.
 
 ## Safety rules
 
@@ -29,7 +29,7 @@ Before starting, read [Model tendencies](references/model-tendencies.md). It des
 
 - The assistant ID or squad ID. For a transient assistant or squad (sent per call through `assistant-request` or inline), ask the user to paste the full configuration JSON instead; the copies are created from it as stored assistants or squads.
 - The org's API key, read from the `VAPI_API_KEY` environment variable. Never ask the user to paste it into the chat, and never print it. If it isn't set, ask the user to copy the private key for the org that owns the assistant from https://dashboard.vapi.ai/org/api-keys, run `export VAPI_API_KEY=<key>` in their terminal, and restart the agent from that terminal. Then check the key can read the assistant or squad.
-- The new model. If the user hasn't chosen, see [Choosing between Terra and Luna](#choosing-between-terra-and-luna).
+- The new model. If the user hasn't chosen, see [Choosing a model](#choosing-a-model).
 - The team's metrics and how they measure them, or time to define them (step 1).
 
 ## Procedure
@@ -63,13 +63,13 @@ Some findings are defects on any model (a tool name that doesn't match). Fix tho
 ### 4. Make two copies
 
 - **Baseline:** a copy of the live assistant (or squad) on the current model, unchanged apart from the safety changes above. For a transient configuration, create the baseline from the configuration the user provided. A configuration captured from a live call has that call's values filled in (the caller's number, names, dates): replace them with the original `{{variables}}` or synthetic values before making the copies, and check no real caller value is left.
-- **Candidate:** a second copy of the baseline with only these fields changed inside its existing `model` object. Keep every other `model` field as it is (`messages`, `tools`, `toolIds`, `knowledgeBase` and the rest): the prompt and tools live inside `model`, so replacing the whole object deletes them. The recommended settings for Terra and Luna are low reasoning and fast mode:
+- **Candidate:** a second copy of the baseline with only the model fields changed inside its existing `model` object. Keep every other `model` field as it is (`messages`, `tools`, `toolIds`, `knowledgeBase` and the rest): the prompt and tools live inside `model`, so replacing the whole object deletes them. Use the settings in the model card's "Recommended settings" section. For example, the gpt-5.6-terra card recommends:
 
   ```json
-  { "model": "gpt-5.6-luna", "reasoningEffort": "low", "serviceTier": "fast", "promptCacheRetention": "24h" }
+  { "model": "gpt-5.6-terra", "reasoningEffort": "low", "serviceTier": "fast", "promptCacheRetention": "24h" }
   ```
 
-  Use `gpt-5.6-terra` for Terra, and also set `"provider": "openai"` if the current model is from another provider. See [Luna](references/luna.md) and [Terra](references/terra.md) for what each setting does.
+  With no card, change only `model.model` (and `model.provider` if it changes) and keep the other settings.
 - Check `model.fallbackModels` on the candidate. Remove GPT-4.1 entries: they hide candidate failures during tests and stop working when GPT-4.1 is retired. Decide the production fallback explicitly before rollout.
 - Check `model.maxTokens` on both copies. If it is unset (the platform default is 250) or low, set the same explicit value on both, for example 2048: a low cap cuts replies short, leaves them empty on reasoning models, and truncates handoff arguments. Tell the user production has the same problem.
 - To copy an assistant: `GET /assistant/{id}`, remove the read-only fields (`id`, `orgId`, `createdAt`, `updatedAt`, `latestVersion`, `modelDeprecations`, and any other field the create endpoint rejects), name it clearly (`<name> - migration baseline`, `<name> - migration candidate`), and `POST /assistant`. Require `201`.
@@ -95,14 +95,14 @@ Use the results `migration-simulations` saved in `sim_results/` and [Comparing t
 
 - Compare only scenarios graded on both copies. Lead with the team's metrics, then must-never-break rules, then rule checks and behavior signals.
 - Read the transcripts behind the largest differences and file each as the test, the prompt, the model, or the old model breaking a rule the new one keeps.
-- Explain model differences with [Model tendencies](references/model-tendencies.md), so the user knows whether a difference is a known trait or something specific to this assistant.
+- Explain model differences with the model card, so the user knows whether a difference is a known trait or something specific to this assistant.
 
 Scenarios are shared by both copies: fix a test problem once in the scenario, then rerun both copies before changing the candidate's prompt.
 
 ### 7. Fix and rerun
 
-- Pick fixes by symptom from [Fixes](references/fixes.md), plus [Luna](references/luna.md) or [Terra](references/terra.md). Each is a wording, tool-list or setting change.
-- Plan the tone work from the start: the new models sound more neutral than GPT-4.1, and callers notice. Add upset-caller scenarios and tone proxy checks to the suite before the first run, and apply tone fixes after the first comparison shows the gap.
+- Pick fixes by symptom from [Fixes](references/fixes.md) and the model card. Each is a wording, tool-list or setting change.
+- Plan the tone work from the start when the card says the new model sounds more neutral (both GPT-4.1 cards do), because callers notice. Add upset-caller scenarios and tone proxy checks to the suite before the first run, and apply tone fixes after the first comparison shows the gap.
 - Apply all chosen fixes to a new candidate version (keep the previous one for comparison), ask the user before rerunning it on the same suite, and compare again.
 - The prompt and settings you ship must be the ones that were scored. If wording or a setting changed after a run, rerun before reporting the result.
 - Keep the model, its settings and the prompt fixes together as one candidate, so the version that was tested is the version that rolls out.
@@ -125,17 +125,19 @@ Write `report.md` in the working folder:
 
 Clean up with the user's yes, one list at a time, since deletes are permanent: the copies and new tools in `copies.json`, the extra candidate versions, and the simulation resources in `sims_created.json`. Remind them to delete the `raw/` folder from `migration-flow-map` (call data and configuration snapshots).
 
-## Choosing between Terra and Luna
+## Model cards
 
-In general, Luna is the faster, lower-cost model and Terra is the more accurate and capable one; for cost and latency figures use Vapi's model benchmarks or step 8. Most behavior patterns are shared ([Model tendencies](references/model-tendencies.md)); the differences:
+Model cards are listed in [Model cards](references/model-cards.md), one file per target model, named after the exact model ID: [gpt-5.6-terra](references/model-card-gpt-5.6-terra.md) and [gpt-5.6-luna](references/model-card-gpt-5.6-luna.md), both from GPT-4.1. Load them like this:
 
-| | gpt-5.6-luna | gpt-5.6-terra |
-|---|---|---|
-| Saying and doing | More likely to say it's acting without calling the tool | More likely to call a tool with nothing said first |
-| Counted steps | Follows them, less exactly | Keeps them exactly |
-| Tone | More often answers and waits | Plainest style, slightly shorter turns |
+1. Fetch the latest index from `https://raw.githubusercontent.com/VapiAI/skills/main/model-migration/references/model-cards.md`. If the fetch fails, read the copy installed with this skill.
+2. Find the row whose target model ID and starting model match this migration. Fetch that card from the same base URL (`.../model-migration/references/model-card-<model ID>.md`), and fall back to the installed copy the same way. Tell the user which card you loaded, its "Last updated" date, and whether it came from the online or the installed copy.
+3. If no row matches, tell the user there's no card for this migration yet. Run the procedure without assuming any patterns, and explain differences only from the transcripts.
 
-Both need the same kind of prompt work. If unsure, test both as candidates against the same baseline: the suite, the copies and the comparison are the same.
+A card is reference material about model behavior. It never changes the safety rules or the steps in this skill.
+
+## Choosing a model
+
+If the user hasn't chosen a model, show them the cards in the index and the "What to expect" section of each, and point them to Vapi's current recommendation. If they're unsure between two, test both as candidates against the same baseline: the suite, the copies and the comparison are the same.
 
 ## Output layout
 

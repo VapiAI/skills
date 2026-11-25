@@ -1,6 +1,6 @@
 # Fixes by symptom
 
-Wording and configuration changes that resolved the behavior differences in [Model tendencies](model-tendencies.md). Apply a fix only when the comparison shows the symptom on the new model and the transcripts confirm it is the model, not the test. Every fix is a wording, tool-list or setting change; none adds a workflow the team didn't already have.
+Wording and configuration changes that resolved the behavior differences in the model cards ([index](model-cards.md)). Apply a fix only when the comparison shows the symptom on the new model and the transcripts confirm it is the model, not the test. Every fix is a wording, tool-list or setting change; none adds a workflow the team didn't already have.
 
 ## Contents
 

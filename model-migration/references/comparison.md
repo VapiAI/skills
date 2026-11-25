@@ -29,7 +29,7 @@ In this order:
 
 ## Behavior signals
 
-Count these from the transcripts of both copies. Checks often miss them, and they are where the new models differ most (see [Model tendencies](model-tendencies.md)).
+Count these from the transcripts of both copies. Checks often miss them, and they are where the new models differ most (see the model card).
 
 | Signal | How to count |
 |---|---|
