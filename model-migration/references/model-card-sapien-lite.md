@@ -24,11 +24,11 @@ Set these fields inside the assistant's existing `model` object, and keep `messa
 
 - Sapien Lite is Vapi's option for cost-conscious teams moving off GPT-4.1. Confirm latency and cost per minute on the user's own assistant (step 8 of the skill).
 - Rule adherence matched or beat GPT-4.1 on the assistants we tested, before any prompt change.
-- It sounds plainer than GPT-4.1, and it pairs lines with tool calls less reliably than other models. Plan the tone work and the say-and-act fixes in [Fixes](fixes.md) from the start, and include upset-caller scenarios and tool-heavy scenarios so the comparison shows them.
+- It sounds plainer than GPT-4.1, and it pairs lines with tool calls less reliably than GPT-4.1 did. Plan the tone work and the say-and-act fixes in [Fixes](fixes.md) from the start, and include upset-caller scenarios and tool-heavy scenarios so the comparison shows them.
 
 ## Behaviors compared with GPT-4.1
 
-They're tendencies, not guarantees, ordered by how much they're likely to affect calls. Lines in bold are where Sapien Lite differs most from other models.
+They're tendencies, not guarantees, ordered by how much they're likely to affect calls. Lines in bold are the ones most worth testing.
 
 ### Acting before speaking
 
@@ -75,7 +75,7 @@ They're tendencies, not guarantees, ordered by how much they're likely to affect
 ### Empathy and warmth
 
 - **GPT-4.1** sounded warm without being told to, with enthusiasm, reassurance and long turns.
-- **Sapien Lite** sounds plainer, with shorter turns and almost no exclamation marks or filler. **Most of its sympathy comes from lines the prompt writes for it; it adds the least of its own of the models we tested.**
+- **Sapien Lite** sounds plainer, with shorter turns and almost no exclamation marks or filler. **Most of its sympathy comes from lines the prompt writes for it; it adds less of its own than GPT-4.1 did.**
 - **What to do:** Write acknowledgments into the prompt for the moments that matter, such as bad news, a refusal or a caller in distress. When the assistant can't do what was asked, have it explain why, offer one alternative and say what happens next.
 
 ### Following procedures
