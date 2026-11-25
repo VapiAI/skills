@@ -8,7 +8,7 @@ The latest version of this index and of every card is at `https://raw.githubuser
 |---|---|---|---|
 | `gpt-5.6-terra` | GPT-4.1 | [model-card-gpt-5.6-terra.md](model-card-gpt-5.6-terra.md) | 2026-11-24 |
 | `gpt-5.6-luna` | GPT-4.1 | [model-card-gpt-5.6-luna.md](model-card-gpt-5.6-luna.md) | 2026-11-24 |
-| `sapien-lite` (provider `vapi`) | GPT-4.1 | [model-card-sapien-lite.md](model-card-sapien-lite.md) | 2026-11-24 |
+| `gpt-6-luna` | GPT-4.1 | [model-card-gpt-6-luna.md](model-card-gpt-6-luna.md) | 2026-11-25 |
 
 A migration with no matching row has no card yet: run the procedure without assuming any patterns, and explain differences only from the transcripts.
 
