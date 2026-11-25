@@ -26,7 +26,15 @@ Copy the block below into `metrics.md` in the migration working folder (by defau
 
 ## Rules that must never break
 - <rule, quoted from the prompt or the team's policy>
+
+## How edge cases count
+- A transfer the tool refused (outside hours, no agent available): <counts as transferred | counts as contained>
+- A handoff to another assistant: <counts as contained | counts as transferred>
 ```
+
+Ask both edge-case questions even when the team's definition sounds clear: they can move a deflection baseline by several points.
+
+Each must-never-break rule a caller can trigger becomes a Critical scenario. If the list is long, tell the user, suggest keeping about 10 as scenarios, and turn the rest into checks on every scenario.
 
 ## Example
 

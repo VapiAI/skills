@@ -18,7 +18,7 @@ How to pull an assistant's or squad's production calls with the public API, and 
 Production calls hold callers' personal data. Before pulling anything, agree with the user where raw data lives:
 
 - Save raw API responses only in `raw/` inside a working folder outside any git repository (for example `~/vapi-migration/<slug>/raw/`). If the folder must live inside a repository, add it to `.gitignore` first and confirm with `git check-ignore`. Delete `raw/` when the migration is done.
-- Everything written outside `raw/` (records, the flow tree, the tool catalog, scenarios) holds no names, phone numbers, emails, addresses, account numbers or dates of birth. In any text taken from a transcript or tool result (notes, quotes, examples), mask digit runs of 3 or more and replace identifying values with synthetic values of the same format. Counts, call IDs and dates in the outputs stay as they are.
+- Everything written outside `raw/` (records, the flow tree, the tool catalog, scenarios) holds no names, phone numbers, emails, addresses, account numbers or dates of birth. In any text taken from a transcript or tool result (notes, quotes, examples), mask digit runs of 3 or more (spaced or spelled-out digits count too) and replace identifying values with synthetic values of the same format. Check for leaks the way SKILL.md step 8 describes: search the outputs for every real value from the source, including values hidden inside templated strings and IDs. Counts, call IDs and dates in the outputs stay as they are.
 - Never paste transcripts into chat, tickets or shared documents.
 - If the account has compliance constraints (HIPAA, PCI or similar), ask the user whether call content may be read at all, and by which tools.
 
@@ -44,7 +44,12 @@ Read the current configuration first, so every call can be measured against it:
 
 The list endpoint has no sort or cursor parameter, so don't rely on the order calls come back in. The example below fetches a day at a time and, when a page comes back full, splits the window in half until every page is complete. Keep requests gentle: one request at a time, and windows of a day or less.
 
-Keep only calls that ended (`status: "ended"`) and that reached a conversation: drop calls whose `endedReason` shows the call never connected (for example `customer-did-not-answer`, `voicemail` on outbound, or start errors). Count what you dropped and why.
+Keep only calls that ended (`status: "ended"`) and that reached a conversation (engaged calls):
+
+- **Outbound:** drop calls whose `endedReason` shows the call never connected (for example `customer-did-not-answer`, `voicemail`, or start errors).
+- **Inbound:** an engaged call has at least one non-empty caller message. Inbound lines often have many calls where the caller never speaks, and neither `endedReason` nor `status` shows it.
+
+Filter first, then sample: draw the sample from engaged calls only, so the number read matches the number agreed. Count the calls dropped over the whole window, and why.
 
 ## Sampling
 
@@ -57,6 +62,7 @@ Reading every call is rarely needed. Agree a sample size with the user; it is th
 | High traffic, many intents, or a squad | 500 to 1,000 calls |
 
 - Spread the sample across days and times of day (for example the same number of calls from each day in the window), so one busy day or one campaign doesn't dominate.
+- An even spread across days over-represents quiet days (weekends). Record each day's count of engaged calls, so baselines and the tree can be weighted by each day's share (SKILL.md step 5).
 - Use a window that matches the current prompt version where possible. Calls from an old version show old behavior.
 - Report the window, the calls available in it, and the sample size.
 

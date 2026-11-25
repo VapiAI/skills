@@ -43,7 +43,7 @@ The smallest suite that can show whether a model change is safe. Usually 10 to 2
 Everything in Critical, plus:
 
 1. **Routes** up to about 90% of engaging traffic. Past that, routes are one-off combinations of parts already tested.
-2. **Variants:** every route with at least 1% of traffic gets one more scenario for each variant that makes up at least 15% of that route. A variant is a different ending, or a caller trait that changes the conversation (another language, a request for a person, a caller acting for someone else).
+2. **Variants:** every route with at least 1% of traffic gets one more scenario for each variant that makes up at least 15% of that route. A variant is a different ending, or a trait from the fixed trait list ([Reading calls](reading.md#what-a-label-records)). Assign each read call to at most one variant, in a fixed priority order (for example: a different ending, then another language, then acting for someone else, then repeated person requests, then upset), so calls with several traits aren't counted twice.
 3. **Tool answers:** every answer kind that makes up at least 0.1% of its tool's calls appears in some scenario. Group answers by what the assistant must do differently, not one scenario per raw shape.
 4. **Compliance situations twice,** with a different caller, different wording and a different point in the call, so one run can't decide a gate.
 5. **State rules and failure triggers:** every one the tool catalog shows (a lookup that finds nothing, an action refused until the caller is verified). Tool failures are one scenario per kind of failure handling, not one per tool: if several tools fail and the prompt handles them the same way, one scenario covers them.
@@ -81,5 +81,5 @@ When the prompt is silent or contradicts itself:
 
 ## Weights
 
-- Route and variant scenarios carry their traffic share. Every other kind (compliance, tool answers, failures, prompt-only) has weight 0 and is reported separately, so the weighted rate counts each real call once.
+- Route and variant scenarios carry their traffic share. A route's weight is its intent's share minus the shares carved out for its variants, so every read call counts once. Every other kind (compliance, tool answers, failures, prompt-only) has weight 0 and is reported separately, so the weighted rate counts each real call once.
 - Without calls, every weight is `null` and rates are reported unweighted.
