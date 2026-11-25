@@ -30,6 +30,7 @@ Simulations have five layers: a personality controls the AI caller, a scenario d
 
 - The two targets: a baseline copy (current model) and a candidate copy (new model), identical apart from the model settings. The `model-migration` skill makes them and records their IDs in `copies.json`.
 - `metrics.md`: the team's metrics and how each is measured. If it doesn't exist, build it with the user from [Metrics template](references/metrics-template.md) before writing any scenario.
+- The org's API key, read from the `VAPI_API_KEY` environment variable. If it isn't set, ask the user to copy the private key for the org that owns the targets from https://dashboard.vapi.ai/org/api-keys, run `export VAPI_API_KEY=<key>` in their terminal, and restart the agent from that terminal.
 - The flow map from `migration-flow-map`: `flow_tree.json`, `tool_catalog.json`, `scenario_list.json`. If there is none, step 3 builds the scenario list from the prompt and tools with the user.
 - The suite level: Critical or All. See [Suite levels](references/levels.md).
 

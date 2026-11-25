@@ -23,11 +23,12 @@ Before starting, read [Model tendencies](references/model-tendencies.md). It des
 - **Keep working files out of the customer's repository.** Create the working folder outside any git repository (for example `~/vapi-migration/<slug>/`). If the user wants it inside a repo, add the folder to `.gitignore` first and confirm with `git check-ignore`.
 - Running simulations uses credits and concurrency. State how many conversations a run will start and get the user's yes before each run.
 - Prompt changes are wording only. Never add a workflow, step or rule the team's prompt doesn't already define. Where two rules disagree or a situation is uncovered, ask the owner; don't pick a side.
-- Never print or store API keys, credential values or caller data.
+- Never print or store API keys, credential values or caller data, and never ask for a key in chat.
 
 ## Inputs
 
-- The assistant ID or squad ID, and the org's API key. For a transient assistant or squad (sent per call through `assistant-request` or inline), ask the user to paste the full configuration JSON instead; the copies are created from it as stored assistants or squads.
+- The assistant ID or squad ID. For a transient assistant or squad (sent per call through `assistant-request` or inline), ask the user to paste the full configuration JSON instead; the copies are created from it as stored assistants or squads.
+- The org's API key, read from the `VAPI_API_KEY` environment variable. Never ask the user to paste it into the chat, and never print it. If it isn't set, ask the user to copy the private key for the org that owns the assistant from https://dashboard.vapi.ai/org/api-keys, run `export VAPI_API_KEY=<key>` in their terminal, and restart the agent from that terminal. Then check the key can read the assistant or squad.
 - The new model. If the user hasn't chosen, see [Choosing between Terra and Luna](#choosing-between-terra-and-luna).
 - The team's metrics and how they measure them, or time to define them (step 1).
 

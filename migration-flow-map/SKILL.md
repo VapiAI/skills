@@ -21,12 +21,13 @@ This skill is read-only. It never creates, updates or deletes anything in Vapi.
 - **Call data is personal data.** Create the working folder outside any git repository (`~/vapi-migration/<slug>/` by default). If the user wants it inside a repository, add it to `.gitignore` first and confirm with `git check-ignore`. Raw API responses and configuration snapshots go in its `raw/` folder, which is deleted when the migration is done. Every other output holds no names, phone numbers, emails, addresses, account numbers or dates of birth: in text taken from transcripts or tool results, mask digit runs of 3 or more and use synthetic values of the same format.
 - Never paste transcripts into chat, tickets or shared documents. Quote at most a short, masked phrase when a finding needs evidence.
 - If the account has compliance constraints (HIPAA, PCI or similar), ask the user whether call content may be read, and by which tools, before pulling transcripts.
-- Never print or store API keys, credential values, server URLs or webhook secrets in any output.
+- Never print or store API keys, credential values, server URLs or webhook secrets in any output, and never ask for a key in chat.
 - The live prompt and the team's rules are the answer key. What the real assistant did on a call is evidence of the caller's situation, not of what it should have done.
 
 ## Inputs
 
 - The assistant ID or squad ID. For a transient assistant or squad (sent per call by the team's server through `assistant-request`, or inline when the call is created), there is no ID to fetch: ask the user to paste the full configuration JSON or give a file path. A transient configuration is mapped from the configuration alone (step 2).
+- The org's API key, read from the `VAPI_API_KEY` environment variable. Never ask the user to paste it into the chat, and never print it. If it isn't set, ask the user to copy the private key for the org that owns the assistant from https://dashboard.vapi.ai/org/api-keys, run `export VAPI_API_KEY=<key>` in their terminal, and restart the agent from that terminal. Then check the key can read the assistant or squad.
 - The team's metrics, or time with the user to define them (step 1).
 - The sample size: how many calls to read. This is the one cost setting. See [Reading call data](references/call-data.md#sampling).
 
