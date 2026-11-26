@@ -35,41 +35,63 @@ Use low reasoning and fast mode. Set these fields inside the assistant's existin
 
 ## Behaviors compared with GPT-4.1
 
-Each pattern held on more than one assistant. They're tendencies, not guarantees, ordered by how much they're likely to affect calls.
+These are tendencies we saw on some assistants, not on every call, ordered by how much they're likely to affect calls. Each pattern held on more than one assistant. Each one pairs what we saw with a prompt habit that helps. Where our tests checked a prompt change, the card says what happened.
 
-1. **Local instructions over global rules.** GPT-4.1 kept the general rules at the top of the prompt in mind for the whole call. Luna follows the instruction for the step it's on, and skips global steps that the current step doesn't repeat.
-   *Example:* a prompt said "always ask if there's anything else before closing", but several branches ended with "close the call". GPT-4.1 asked in 60 of 60 conversations on those branches; Luna in 8. A link the prompt said to send after a callback was sent in 12 of 12 on GPT-4.1 and 1 on Luna.
-2. **Taking the system prompt literally.** GPT-4.1 read the prompt for its intent and filled in what it left unsaid. Luna does exactly what the prompt says.
-   *Example:* a prompt called its end-call tool `end_call`, but the tool's real name was `end_call_tool`. GPT-4.1 ended the call anyway. Luna often said goodbye and never ended the call.
-3. **Situations the prompt doesn't cover.** GPT-4.1 made up an answer from general knowledge, and was often wrong. Luna doesn't invent answers: it holds back and takes the broadest option the setup gives it, which on many assistants means more transfers or callbacks.
-   *Example:* asked whether a document was required, which the prompt didn't say, GPT-4.1 answered anyway in 11 of 12 conversations. Luna did once.
-4. **Tool descriptions.** GPT-4.1 followed the system prompt when a tool's description disagreed with it. Luna gives tool descriptions, parameter descriptions and text in tool results more weight than the system prompt. Empty or bare descriptions leave it guessing.
-   *Example:* a finish tool whose description said to use it when the conversation was complete got called, even though the prompt said never to call it. GPT-4.1 never called it.
-5. **Empathy and warmth.** GPT-4.1 sounded warm without being told to: enthusiasm, reassurance, and a reason or alternative with every "no". Luna sounds more neutral, with turns about a third shorter, and most of its warmth comes from what the prompt writes. Where a prompt limited acknowledgments, GPT-4.1 often ignored the rule and Luna followed it.
-6. **Offering the next step.** GPT-4.1 offered the obvious next step on its own, such as "anything else?" or a link. Luna answers and waits, unless the current step says what comes next.
-   *Example:* after answering a general question, GPT-4.1 offered to text a link in 11 of 11 conversations; Luna in 2 of 12.
-7. **Following procedures.** GPT-4.1 sometimes bent procedures when a request looked simple, skipping verification or a required lookup. Luna follows written steps strictly and in order, and keeps counted steps more closely than GPT-4.1, though less exactly than Terra. When a tool fails and the prompt has no recovery step, it stops or sends the caller elsewhere instead of improvising.
-8. **Scripted lines.** GPT-4.1 treated sample lines as inspiration and varied them. Luna says them word for word.
-   *Example:* a prompt's sample closing ended 19 conversations on GPT-4.1 and 111 on Luna, so calls started to sound alike.
-9. **Using tools.** GPT-4.1 often answered from memory and skipped required lookups. Luna runs the lookups the prompt requires, and may also call attached tools the prompt never mentions.
-   *Example:* on a support assistant that required a knowledge lookup before giving steps, GPT-4.1 skipped it in 45 of 108 conversations. Luna almost always ran it.
-10. **Saying and doing.** GPT-4.1 usually paired what it said with the matching tool call. Around transfers, texts and ending the call, Luna sometimes separates the two: it is more likely than Terra to say it's doing something ("connecting you now") without calling the tool, and it also sometimes calls a tool with nothing said first. It stops talking after a transfer or end-call tool and rarely claims an action no tool confirmed.
-    *Example:* on one assistant, Luna announced 13 of 36 safety transfers without making them; on a scheduling squad, 113 first transfers happened with nothing said first.
-    *For your prompt:* Don't remove the transfer wording from a refusal line; in our tests that made 5.6 Luna transfer less often.
+### Repeat closing steps in each branch
 
-## Where it differs from gpt-5.6-terra
+- **What we saw:** 5.6 Luna follows the instruction for the step it's on, so a step that ends with "confirm and close the call" can close the call there and skip global steps written elsewhere, such as a closing question or a link to send. GPT-4.1 kept those general rules in mind for the whole call.
+- **For your prompt:** Repeat each global step inside every branch that needs it, including branches where something fails, for example: "Then send the link and follow # Closing."
 
-| Behavior | gpt-5.6-luna | What to do |
-|---|---|---|
-| Saying and doing | More likely than Terra to say it's doing something without calling the tool | Put the line and the tool call in the same response; never announce an action without its tool call |
-| Counted steps | Follows them less exactly ("transfer on the third request": 9 of 18) | Check counted steps in the suite, and state the count plainly in the step itself |
-| Tone | More often answers and waits for the caller to lead | A next-action table (see [Fixes](fixes.md#conversation-flow)) |
+### Match names exactly
+
+- **What we saw:** 5.6 Luna does what the prompt says without inferring what the author meant, more than GPT-4.1. When a prompt named an `end_call` tool but the real tool was `end_call_tool`, it could say goodbye and never end the call, where GPT-4.1 worked out what was meant.
+- **For your prompt:** Check that every tool, step and variable the prompt names matches your configuration, and write down anything you relied on GPT-4.1 to work out on its own, such as when to end the call.
+
+### Write down the common situations
+
+- **What we saw:** 5.6 Luna doesn't invent answers the way GPT-4.1 sometimes did. When the prompt doesn't cover a situation, it can hold back and take the broadest option your setup gives it, which on many assistants meant more transfers or callbacks and lower deflection.
+- **For your prompt:** Write down what the assistant should do in the situations that come up often, even if it's only one sentence for each.
+
+### Write complete tool descriptions
+
+- **What we saw:** 5.6 Luna gives tool descriptions, parameter descriptions and the text in tool results more weight than GPT-4.1 did, and empty or bare descriptions leave it guessing. On one assistant it called a finish tool whose description said to use it when the conversation was complete, even though the prompt said never to call it.
+- **For your prompt:** Give every tool and parameter a complete description of what it does, when to use it and what each value means, in line with the prompt, and keep instructions out of the text your tools return.
+
+### Plan for warmth
+
+- **What we saw:** 5.6 Luna sounds more neutral than GPT-4.1, with turns about a third shorter, and follows rules that limit acknowledgments, which GPT-4.1 often ignored. Most of its warmth comes from what the prompt writes for it, so callers can find it colder than GPT-4.1.
+- **For your prompt:** Loosen or narrow rules that ban acknowledgments, and when the assistant has to say no, have it explain why, offer one alternative and say what happens next, since a general line like "be warm" made no difference in our tests.
+
+### Write the next step after each answer
+
+- **What we saw:** 5.6 Luna answers what the caller asked and then waits for the caller to lead, one of the tendencies we saw most often, and rarely asks "anything else?" or offers a link unless the current step tells it to.
+- **For your prompt:** Write in the prompt what the next step should be after each kind of answer or tool result, for example as a short table of next actions (see [Fixes](fixes.md#conversation-flow)).
+
+### Plan for tool failures
+
+- **What we saw:** 5.6 Luna follows written steps strictly and in order, and keeps counted steps, such as "transfer on the third request", more closely than GPT-4.1, though not always exactly. When a tool fails and the prompt has no recovery step, it can stop or send the caller elsewhere instead of improvising.
+- **For your prompt:** Write a fallback line and a next step for each tool failure that matters to you, and state each count plainly in the step it belongs to.
+
+### Mark lines that must be said exactly
+
+- **What we saw:** 5.6 Luna says sample lines from the prompt word for word more often than GPT-4.1, so calls can start to sound the same.
+- **For your prompt:** Label examples clearly and give two or three different ones, or describe what the line should contain, and mark lines that must be said exactly with "Say exactly:", making sure no other rule contradicts them.
+
+### Attach only the tools you need
+
+- **What we saw:** 5.6 Luna runs the lookups and verification steps the prompt requires, which GPT-4.1 often skipped. It may also call attached tools the prompt never mentions.
+- **For your prompt:** Attach only the tools the assistant actually needs.
+
+### Pair each line with its tool call
+
+- **What we saw:** Around transfers, texts and ending the call, 5.6 Luna can say it's connecting the caller without calling the tool, and sometimes calls a tool without saying anything first, which the caller hears as silence. It stops talking after a transfer or end-call tool and rarely claims an action no tool confirmed.
+- **For your prompt:** Tie the line and the tool call together in one instruction, for example "Say 'Let me transfer you to billing.' and call `transfer_call` in the same response.", and keep any transfer wording in refusal lines so transfers still happen.
 
 ## How this changes your prompt
 
-Anything the team relied on GPT-4.1 doing implicitly has to be written down: the next step after each kind of answer, the closing sequence inside each branch, what to say with each tool call, how to refuse (reason, alternative, next step), when to acknowledge feelings, and which tools exist. [Fixes](fixes.md) lists the wording that works for each symptom.
+The habits above come down to writing down what the team relied on GPT-4.1 to do on its own: the next step after each kind of answer, the closing steps inside each branch, what to say with each tool call, how to say no (reason, alternative, next step), when to acknowledge feelings, and which tools exist. [Fixes](fixes.md) lists the wording that works for each symptom.
 
-Luna gains most from this. A structure that worked: one short conversation-state section that the rest of the prompt points to.
+5.6 Luna gains a lot from this. A structure that worked: one short conversation-state section that the rest of the prompt points to.
 
 - **Open request:** keep the caller's oldest unresolved request through side questions; "okay" or "thanks" doesn't close it.
 - **Next action:** after each kind of answer or tool result, the specific next step, before any generic "anything else?".

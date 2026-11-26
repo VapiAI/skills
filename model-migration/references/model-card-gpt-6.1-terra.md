@@ -36,68 +36,58 @@ Use low reasoning and fast mode. Set these fields inside the assistant's existin
 
 ## Behaviors compared with GPT-4.1
 
-Each pattern held on more than one assistant. They're tendencies, not guarantees, ordered by how much they're likely to affect calls.
+These are tendencies we saw on some assistants, not on every call, ordered by how much they're likely to affect calls. Each pattern held on more than one assistant. Each one pairs what we saw with a prompt habit that helps. Where our tests checked a prompt change, the card says what happened.
 
-### Taking the system prompt literally
+### Match names and triggers exactly
 
-- **GPT-4.1** read the system prompt for its intent and filled in what it left unsaid.
-- **Terra** **matches field names, labels and trigger words in the prompt exactly, even when a tool result says the same thing a different way.** In one case the prompt checked a `verified` field while the tool returned `"state": "VERIFIED"`, and Terra treated verified callers as unverified. A language rule triggered by the word "Spanish" didn't fire for callers who simply spoke Spanish, and a list of urgent keywords was applied to every mention of those words, even where they didn't apply.
-- **For your prompt:** Name each tool-result field exactly as the tool returns it, once, where the decision is made, and delete lines about statuses the assistant never sees. Describe a trigger by meaning, such as "if the caller's first message is in Spanish or asks for Spanish", not as a list of words to match. This change fixed it in our tests.
+- **What we saw:** 6.1 Terra can match field names, labels and trigger words exactly as the prompt writes them, more than GPT-4.1, so a prompt that checked a `verified` field while the tool returned `"state": "VERIFIED"` led it to treat verified callers as unverified. On some assistants a rule triggered by the word "Spanish" didn't fire for callers who simply spoke Spanish, and a list of urgent keywords applied to every mention of those words.
+- **For your prompt:** Name each tool-result field once, exactly as the tool returns it, where the decision is made, delete lines about statuses the assistant never sees, and describe triggers by meaning, such as "if the caller's first message is in Spanish or asks for Spanish". This worked in our tests.
 
-### Situations the prompt doesn't cover
+### Write down the common situations
 
-- **GPT-4.1** made up an answer from its own general knowledge when the prompt and tools had none, and those answers were sometimes wrong.
-- **Terra** doesn't invent answers. It says it isn't sure, and **sometimes stops there without offering a next step, or offers a person sooner than GPT-4.1 did.**
-- **For your prompt:** Write down what the assistant should do in the situations that come up often, including the next step it should offer.
+- **What we saw:** 6.1 Terra doesn't invent answers the way GPT-4.1 sometimes did. When the prompt doesn't cover a situation, it can say it isn't sure and stop there, or offer a person sooner than GPT-4.1 did.
+- **For your prompt:** Write down what to do in the situations that come up often, including the next step to offer.
 
-### Global rules in every branch
+### Say where each closing step applies
 
-- **GPT-4.1** applied general rules such as a closing question or a survey most of the time, and skipped them where they clearly didn't fit.
-- **Terra** **applies global closing steps in every branch, even where they don't fit, for example offering a survey after a transfer.**
-- **For your prompt:** Give each closing step one place in the prompt and state its scope there once, for example "before your closing line" or "not after a transfer". Delete duplicate closing rules and any "close the call" endings inside branches that compete with it, and tie the order to the end-call tool by name, for example: "Call `end_call` only after the caller answers the survey question." This change fixed it in our tests.
+- **What we saw:** 6.1 Terra can apply a global closing step in every branch, even where it doesn't fit, such as offering a survey after a transfer, where GPT-4.1 usually skipped it.
+- **For your prompt:** Give each closing step one place and state its scope there once, delete duplicate closing rules and competing "close the call" endings in branches, and tie the order to the end-call tool by name, for example "Call `end_call` only after the caller answers the survey question." This worked in our tests.
 
-### Tool descriptions and tool results
+### Write complete tool descriptions
 
-- **GPT-4.1** followed the system prompt when a tool's description or result disagreed with it.
-- **Terra** gives tool descriptions, parameter descriptions and the text in tool results more weight than the system prompt. When a tool returns text meant for the caller, it reads it out straight away, and may then say the prompt's version too.
-- **For your prompt:** Write complete descriptions that agree with the system prompt. Keep instructions out of tool results, and keep any script in one place, either the tool result or the prompt, not both.
+- **What we saw:** 6.1 Terra gives tool descriptions, parameter descriptions and the text in tool results more weight than GPT-4.1 did. When a tool returns text meant for the caller, it can read it out right away and then say the prompt's version too.
+- **For your prompt:** Write complete tool descriptions that agree with the prompt, keep instructions out of tool results, and keep each script in one place, either the tool result or the prompt.
 
-### Using tools
+### Attach only the tools you need
 
-- **GPT-4.1** often answered from memory and skipped lookups the prompt required.
-- **Terra** looks things up before answering every time, sometimes even when the question doesn't need it. It also calls tools that are attached to the assistant even when the prompt never mentions them.
+- **What we saw:** 6.1 Terra looks things up before answering, sometimes even when the question doesn't need it, where GPT-4.1 often answered from memory. It can also call attached tools the prompt never mentions.
 - **For your prompt:** Attach only the tools the assistant needs, and say which questions it can answer without a lookup.
 
-### Following procedures
+### Plan for tool failures
 
-- **GPT-4.1** sometimes bent procedures when a request looked simple, for example by skipping verification or a disclosure.
-- **Terra** follows the written steps strictly and in order, and **keeps counted steps (such as "transfer on the third request") exactly.** It doesn't claim an action succeeded when a tool failed.
-- **For your prompt:** Make sure the counts and conditions in the prompt are the ones you want, and write a fallback line and a next step for each tool failure that matters to you.
+- **What we saw:** 6.1 Terra follows written steps strictly and in order, more than GPT-4.1, and keeps counted steps, such as "transfer on the third request", exactly. It doesn't claim an action succeeded when a tool failed.
+- **For your prompt:** Check that the counts and conditions in the prompt are the ones you want, and write a fallback line and a next step for each tool failure that matters to you.
 
-### Scripted lines
+### Mark lines that must be said exactly
 
-- **GPT-4.1** treated sample lines in the prompt as inspiration and varied the wording.
-- **Terra** says short sample lines word for word, but it may reword a required script to satisfy a general rule, such as a rule to say numbers as words.
-- **For your prompt:** Label examples clearly and give two or three different ones. Mark lines that must be said exactly with "Say exactly:", and make sure no other rule contradicts them.
+- **What we saw:** 6.1 Terra says short sample lines word for word more often than GPT-4.1, but it can reword a required script to fit a general rule, such as a rule to say numbers as words.
+- **For your prompt:** Label examples clearly and give two or three different ones, and mark lines that must be said exactly with "Say exactly:", making sure no other rule contradicts them.
 
-### Empathy and warmth
+### Plan for warmth
 
-- **GPT-4.1** sounded warm without being told to, with enthusiasm, reassurance and long turns.
-- **Terra** sounds plainer, with turns about half as long and almost no exclamation marks or filler. It adds a short acknowledgment of bad news more often than GPT-4.1 did, and follows rules that limit acknowledgments exactly.
-- **For your prompt:** Loosen or narrow any rules that ban acknowledgments. When the assistant can't do what was asked, have it explain why, offer one alternative and say what happens next.
+- **What we saw:** 6.1 Terra sounds plainer than GPT-4.1, with turns about half as long and almost no exclamation marks or filler. It adds a short acknowledgment of bad news more often than GPT-4.1 did, and follows rules that limit acknowledgments exactly.
+- **For your prompt:** Loosen or narrow rules that ban acknowledgments, and when the assistant can't do what was asked, have it explain why, offer one alternative and say what happens next.
 
-### Saying and doing
+### Pair each line with its tool call
 
-- **GPT-4.1** usually paired what it said with the matching tool call.
-- **Terra** usually says its line before a transfer, but on some assistants it calls a tool before saying anything, which the caller hears as silence. It never claims to have done something that no tool confirmed.
+- **What we saw:** 6.1 Terra usually says its line before a transfer, but on some assistants it called a tool before saying anything, which the caller hears as silence. We didn't see it claim an action that no tool confirmed.
 - **For your prompt:** Tie the line and the tool call together in one instruction, for example: "Say 'Let me transfer you to billing.' and call `transfer_call` in the same response."
 
-### Offering the next step
+### Write the next step after each answer
 
-- **GPT-4.1** offered the obvious next step on its own, for example asking "Is there anything else I can help with?"
-- **Terra** answers what the caller asked and then waits, unless a step in the prompt says what comes next.
+- **What we saw:** 6.1 Terra answers what the caller asked and then waits unless a step in the prompt says what comes next, where GPT-4.1 often offered the next step on its own.
 - **For your prompt:** Write in the prompt what the next step should be after each kind of answer or tool result.
 
 ## How this changes your prompt
 
-Anything the team relied on GPT-4.1 doing implicitly has to be written down: field names and values exactly as your tools return them, triggers described by meaning, where each global closing step applies, what to say with each tool call, the next step after each kind of answer, and which tools exist. [Fixes](fixes.md) lists the wording that works for each symptom.
+The habits above come down to writing down what the team relied on GPT-4.1 to do on its own: field names and values exactly as your tools return them, triggers described by meaning, where each closing step applies, what to say with each tool call, the next step after each kind of answer, and which tools exist. [Fixes](fixes.md) lists the wording that works for each symptom.
