@@ -2,8 +2,10 @@
 
 - **Target model:** `gpt-5.6-terra`
 - **Starting model:** GPT-4.1
-- **Last updated:** 2026-11-24
+- **Last updated:** 2026-11-26
 - **Evidence:** GPT-4.1 and Terra on the same simulated scenarios across several real-world assistants (support, collections, applications and scheduling, including a multi-assistant squad), each on its unchanged prompt. Examples are anonymized.
+
+This card is a starting point. It covers the main patterns we saw when we tested 5.6 Terra against GPT-4.1 on several real assistants. Your assistant may behave differently in ways our tests didn't show, so test your own key scenarios before you switch.
 
 ## Recommended settings
 
@@ -40,6 +42,7 @@ Each pattern held on more than one assistant. They're tendencies, not guarantees
    *Example:* a prompt said "always ask if there's anything else before closing", but several branches ended with "close the call". GPT-4.1 asked in 60 of 60 conversations on those branches; Terra in 4. A link the prompt said to send after a callback was sent in 12 of 12 on GPT-4.1 and 0 on Terra.
 2. **Taking the system prompt literally.** GPT-4.1 read the prompt for its intent and filled in what it left unsaid. Terra does exactly what the prompt says.
    *Example:* a prompt called its end-call tool `end_call`, but the tool's real name was `end_call_tool`. GPT-4.1 ended the call anyway. Terra often said goodbye and never ended the call.
+   *For your prompt:* Describe triggers by meaning, such as "if the caller speaks or asks for Spanish", not by a single keyword; this fixed missed language switches in our tests.
 3. **Situations the prompt doesn't cover.** GPT-4.1 made up an answer from general knowledge, and was often wrong. Terra doesn't invent answers: it holds back and takes the broadest option the setup gives it, which on many assistants means more transfers or callbacks.
    *Example:* asked whether a document was required, which the prompt didn't say, GPT-4.1 answered anyway in 11 of 12 conversations. Terra never did.
 4. **Tool descriptions.** GPT-4.1 followed the system prompt when a tool's description disagreed with it. Terra gives tool descriptions, parameter descriptions and text in tool results more weight than the system prompt. Empty or bare descriptions leave it guessing.
@@ -64,7 +67,7 @@ Each pattern held on more than one assistant. They're tendencies, not guarantees
 | Counted steps | Keeps them exactly ("transfer on the third request": 18 of 18) | Nothing to fix; make sure the counts in the prompt are the ones you want |
 | Tone | Plainest style and slightly shorter turns | The tone fixes in [Fixes](fixes.md#tone-and-warmth) |
 
-## Prompt work that helps
+## How this changes your prompt
 
 Anything the team relied on GPT-4.1 doing implicitly has to be written down: the next step after each kind of answer, the closing sequence inside each branch, what to say with each tool call, how to refuse (reason, alternative, next step), when to acknowledge feelings, and which tools exist. [Fixes](fixes.md) lists the wording that works for each symptom.
 

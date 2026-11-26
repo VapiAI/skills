@@ -6,9 +6,10 @@ The latest version of this index and of every card is at `https://raw.githubuser
 
 | Target model ID | Starting model | Card | Last updated |
 |---|---|---|---|
-| `gpt-5.6-terra` | GPT-4.1 | [model-card-gpt-5.6-terra.md](model-card-gpt-5.6-terra.md) | 2026-11-24 |
-| `gpt-5.6-luna` | GPT-4.1 | [model-card-gpt-5.6-luna.md](model-card-gpt-5.6-luna.md) | 2026-11-24 |
-| `gpt-6-luna` | GPT-4.1 | [model-card-gpt-6-luna.md](model-card-gpt-6-luna.md) | 2026-11-25 |
+| `gpt-5.6-terra` | GPT-4.1 | [model-card-gpt-5.6-terra.md](model-card-gpt-5.6-terra.md) | 2026-11-26 |
+| `gpt-5.6-luna` | GPT-4.1 | [model-card-gpt-5.6-luna.md](model-card-gpt-5.6-luna.md) | 2026-11-26 |
+| `gpt-6-luna` | GPT-4.1 | [model-card-gpt-6-luna.md](model-card-gpt-6-luna.md) | 2026-11-26 |
+| `gpt-6.1-terra` | GPT-4.1 | [model-card-gpt-6.1-terra.md](model-card-gpt-6.1-terra.md) | 2026-11-26 |
 
 A migration with no matching row has no card yet: run the procedure without assuming any patterns, and explain differences only from the transcripts.
 

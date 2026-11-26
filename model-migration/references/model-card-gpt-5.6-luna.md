@@ -2,8 +2,10 @@
 
 - **Target model:** `gpt-5.6-luna`
 - **Starting model:** GPT-4.1
-- **Last updated:** 2026-11-24
+- **Last updated:** 2026-11-26
 - **Evidence:** GPT-4.1 and Luna on the same simulated scenarios across several real-world assistants (support, collections, applications and scheduling, including a multi-assistant squad), each on its unchanged prompt. Examples are anonymized.
+
+This card is a starting point. It covers the main patterns we saw when we tested 5.6 Luna against GPT-4.1 on several real assistants. Your assistant may behave differently in ways our tests didn't show, so test your own key scenarios before you switch.
 
 ## Recommended settings
 
@@ -53,6 +55,7 @@ Each pattern held on more than one assistant. They're tendencies, not guarantees
    *Example:* on a support assistant that required a knowledge lookup before giving steps, GPT-4.1 skipped it in 45 of 108 conversations. Luna almost always ran it.
 10. **Saying and doing.** GPT-4.1 usually paired what it said with the matching tool call. Around transfers, texts and ending the call, Luna sometimes separates the two: it is more likely than Terra to say it's doing something ("connecting you now") without calling the tool, and it also sometimes calls a tool with nothing said first. It stops talking after a transfer or end-call tool and rarely claims an action no tool confirmed.
     *Example:* on one assistant, Luna announced 13 of 36 safety transfers without making them; on a scheduling squad, 113 first transfers happened with nothing said first.
+    *For your prompt:* Don't remove the transfer wording from a refusal line; in our tests that made 5.6 Luna transfer less often.
 
 ## Where it differs from gpt-5.6-terra
 
@@ -62,7 +65,7 @@ Each pattern held on more than one assistant. They're tendencies, not guarantees
 | Counted steps | Follows them less exactly ("transfer on the third request": 9 of 18) | Check counted steps in the suite, and state the count plainly in the step itself |
 | Tone | More often answers and waits for the caller to lead | A next-action table (see [Fixes](fixes.md#conversation-flow)) |
 
-## Prompt work that helps
+## How this changes your prompt
 
 Anything the team relied on GPT-4.1 doing implicitly has to be written down: the next step after each kind of answer, the closing sequence inside each branch, what to say with each tool call, how to refuse (reason, alternative, next step), when to acknowledge feelings, and which tools exist. [Fixes](fixes.md) lists the wording that works for each symptom.
 

@@ -127,7 +127,7 @@ Clean up with the user's yes, one list at a time, since deletes are permanent: t
 
 ## Model cards
 
-Model cards are listed in [Model cards](references/model-cards.md), one file per target model, named after the exact model ID: [gpt-5.6-terra](references/model-card-gpt-5.6-terra.md), [gpt-5.6-luna](references/model-card-gpt-5.6-luna.md) and [gpt-6-luna](references/model-card-gpt-6-luna.md), all from GPT-4.1. Load them like this:
+Model cards are listed in [Model cards](references/model-cards.md), one file per target model, named after the exact model ID: [gpt-5.6-terra](references/model-card-gpt-5.6-terra.md), [gpt-5.6-luna](references/model-card-gpt-5.6-luna.md), [gpt-6-luna](references/model-card-gpt-6-luna.md) and [gpt-6.1-terra](references/model-card-gpt-6.1-terra.md), all from GPT-4.1. Load them like this:
 
 1. Fetch the latest index from `https://raw.githubusercontent.com/VapiAI/skills/main/model-migration/references/model-cards.md`. If the fetch fails, read the copy installed with this skill.
 2. Find the row whose target model ID and starting model match this migration. Fetch that card from the same base URL (`.../model-migration/references/model-card-<model ID>.md`), and fall back to the installed copy the same way. Tell the user which card you loaded, its "Last updated" date, and whether it came from the online or the installed copy.
