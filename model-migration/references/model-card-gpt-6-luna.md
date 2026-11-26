@@ -47,7 +47,7 @@ They're tendencies, not guarantees, ordered by how much they're likely to affect
 
 - **GPT-4.1** kept the general rules at the top of the prompt in mind for the whole call, such as a closing question or a text it promised to send.
 - **Luna** follows the instruction for the step it's on. **When a step has its own last line, it often drops the closing steps written elsewhere. It can end the call while the caller still has an open request, or hand the call back instead of closing it.**
-- **For your prompt:** Repeat each closing step inside every branch that needs it, for example: "Then send the link and follow # Closing." Say plainly when the call is allowed to end. Scoping closing steps helped only partly in our tests: a caller saying goodbye can still end the call before a required closing step, so test that case.
+- **For your prompt:** Repeat each closing step inside every branch that needs it, for example: "Then send the link and follow # Closing." Say plainly when the call is allowed to end. Also say that a caller's goodbye doesn't skip a required closing step, such as a survey question, and test the case where the caller says goodbye first.
 
 ### Tool descriptions
 
