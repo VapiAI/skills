@@ -61,7 +61,7 @@ Simulations have five layers: a personality controls the AI caller, a scenario d
      - Evaluations quote the words they grade, judge tool results rather than the assistant's claims, and tell the grader that tool calls and tool names written as text are not things the assistant said.
    - Every scenario that runs in chat needs at least one text-based required evaluation. Audio-only evaluations are skipped in chat, and a scenario whose required evaluations are all skipped passes without testing anything.
    - Provide either `structuredOutputId` or inline `structuredOutput`, never both. Inline outputs need `name` and a JSON `schema`. Match the expected `value` type to the output: `=` or `!=` for Boolean and string, any comparator for numbers.
-   - Put test values for `{{variables}}` in `targetOverrides.variableValues`. Built-in caller values such as `{{customer.number}}` are empty in a chat simulation: where the prompt depends on one, have the caller supply it in the conversation, and note the path difference. If the prompt reads the current date or time, pin it to a fixed test value so business-hours paths don't change with the hour the suite runs. If the team's server writes the date into the prompt text itself (not a `{{variable}}`), replace that line with the same fixed date on both copies, and say so in the report.
+   - Put test values for `{{variables}}` in `targetOverrides.variableValues`. Built-in caller values such as `{{customer.number}}` are not filled in a chat simulation: the placeholder stays as literal text, and the model can pass it to a tool as a value. Where the prompt or a tool uses one, set it in `targetOverrides.variableValues` (for example `"customer": {"number": "+15555550123"}`), and note the path difference. If the prompt reads the current date or time, pin it to a fixed test value so business-hours paths don't change with the hour the suite runs. If the team's server writes the date into the prompt text itself (not a `{{variable}}`), replace that line with the same fixed date on both copies, and say so in the report.
 
 5. **Define the caller personality.**
    - One personality for the suite, plus extra ones only where a scenario needs a different temperament (upset, rushed, confused). See the personality rules in [Building scenarios from a flow map](references/from-flow-map.md#caller-personality).
@@ -86,13 +86,13 @@ Simulations have five layers: a personality controls the AI caller, a scenario d
 8. **Run both copies.**
    - Recap before sending: the suite, both targets, transport, runs per scenario, the mocks, any tool left unmocked, and the number of conversations. Ask whether to start the full runs, and wait for the user's yes even if they approved the smoke test.
    - Run the same suite, with the same settings, against the baseline and the candidate. Use chat for behavior; it is faster and cheaper, and it is where the comparison happens.
-   - Create each run with `POST /eval/simulation/run` and require `201`. Return the run IDs and dashboard URLs.
+   - Create each run with `POST /eval/simulation/run` and require `201`. Return the run IDs and dashboard URLs. A run runs each listed simulation once even if you list it twice; for more conversations per scenario, raise `iterations` or start another run.
    - For large suites, keep the number of conversations in flight moderate (check `GET /eval/simulation/concurrency`), so one run doesn't block others in the org.
 
 9. **Collect and check results.**
    - Poll `GET /eval/simulation/run/{id}` until `status` is `ended`. Do not judge `queued` or `running`.
    - Fetch every item (`GET /eval/simulation/run/{id}/item`) 100 at a time and deduplicate by item ID: page order isn't stable, and one request for a whole run can stall for a long time. Save them in the working folder as `sim_results/<baseline|candidate>/<run-id>.json`. The `model-migration` skill reads them from there.
-   - Separate execution failures (an item that errored, timed out or was canceled) from evaluation failures. An execution failure is not a model result; rerun those items before comparing.
+   - Separate execution failures (an item that errored, timed out or was canceled) from evaluation failures. An execution failure is not a model result; rerun those items before comparing. A conversation that hangs can come back as `failed` with no `failureReason` and empty evaluation results, about 20 minutes later, and `itemCounts.failed` counts it with evaluation failures: treat an item with no evaluation results as an execution failure.
    - Set aside test artifacts before comparing: the caller ended the chat before the assistant spoke or before the assistant's last turn, the conversation hit the turn limit after a transfer, or a tool call reached a tool with no mock.
 
 10. **Report side by side.**
