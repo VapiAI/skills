@@ -40,7 +40,7 @@ Wording and configuration changes that resolved the behavior differences in the 
 
 | Symptom | Fix |
 |---|---|
-| Skips "anything else?" or the closing steps after a branch that ends with its own last line | Restate the closing inside each branch, including failures and declined offers: "In that same turn, send the link with `send_sms`, then follow # Closing." |
+| Skips "anything else?" or the closing steps after a branch that ends with its own last line | Write the closing steps once, remove other "close the call" endings, and end each branch (failures and declined offers included) with a pointer that names the next step: "Then send the link with `send_sms` and follow # Closing." |
 | Answers and waits, without the next step 4.1 offered | A next-action table: for each kind of answer or tool result, the specific next step, placed before any generic "anything else?" |
 | Loses the caller's open request after a side question, or treats "okay" as the end | A short conversation-state section: keep the caller's oldest unresolved request open through side questions; "okay" or "thanks" doesn't mean the request is done |
 | Gives a bare "no" and repeats it when the caller pushes back | A refusal pattern: every "no" gives the reason, one alternative, and what happens next. On pushback, offer something different instead of repeating |

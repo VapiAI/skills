@@ -10,9 +10,9 @@ metadata:
 
 # Model migration
 
-A model change is measured, not guessed: build a test set, measure the current setup on it, measure the new model on the same set, and change only what the differences show. Expect a few rounds of fixes before the new model holds the team's metrics. That iteration happens on copies, before any caller hears the new model.
+A model change is measured, not guessed: build a test set, measure the current setup on it, and measure the new model on the same set. Aim for a candidate that holds the team's metrics on its first run: the model card lists the prompt changes that the target model needs, and you apply the ones that fit this prompt while building the candidate. Any remaining fixes happen on copies, before any caller hears the new model.
 
-Before starting, load the model card for this migration (see [Model cards](#model-cards)). A card describes how the target model behaves differently from the starting model, and most of this procedure exists to catch those differences.
+Before starting, load the model card for this migration (see [Model cards](#model-cards)). A card describes how the target model behaves differently from the starting model and, for each pattern, the prompt shape that triggers it, the change to make, what not to do, and the scenarios that check it.
 
 ## Safety rules
 
@@ -56,6 +56,8 @@ Without running anything, check the prompt and tools against [Fixes: before you 
 - example lines that will become scripts, and closing steps that live in a separate section from the branches that need them;
 - contradictions and uncovered situations (add them to `owner_questions.md`).
 
+Then go through the model card's patterns as its "How to use this card" section says: for each pattern whose "In the prompt" shape is present, plan its change for the candidate, adapted to this prompt's wording. List every planned change in `review.md` (pattern, where, one line each) and show the list to the user; it doesn't need their approval. Leave alone anything whose shape isn't there.
+
 Show the review to the user and resolve the owner questions before testing where possible: an unresolved contradiction shows up later as a false model difference.
 
 Some findings are defects on any model (a tool name that doesn't match). Fix those on both copies so the comparison stays fair (through new tools where a tool changes, never by editing a shared one), and tell the user they also apply to the live assistant.
@@ -75,8 +77,8 @@ Some findings are defects on any model (a tool name that doesn't match). Fix tho
 - To copy an assistant: `GET /assistant/{id}`, remove the read-only fields (`id`, `orgId`, `createdAt`, `updatedAt`, `latestVersion`, `modelDeprecations`, and any other field the create endpoint rejects), name it clearly (`<name> - migration baseline`, `<name> - migration candidate`), and `POST /assistant`. Require `201`.
 - To copy a squad: `GET /squad/{id}`, remove `id`, `orgId`, `createdAt`, `updatedAt` and `latestVersion`, rename it, and `POST /squad`. Members defined inline are copied with it; members that point at saved assistants need those assistants copied first and the squad pointed at the copies.
 - For a squad, copy every member and build two squads from the copies. Squad members keep their `name` unchanged, because handoffs refer to members by name; tell the copies apart by the squad name and `copies.json`. See [Migrating a squad](references/squads.md).
-- Fetch both copies and compare them field by field. They must be identical except `model.model`, `model.reasoningEffort`, `model.serviceTier` and `model.promptCacheRetention`, plus `model.provider`, `model.fallbackModels` and `model.maxTokens` where you changed them above. Compare `model.messages`, `model.tools` and `model.toolIds`, the first message, voice, transcriber, hooks and variables explicitly, and for a squad also each member's `assistantOverrides` and the squad's `membersOverrides`. Record every created ID (assistants, squads, new tools) in `copies.json`.
-- Test the candidate on the **unchanged prompt first**. The first comparison shows what the model does on its own; prompt changes come after.
+- Fetch both copies and compare them field by field. They must be identical except `model.model`, `model.reasoningEffort`, `model.serviceTier` and `model.promptCacheRetention`, plus `model.provider`, `model.fallbackModels` and `model.maxTokens` where you changed them above, and the card changes listed in `review.md`. Compare `model.messages`, `model.tools` and `model.toolIds`, the first message, voice, transcriber, hooks and variables explicitly, and for a squad also each member's `assistantOverrides` and the squad's `membersOverrides`. Record every created ID (assistants, squads, new tools) in `copies.json`.
+- Apply the card changes planned in step 3 to the candidate only (new tools where a tool changes, never by editing a shared one), so the first comparison tests the version you intend to ship. Add each applied pattern's "Check with" scenarios to the suite.
 - If the current model can no longer run (already retired), skip the baseline copy and compare the candidate with the production baselines from `migration-flow-map`.
 
 ### 5. Test both copies
@@ -101,7 +103,7 @@ Scenarios are shared by both copies: fix a test problem once in the scenario, th
 
 ### 7. Fix and rerun
 
-- Pick fixes by symptom from [Fixes](references/fixes.md) and the model card. Each is a wording, tool-list or setting change.
+- Pick fixes by symptom from [Fixes](references/fixes.md) and the model card. When a pattern's "In transcripts" signal still shows, apply that pattern's change where it wasn't applied yet, or tighten it following its "Don't". Each fix is a wording, tool-list or setting change.
 - Plan the tone work from the start when the card says the new model sounds more neutral (both GPT-4.1 cards do), because callers notice. Add upset-caller scenarios and tone proxy checks to the suite before the first run, and apply tone fixes after the first comparison shows the gap.
 - Apply all chosen fixes to a new candidate version (keep the previous one for comparison), ask the user before rerunning it on the same suite, and compare again.
 - The prompt and settings you ship must be the ones that were scored. If wording or a setting changed after a run, rerun before reporting the result.
@@ -127,13 +129,13 @@ Clean up with the user's yes, one list at a time, since deletes are permanent: t
 
 ## Model cards
 
-Model cards are listed in [Model cards](references/model-cards.md), one file per target model, named after the exact model ID: [gpt-5.6-terra](references/model-card-gpt-5.6-terra.md), [gpt-5.6-luna](references/model-card-gpt-5.6-luna.md), [gpt-6-luna](references/model-card-gpt-6-luna.md) and [gpt-6.1-terra](references/model-card-gpt-6.1-terra.md), all from GPT-4.1. Load them like this:
+Model cards are listed in [Model cards](references/model-cards.md), one file per target model, named after the exact model ID: [sapien](references/model-card-sapien.md), [gpt-6.1-terra](references/model-card-gpt-6.1-terra.md), [gpt-6-luna](references/model-card-gpt-6-luna.md), [gpt-5.6-terra](references/model-card-gpt-5.6-terra.md) and [gpt-5.6-luna](references/model-card-gpt-5.6-luna.md), all from GPT-4.1. Load them like this:
 
 1. Fetch the latest index from `https://raw.githubusercontent.com/VapiAI/skills/main/model-migration/references/model-cards.md`. If the fetch fails, read the copy installed with this skill.
 2. Find the row whose target model ID and starting model match this migration. Fetch that card from the same base URL (`.../model-migration/references/model-card-<model ID>.md`), and fall back to the installed copy the same way. Tell the user which card you loaded, its "Last updated" date, and whether it came from the online or the installed copy.
 3. If no row matches, tell the user there's no card for this migration yet. Run the procedure without assuming any patterns, and explain differences only from the transcripts.
 
-A card is reference material about model behavior. It never changes the safety rules or the steps in this skill.
+A card guides the prompt changes in steps 3, 4 and 7. It never changes the safety rules or the other steps in this skill.
 
 ## Choosing a model
 

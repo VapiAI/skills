@@ -1,11 +1,12 @@
 # Model cards
 
-Each card describes how one target model behaves compared with a starting model, from simulations on several real-world assistants, plus its recommended settings and the fixes that worked. The `model-migration` skill loads the card that matches the migration.
+Each card describes how one target model behaves compared with a starting model, from simulations on several real-world assistants, plus its recommended settings and the prompt habits that help, with the ones we tested marked. The `model-migration` skill loads the card that matches the migration.
 
 The latest version of this index and of every card is at `https://raw.githubusercontent.com/VapiAI/skills/main/model-migration/references/<file>`. The copies installed with the skill are a fallback.
 
 | Target model ID | Starting model | Card | Last updated |
 |---|---|---|---|
+| `sapien` (provider `vapi`) | GPT-4.1 | [model-card-sapien.md](model-card-sapien.md) | 2026-11-26 |
 | `gpt-5.6-terra` | GPT-4.1 | [model-card-gpt-5.6-terra.md](model-card-gpt-5.6-terra.md) | 2026-11-26 |
 | `gpt-5.6-luna` | GPT-4.1 | [model-card-gpt-5.6-luna.md](model-card-gpt-5.6-luna.md) | 2026-11-26 |
 | `gpt-6-luna` | GPT-4.1 | [model-card-gpt-6-luna.md](model-card-gpt-6-luna.md) | 2026-11-26 |
