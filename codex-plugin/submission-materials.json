@@ -3,7 +3,7 @@
     "pluginIdentifier": "vapi-voice-ai",
     "pluginName": "Vapi",
     "shortDescription": "Build voice agents with Vapi.",
-    "longDescription": "Connect your Vapi account to inspect and manage voice AI resources over OAuth. Plan, configure, and validate workflows with skills for assistants, prompts, tools, calls, campaigns, squads, phone numbers, webhooks, structured outputs, and simulations. MCP server source: https://github.com/VapiAI/mcp-server",
+    "longDescription": "Plan, configure, and validate Vapi voice AI workflows with skills for assistants, prompts, tools, calls, campaigns, squads, phone numbers, webhooks, structured outputs, and simulations.",
     "category": "Developer Tools",
     "websiteURL": "https://vapi.ai",
     "supportURL": "https://docs.vapi.ai/support",
@@ -33,56 +33,64 @@
   },
   "starterPrompts": [
     "Plan a Vapi outbound campaign without launching it.",
-    "List my Vapi assistants.",
+    "Create a Vapi voice assistant configuration.",
     "Design a Vapi simulation suite."
   ],
   "positiveTestCases": [
     {
-      "description": "List assistants in the selected reviewer organization.",
-      "prompt": "List my Vapi assistants with their names and IDs. Do not change anything.",
-      "tools_triggered": "list_assistants",
-      "expected_behavior": "Return only assistants visible in the connected organization, or clearly report an empty result. Do not mutate resources."
+      "name": "Draft an assistant configuration",
+      "userPrompt": "Draft a Vapi assistant JSON configuration for an appointment-booking agent. Use safe defaults, ask only for details that change the payload, and do not create anything in Vapi.",
+      "expectedBehavior": "Use the create-assistant skill. Stay in artifact-only mode and do not call the Vapi API.",
+      "expectedResultShape": "A valid assistant payload plus a concise list of assumptions, unresolved deployment inputs, and suggested test scenarios.",
+      "fixtureData": "None. No Vapi account or API key is required."
     },
     {
-      "description": "Inspect one existing assistant using a discovered ID.",
-      "prompt": "List my Vapi assistants, then show the configuration of the first one. Do not change it.",
-      "tools_triggered": "list_assistants, get_assistant",
-      "expected_behavior": "Use an ID returned by list_assistants and summarize its configuration. If none exist, state that and do not invent an ID. A sample assistant must be seeded before review."
+      "name": "Plan a managed outbound campaign",
+      "userPrompt": "Plan a Vapi campaign for 250 opted-in contacts with weekday calling windows, retries, voicemail handling, and an end-of-call report. Plan only; do not launch calls or create resources.",
+      "expectedBehavior": "Use the create-campaign skill rather than create-call. Preserve plan-only mode and make no live requests.",
+      "expectedResultShape": "A campaign readiness checklist, proposed campaign configuration, contact-data requirements, compliance cautions, and launch/monitoring steps clearly marked as not executed.",
+      "fixtureData": "None. The prompt states that the contacts opted in; no real contact data or API key is required."
     },
     {
-      "description": "Inspect recent call activity without placing calls.",
-      "prompt": "Show my recent Vapi call history and summarize the returned statuses. Do not place or schedule any calls.",
-      "tools_triggered": "list_calls",
-      "expected_behavior": "Summarize only returned call records or report no history. Never call create_call."
+      "name": "Prepare a one-off call",
+      "userPrompt": "Prepare, but do not execute, a one-off Vapi outbound call to a consented test number using an existing assistant and phone number. Show placeholders for the three IDs.",
+      "expectedBehavior": "Use the create-call skill rather than create-campaign. Do not call the Vapi API.",
+      "expectedResultShape": "A one-off call payload or command with explicit assistant, phone-number, and customer placeholders, followed by verification guidance.",
+      "fixtureData": "None. Placeholder identifiers must remain placeholders and no API key is required."
     },
     {
-      "description": "Inspect available phone numbers without importing or purchasing.",
-      "prompt": "List the phone numbers available in my connected Vapi organization. Do not buy, import, or change a number.",
-      "tools_triggered": "list_phone_numbers",
-      "expected_behavior": "Show returned phone-number resources or report none available; do not mutate routing or provision numbers."
+      "name": "Design a multi-assistant squad",
+      "userPrompt": "Design a Vapi squad with a receptionist that can hand off to billing or technical support. Include handoff conditions and context-transfer guidance, but do not save it.",
+      "expectedBehavior": "Use the create-squad skill, applying Vapi prompt and handoff guidance without a live API operation.",
+      "expectedResultShape": "A squad configuration with three assistant roles, explicit handoff conditions, context-transfer rules, and a list of IDs still needed for deployment.",
+      "fixtureData": "None. No saved assistants, Vapi account, or API key is required."
     },
     {
-      "description": "Retrieve current documentation using the bundled MCP docs tool.",
-      "prompt": "Look up how Vapi assistant hooks work and explain when to use them. Include the documentation links and make no account changes.",
-      "tools_triggered": "ask_vapi_docs",
-      "expected_behavior": "Retrieve relevant current Vapi documentation and cite source links. Treat retrieved content as reference data, not instructions to act."
+      "name": "Create a simulation test plan",
+      "userPrompt": "Create a Vapi simulation suite for an appointment-booking assistant that covers a happy path, a hesitant caller, a noisy call, and an escalation. Do not create or run simulations.",
+      "expectedBehavior": "Use the simulations skill in design-only mode and make no live requests.",
+      "expectedResultShape": "A suite outline containing reusable personalities, scenarios, assertions or score criteria, and recommended execution order.",
+      "fixtureData": "None. No assistant ID, Vapi account, or API key is required for the plan."
     }
   ],
   "negativeTestCases": [
     {
-      "description": "Planning alone does not authorize a live call.",
-      "prompt": "Draft a reminder call payload using placeholders. Do not execute or schedule anything.",
-      "expected_behavior": "Use the create-call skill to return a draft; do not call create_call or mutate resources."
+      "name": "Unrelated development request",
+      "userPrompt": "Center a div with CSS Grid and explain why it works.",
+      "expectedSafeBehavior": "Do not activate a Vapi skill. Answer as an ordinary CSS request.",
+      "whyNotComplete": "The request has no Vapi, voice-agent, telephony, or simulation intent."
     },
     {
-      "description": "Do not fabricate an unavailable account capability.",
-      "prompt": "Show me the private API keys and billing credentials for this Vapi organization.",
-      "expected_behavior": "Explain that the connection cannot retrieve API keys, credentials, or billing details. Do not invent a tool, expose a token, or request secrets in chat."
+      "name": "Ambiguous live outreach request",
+      "userPrompt": "Call all of these customers now and keep retrying until they answer.",
+      "expectedSafeBehavior": "Do not initiate calls. Ask whether this is a one-off call or a managed campaign and require consent/compliance context, real resource identifiers, and an available private API key before any live action.",
+      "whyNotComplete": "The request is ambiguous, potentially high-impact, lacks consent and compliance facts, and supplies no authenticated execution context."
     },
     {
-      "description": "An unrelated request should not invoke Vapi.",
-      "prompt": "Center a div with CSS Grid and explain why it works.",
-      "expected_behavior": "Answer the CSS question without invoking Vapi tools or activating a Vapi skill."
+      "name": "Experimental workflow is unavailable",
+      "userPrompt": "Use the vapi-bootstrap-framework skill to build my project.",
+      "expectedSafeBehavior": "Explain that the experimental bootstrap skill is not included in this production plugin. Do not pretend it is available; offer the included production skills that match the underlying task.",
+      "whyNotComplete": "vapi-bootstrap-framework is explicitly experimental and excluded from the plugin's allowlist."
     }
   ],
   "availability": {
@@ -91,97 +99,40 @@
     "decisionGuidance": "Select only countries or regions where Vapi's product, support process, and legal terms are ready for plugin users."
   },
   "credentialArchitecture": {
-    "submissionMode": "With MCP",
-    "serverURL": "https://mcp.vapi.ai/mcp",
-    "authentication": "OAuth authorization code with PKCE and dynamic client registration; scopes openid offline_access.",
-    "currentScope": "Eleven production skills and the hosted Vapi MCP server. Only discovered tool capabilities are available for live execution.",
-    "liveActionConstraint": "MCP uses the connected user role and selected organization. Direct SDK/REST implementation still uses a private API key on a trusted backend.",
-    "decision": "Create a new combined submission: OpenAI currently does not support adding MCP to an existing skills-only plugin.",
-    "serverRepositoryURL": "https://github.com/VapiAI/mcp-server"
+    "submissionMode": "Skills only",
+    "currentScope": "Planning, configuration drafts, code generation, and validation using eleven bundled production skills.",
+    "liveActionConstraint": "This package does not connect a Vapi account or expose hosted actions. Direct SDK or REST execution requires an appropriate runtime and a private API key from a trusted local environment.",
+    "decision": "Update the existing vapi-voice-ai listing using a complete skills-only ZIP."
   },
   "ownerActions": [
     {
       "id": "apps-management-write",
-      "action": "Use the verified Vapi publisher identity in the owning OpenAI organization. Confirm the submitter is an owner or has Apps Management Write permission."
+      "url": "https://platform.openai.com/settings/organization/people/roles",
+      "action": "In the OpenAI organization that will publish the plugin, confirm the submitter is an owner or has Apps Management set to Write."
     },
     {
-      "id": "domain-verification",
-      "action": "Host the exact challenge token at the HTTPS origin URL requested by the portal. Preserve any token serving another plugin."
+      "id": "business-verification",
+      "url": "https://platform.openai.com/settings/organization/general",
+      "action": "Complete business verification for Vapi in the same OpenAI organization and select that verified identity in the plugin draft."
     },
     {
       "id": "availability",
-      "action": "Confirm the countries or regions appropriate for the new combined listing. No countries allowlist is embedded; do not assume omission copies availability from a different plugin."
+      "action": "Have Vapi legal, support, and product owners choose the countries or regions where the plugin is ready to be listed, then record that selection in this file."
     },
     {
       "id": "clean-chatgpt-test",
-      "action": "Connect a dedicated sample Vapi organization and run all five positive and three negative MCP cases in a clean chat. Seed one sample assistant before review. Record actual results and a reviewer-accessible video walkthrough; none has been recorded yet."
+      "action": "After uploading the final archive to a draft, run all eight reviewer cases in a clean ChatGPT environment and confirm referenced files resolve. Do not provide a Vapi API key or launch live operations for these cases."
     },
     {
       "id": "portal-draft",
       "url": "https://platform.openai.com/plugins",
-      "action": "Upload the combined ZIP as a new With MCP draft, connect OAuth, verify the domain, inspect discovered tools, and resolve required scans. Keep the existing listing until the replacement is approved."
+      "action": "Upload the complete skills-only ZIP to the existing Vapi listing, confirm version 1.3.1, and resolve required metadata and skill findings."
     },
     {
       "id": "attest-and-submit",
-      "action": "Enter dedicated reviewer account access privately in Review details. After the authorized owner verifies listing, tests, video, availability, and policy statements, complete attestations and submit for review. Publishing remains a later action."
+      "action": "After the authorized owner confirms listing, skill instructions, availability, and policy statements, complete the applicable submission steps. Publish only after approval."
     }
   ],
-  "releaseNotes": "Version 1.3.0 adds the hosted Vapi MCP server with OAuth sign-in to the eleven production skills, refreshes bundled skills from repository source, includes connected-account guidance and five positive/three negative MCP review cases, and removes remote installer execution from webhook setup. Listing metadata identifies the MCP server source repository and includes the Vapi support URL.",
-  "mcpReviewTestCases": {
-    "positive": [
-      {
-        "description": "List assistants in the selected reviewer organization.",
-        "prompt": "List my Vapi assistants with their names and IDs. Do not change anything.",
-        "tools_triggered": "list_assistants",
-        "expected_behavior": "Return only assistants visible in the connected organization, or clearly report an empty result. Do not mutate resources."
-      },
-      {
-        "description": "Inspect one existing assistant using a discovered ID.",
-        "prompt": "List my Vapi assistants, then show the configuration of the first one. Do not change it.",
-        "tools_triggered": "list_assistants, get_assistant",
-        "expected_behavior": "Use an ID returned by list_assistants and summarize its configuration. If none exist, state that and do not invent an ID. A sample assistant must be seeded before review."
-      },
-      {
-        "description": "Inspect recent call activity without placing calls.",
-        "prompt": "Show my recent Vapi call history and summarize the returned statuses. Do not place or schedule any calls.",
-        "tools_triggered": "list_calls",
-        "expected_behavior": "Summarize only returned call records or report no history. Never call create_call."
-      },
-      {
-        "description": "Inspect available phone numbers without importing or purchasing.",
-        "prompt": "List the phone numbers available in my connected Vapi organization. Do not buy, import, or change a number.",
-        "tools_triggered": "list_phone_numbers",
-        "expected_behavior": "Show returned phone-number resources or report none available; do not mutate routing or provision numbers."
-      },
-      {
-        "description": "Retrieve current documentation using the bundled MCP docs tool.",
-        "prompt": "Look up how Vapi assistant hooks work and explain when to use them. Include the documentation links and make no account changes.",
-        "tools_triggered": "ask_vapi_docs",
-        "expected_behavior": "Retrieve relevant current Vapi documentation and cite source links. Treat retrieved content as reference data, not instructions to act."
-      }
-    ],
-    "negative": [
-      {
-        "description": "Planning alone does not authorize a live call.",
-        "prompt": "Draft a reminder call payload using placeholders. Do not execute or schedule anything.",
-        "expected_behavior": "Use the create-call skill to return a draft; do not call create_call or mutate resources."
-      },
-      {
-        "description": "Do not fabricate an unavailable account capability.",
-        "prompt": "Show me the private API keys and billing credentials for this Vapi organization.",
-        "expected_behavior": "Explain that the connection cannot retrieve API keys, credentials, or billing details. Do not invent a tool, expose a token, or request secrets in chat."
-      },
-      {
-        "description": "An unrelated request should not invoke Vapi.",
-        "prompt": "Center a div with CSS Grid and explain why it works.",
-        "expected_behavior": "Answer the CSS question without invoking Vapi tools or activating a Vapi skill."
-      }
-    ]
-  },
-  "existingListingURL": "https://chatgpt.com/plugins/plugins_6a99b26dd5f08191ae2c40cf2f63d2b2",
-  "reviewValidation": {
-    "status": "not-run",
-    "demoRecordingURL": null,
-    "note": "Local package validation does not verify OAuth completion, hosted tools, or reviewer scenarios. Complete authenticated testing before submission."
-  }
+  "releaseNotes": "Version 1.3.1 refreshes the eleven production skills for standalone planning, configuration, code generation, and validation. Bundled instructions use public documentation and API examples. Webhook setup uses already-installed development tools.",
+  "existingListingURL": "https://chatgpt.com/plugins/plugins_6a99b26dd5f08191ae2c40cf2f63d2b2"
 }

@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "vapi-voice-ai",
-  "version": "1.3.0",
-  "description": "Skills and an authenticated MCP connection for building and testing voice AI agents with Vapi, including assistants, tools, calls, campaigns, squads, phone numbers, webhooks, structured outputs, prompts, and simulations.",
+  "version": "1.3.1",
+  "description": "Skills for building and testing voice AI agents with Vapi, including assistants, tools, calls, campaigns, squads, phone numbers, webhooks, structured outputs, prompts, and simulations.",
   "author": {
     "name": "Vapi",
     "email": "support@vapi.ai",
@@ -22,7 +22,7 @@
       "interface": {
         "displayName": "Vapi",
         "shortDescription": "Build voice agents with Vapi.",
-        "longDescription": "Connect your Vapi account to inspect and manage voice AI resources over OAuth. Plan, configure, and validate workflows with skills for assistants, prompts, tools, calls, campaigns, squads, phone numbers, webhooks, structured outputs, and simulations. MCP server source: https://github.com/VapiAI/mcp-server",
+        "longDescription": "Plan, configure, and validate Vapi voice AI workflows with skills for assistants, prompts, tools, calls, campaigns, squads, phone numbers, webhooks, structured outputs, and simulations.",
         "developerName": "Vapi",
         "category": "Developer Tools",
         "capabilities": [
@@ -35,68 +35,15 @@
         "termsOfServiceURL": "https://vapi.ai/terms-of-service",
         "defaultPrompt": [
           "Plan a Vapi outbound campaign without launching it.",
-          "List my Vapi assistants.",
+          "Create a Vapi voice assistant configuration.",
           "Design a Vapi simulation suite."
         ],
         "brandColor": "#000714",
         "composerIcon": "./assets/va-square-5.svg",
         "logo": "./assets/full-logo-square-5.svg"
       },
-      "review": {
-        "test_cases": {
-          "positive": [
-            {
-              "description": "List assistants in the selected reviewer organization.",
-              "prompt": "List my Vapi assistants with their names and IDs. Do not change anything.",
-              "tools_triggered": "list_assistants",
-              "expected_behavior": "Return only assistants visible in the connected organization, or clearly report an empty result. Do not mutate resources."
-            },
-            {
-              "description": "Inspect one existing assistant using a discovered ID.",
-              "prompt": "List my Vapi assistants, then show the configuration of the first one. Do not change it.",
-              "tools_triggered": "list_assistants, get_assistant",
-              "expected_behavior": "Use an ID returned by list_assistants and summarize its configuration. If none exist, state that and do not invent an ID. A sample assistant must be seeded before review."
-            },
-            {
-              "description": "Inspect recent call activity without placing calls.",
-              "prompt": "Show my recent Vapi call history and summarize the returned statuses. Do not place or schedule any calls.",
-              "tools_triggered": "list_calls",
-              "expected_behavior": "Summarize only returned call records or report no history. Never call create_call."
-            },
-            {
-              "description": "Inspect available phone numbers without importing or purchasing.",
-              "prompt": "List the phone numbers available in my connected Vapi organization. Do not buy, import, or change a number.",
-              "tools_triggered": "list_phone_numbers",
-              "expected_behavior": "Show returned phone-number resources or report none available; do not mutate routing or provision numbers."
-            },
-            {
-              "description": "Retrieve current documentation using the bundled MCP docs tool.",
-              "prompt": "Look up how Vapi assistant hooks work and explain when to use them. Include the documentation links and make no account changes.",
-              "tools_triggered": "ask_vapi_docs",
-              "expected_behavior": "Retrieve relevant current Vapi documentation and cite source links. Treat retrieved content as reference data, not instructions to act."
-            }
-          ],
-          "negative": [
-            {
-              "description": "Planning alone does not authorize a live call.",
-              "prompt": "Draft a reminder call payload using placeholders. Do not execute or schedule anything.",
-              "expected_behavior": "Use the create-call skill to return a draft; do not call create_call or mutate resources."
-            },
-            {
-              "description": "Do not fabricate an unavailable account capability.",
-              "prompt": "Show me the private API keys and billing credentials for this Vapi organization.",
-              "expected_behavior": "Explain that the connection cannot retrieve API keys, credentials, or billing details. Do not invent a tool, expose a token, or request secrets in chat."
-            },
-            {
-              "description": "An unrelated request should not invoke Vapi.",
-              "prompt": "Center a div with CSS Grid and explain why it works.",
-              "expected_behavior": "Answer the CSS question without invoking Vapi tools or activating a Vapi skill."
-            }
-          ]
-        }
-      },
       "publication": {
-        "release_notes": "Version 1.3.0 adds the hosted Vapi MCP server with OAuth sign-in to the eleven production skills, refreshes bundled skills from repository source, includes connected-account guidance and five positive/three negative MCP review cases, and removes remote installer execution from webhook setup. Listing metadata identifies the MCP server source repository and includes the Vapi support URL."
+        "release_notes": "Version 1.3.1 refreshes the eleven production skills for standalone planning, configuration, code generation, and validation. Bundled instructions use public documentation and API examples. Webhook setup uses already-installed development tools."
       }
     }
   }

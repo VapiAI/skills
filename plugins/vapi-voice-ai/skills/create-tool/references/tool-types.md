@@ -8,7 +8,6 @@ Read only the section for the capability being built. Revalidate every example a
 - [Provider integration tools](#provider-integration-tools)
 - [API Request tools](#api-request-tools)
 - [Custom function tools](#custom-function-tools)
-- [MCP tools](#mcp-tools)
 
 ## Native Vapi Tools
 
@@ -105,26 +104,9 @@ The Vapi tool and the server implementation are separate deliverables. If the en
 
 Read [Function Tool Server](function-tool-server.md) only when the user asks to implement this backend.
 
-## MCP Tools
-
-Use `mcp` when the user already has an MCP-compatible server whose dynamically discovered tools should be available to the assistant.
-
-```json
-{
-  "type": "mcp",
-  "function": { "name": "connected_mcp_tools" },
-  "server": {
-    "url": "<secret-mcp-server-url>"
-  }
-}
-```
-
-Use the default Streamable HTTP transport. Treat token-bearing MCP URLs and headers as credentials: source them from secure local configuration and never print or persist them in example payloads. Verify that the server returns a focused tool set and bounded results so it does not overwhelm the model context.
-
 ## Public Sources
 
 - [Create Tool API](https://docs.vapi.ai/api-reference/tools/create)
 - [Default tools](https://docs.vapi.ai/tools/default-tools)
 - [Custom tools](https://docs.vapi.ai/tools/custom-tools)
 - [Google Calendar](https://docs.vapi.ai/tools/google-calendar), [Google Sheets](https://docs.vapi.ai/tools/google-sheets), and [Slack](https://docs.vapi.ai/tools/slack)
-- [MCP integration](https://docs.vapi.ai/tools/mcp)

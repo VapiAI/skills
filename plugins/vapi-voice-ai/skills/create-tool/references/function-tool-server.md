@@ -1,6 +1,6 @@
 # Function Tool Server
 
-Read this file only after selecting a custom `function` tool and only when the user asks to implement its external backend. It does not apply to native, integration, API Request, or MCP tools.
+Read this file only after selecting a custom `function` tool and only when the user asks to implement its external backend. It does not apply to native, integration, or API Request tools.
 
 ## Contract
 
